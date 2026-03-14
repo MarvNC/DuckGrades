@@ -52,7 +52,7 @@ Last updated: 2026-03-14
 
 - [ ] Implement numerical/non-numerical chart primitives matching spec language.
 - [x] Wire course/professor drill-down sections with collapsible section records.
-- [ ] Add route-level data prefetch from search results (hover/focus).
+- [x] Add route-level data prefetch from search results (hover/focus).
 - [ ] Add deployment docs for GitHub Pages and Cloudflare Pages with `VITE_DATA_BASE_URL`.
 
 ## Verification Log
@@ -62,9 +62,11 @@ Last updated: 2026-03-14
 - [x] `bun run build` passes with production bundle output.
 - [x] Re-ran `bun run build:data`, `bun run check`, and `bun run build` on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after search/drilldown upgrades on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after route prefetch integration on 2026-03-14.
 
 ## Recent Commits
 
+- `35cf0b7` feat: prefetch shard routes from search interactions
 - `a04803f` feat: improve search UX and add route drilldown states
 - `be97dd5` feat: share aggregate summary card across detail routes
 - `d22f02f` chore: add handoff progress checklist workflow
