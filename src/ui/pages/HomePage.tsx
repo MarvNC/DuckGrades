@@ -60,7 +60,7 @@ export function HomePage() {
             <input
               id="search"
               ref={inputRef}
-              className="w-full rounded-2xl border border-slate-200 bg-white py-5 pr-4 pl-14 text-lg text-slate-900 shadow-lg shadow-slate-200/35 outline-none transition-all placeholder:text-slate-400 focus:border-[#4d8152] focus:ring-2 focus:ring-[#4d8152]/25"
+              className="w-full rounded-2xl border border-slate-200 bg-white py-4 pr-4 pl-14 text-lg text-slate-900 shadow-lg shadow-slate-200/35 outline-none transition-all placeholder:text-slate-400 focus:border-[#4d8152] focus:ring-2 focus:ring-[#4d8152]/25"
               value={query}
               onChange={(event) => {
                 setQuery(event.target.value);

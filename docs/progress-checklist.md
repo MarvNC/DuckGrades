@@ -22,6 +22,9 @@ Last updated: 2026-03-14
 - [x] Add subject sorting with URL query-state persistence.
 - [x] Add reusable aggregate summary card and wire it across subject/course/professor pages.
 - [x] Unify homepage/header search ranking model and remove homepage debounce lag.
+- [x] Unify route-wide search experience (shared header input + inline result mode that clears back to page content).
+- [x] Restore original homepage hero-first search layout (centered search on home + header-only on non-home routes).
+- [x] Slightly reduce homepage search input height for tighter hero spacing.
 
 ## Spec Coverage Snapshot
 
@@ -105,6 +108,11 @@ Last updated: 2026-03-14
 - [x] Re-ran `bun run check` and `bun run build` after aggregate/card alignment and subject search restore on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after unifying homepage/header search logic and removing homepage debounce lag on 2026-03-14.
 - [x] Re-ran `bun run check` after removing homepage search-result animation classes on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after route-wide header search unification and inline result-mode rendering on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after restoring homepage hero and adding search-activated upward hero transition on 2026-03-14.
+- [x] Re-ran `bun run check` after restoring homepage hero wordmark sizing while keeping header search unified on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after restoring original no-header-home + centered-search design on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after reducing homepage search input height on 2026-03-14.
 
 ## Recent Commits
 
