@@ -32,7 +32,7 @@ function buildSectionAggregate(section: SectionRow): Aggregate {
   const coverage = section.totalNonWReported > 0 ? visibleNonW / section.totalNonWReported : null;
 
   return {
-    totalNonWReported: visibleNonW,
+    totalNonWReported: section.totalNonWReported,
     totalVisibleNonW: visibleNonW,
     coverage,
     mean: null,
@@ -45,22 +45,35 @@ function buildSectionAggregate(section: SectionRow): Aggregate {
 }
 
 export function SectionDrilldown({ sections, summaryLabel = "Section details", identityPrefix }: SectionDrilldownProps) {
+  const totalReported = sections.reduce((sum, section) => sum + section.totalNonWReported, 0);
+
   return (
-    <details className="mt-3 rounded-xl border border-slate-200 bg-[#f7faf2] p-3">
-      <summary className="cursor-pointer text-sm font-semibold text-slate-700">{summaryLabel}</summary>
-      <div className="mt-2 space-y-2">
+    <details className="mt-3 rounded-xl border border-slate-200 bg-[#f7faf2] p-3 open:shadow-sm">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-1 py-0.5 text-sm font-semibold text-slate-700 marker:content-none">
+        <span className="inline-flex items-center gap-2">
+          <span className="text-slate-500">▼</span>
+          {summaryLabel}
+        </span>
+        <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+          <span className="rounded-full border border-slate-200 bg-white/70 px-2 py-0.5">{sections.length} sections</span>
+          <span className="rounded-full border border-slate-200 bg-white/70 px-2 py-0.5">{totalReported} reported</span>
+        </span>
+      </summary>
+
+      <div className="mt-2 space-y-2.5">
         {sections.map((section) => {
           const visible = visibleNumericalCount(section);
           const coverage = section.totalNonWReported > 0 ? (visible / section.totalNonWReported) * 100 : 0;
           const sectionAggregate = buildSectionAggregate(section);
           const hasHiddenBuckets = section.totalNonWReported > visible;
+          const sectionWithdrawals = section.counts.W ?? 0;
 
           return (
-            <div key={`${identityPrefix}-${section.crn}`} className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+            <article key={`${identityPrefix}-${section.crn}`} className="rounded-xl border border-slate-200 bg-white/95 px-3 py-2.5">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                 <div className="min-w-0 sm:flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                    <p className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
                       {section.termDesc} · CRN {section.crn}
                     </p>
                     <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5 text-[10px] font-semibold text-slate-700">
@@ -69,21 +82,21 @@ export function SectionDrilldown({ sections, summaryLabel = "Section details", i
                     <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5 text-[10px] font-semibold text-slate-700">
                       {visible} visible ({coverage.toFixed(1)}%)
                     </span>
-                    {(section.counts.W ?? 0) > 0 ? (
+                    {sectionWithdrawals > 0 ? (
                       <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5 text-[10px] font-semibold text-slate-700">
-                        {section.counts.W} withdrawals
+                        {sectionWithdrawals} withdrawals
                       </span>
                     ) : null}
                   </div>
 
-                  {hasHiddenBuckets ? <p className="mt-1 text-[11px] text-slate-500">Some grade buckets are redacted in source data for this section.</p> : null}
+                  {hasHiddenBuckets ? <p className="mt-1 text-[11px] text-slate-500">Some grade buckets are redacted for this section in source data.</p> : null}
                 </div>
 
                 <div className="flex justify-end sm:pl-2">
                   <GradeDistributionStrip aggregate={sectionAggregate} size="sm" showStudentCount={false} />
                 </div>
               </div>
-            </div>
+            </article>
           );
         })}
       </div>
