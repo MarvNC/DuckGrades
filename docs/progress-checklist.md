@@ -50,6 +50,7 @@ Last updated: 2026-03-14
 - [x] Add keyboard-first grouped search behavior (tab/shift+tab focus travel and Esc close state polish).
 - [x] Add loading, no-data, and redaction coverage states across all route pages.
 - [~] Add build-time integrity checks (hash + cross-reference done; schema-contract validation still pending).
+- [~] Revamp subject/course distributions for dense inline cards (compact chart + hover details + clarified P/NP/Other/W semantics).
 
 ## Next Up (Priority)
 
@@ -97,10 +98,12 @@ Last updated: 2026-03-14
 - [x] Re-ran `bun run check` and `bun run build` after non-home page visual refresh for homepage design consistency on 2026-03-14.
 - [x] Re-ran `bun run check` after reducing non-home logo scale while preserving homepage hero sizing on 2026-03-14.
 - [x] Re-ran `bun run check` after unifying homepage/header search placeholder copy on 2026-03-14.
+- [x] Re-ran `bun run check` after compact subject/course distribution revamp and search dropdown opacity fix on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after disabling Vite `emptyOutDir` to avoid intermittent Windows `ENOTEMPTY` dist cleanup failures on 2026-03-14.
 
 ## Recent Commits
 
+- `0808803` feat: compact course distributions and clarify non-numeric grades
 - `7beb3f6` feat: compact search-index with string table and flat tuples
 - `47d97a2` feat: add consistent focus-visible accessibility styling
 - `d829d88` feat: add dataset budget analysis script
@@ -130,3 +133,4 @@ Last updated: 2026-03-14
 - Main CSVs are intentionally committed and treated as stable source input.
 - Research report from `uo.zone` deep dive is at `docs/uo-zone-ux-structure-report.md` (intentionally not committed).
 - Latest budget snapshot shows current payloads are above target and need compression-oriented schema/sharding optimization.
+- `OTHER` is a separate source bucket (not withdrawals); `W` remains a distinct withdrawal bucket and is now displayed explicitly in compact charts.
