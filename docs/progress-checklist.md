@@ -82,6 +82,11 @@ Last updated: 2026-03-14
 - [x] Ran `bun run analyze:budgets` and re-ran `bun run check` + `bun run build` after budget tooling additions on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after global focus-visible accessibility polish on 2026-03-14.
 - [x] Re-ran `bun run build:data`, `bun run analyze:budgets`, `bun run check`, and `bun run build` after compact search-index encoding on 2026-03-14.
+- [x] Re-ran `bun run check` after homepage hero copy cleanup on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after homepage minimal search-first redesign on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after homepage/header search-shell + nav simplification on 2026-03-14.
+- [x] Re-ran `bun run check` after homepage logo hierarchy polish on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after centered homepage hierarchy cleanup on 2026-03-14.
 
 ## Recent Commits
 
