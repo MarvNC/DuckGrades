@@ -30,6 +30,7 @@ Last updated: 2026-03-14
 - [x] Implement shared in-memory search shell with hero-to-header transition and full-page results mode.
 - [x] Integrate fuzzysort-based fuzzy matching for global search and route-level course/instructor filters.
 - [x] Add `/subjects` overview route with university aggregate stats and searchable/sortable subject cards.
+- [x] Compact `subjects-overview.json` encoding to reduce payload size and parse overhead.
 
 ## Spec Coverage Snapshot
 
@@ -134,9 +135,11 @@ Last updated: 2026-03-14
 - [x] Triggered Cloudflare redeploy via empty commit push on 2026-03-14.
 - [x] Re-ran `bun run build:data`, `bun run check`, and `bun run build` after subjects overview implementation on 2026-03-14.
 - [x] Removed `github-pages` environment and deleted historical GitHub Pages deployments via `gh api` on 2026-03-14.
+- [x] Re-ran `bun run build:data`, `bun run check`, and `bun run build` after compacting subjects overview shard on 2026-03-14.
 
 ## Recent Commits
 
+- `04d7020` perf: compact subjects overview shard encoding
 - `bd7f9d5` chore: update progress checklist
 - `a0f510b` feat: add subject overview browsing experience
 - `b4e4bf2` chore: trigger cloudflare redeploy
@@ -176,3 +179,4 @@ Last updated: 2026-03-14
 - Latest budget snapshot shows current payloads are above target and need compression-oriented schema/sharding optimization.
 - `OTHER` is a separate source bucket (not withdrawals); `W` remains a distinct withdrawal bucket and is now displayed explicitly in compact charts.
 - Subject browse UI now uses `v*/subjects-overview.json`; run `bun run build:data` before deploys that include `/subjects` changes.
+- `subjects-overview.json` now uses compact `v:1` tuple encoding and is decoded in `dataClient`; keep encoder/decoder in lockstep.
