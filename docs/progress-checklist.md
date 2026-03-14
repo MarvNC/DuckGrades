@@ -46,7 +46,7 @@ Last updated: 2026-03-14
 
 - [ ] Replace placeholder page blocks with chart components and richer drill-down content.
 - [x] Add keyboard-first grouped search behavior (tab/shift+tab focus travel and Esc close state polish).
-- [~] Add loading, no-data, and redaction coverage states across all route pages.
+- [x] Add loading, no-data, and redaction coverage states across all route pages.
 
 ## Next Up (Priority)
 
@@ -70,9 +70,13 @@ Last updated: 2026-03-14
 - [x] Re-ran `bun run check` and `bun run build` after subject virtualization + back-to-top implementation on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after interactive distribution chart improvements on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after shared section drilldown refactor on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after trapezoid-style chart fidelity update on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after loading/redaction state improvements on 2026-03-14.
 
 ## Recent Commits
 
+- `6e85c53` feat: surface loading and coverage redaction states
+- `f8c838b` feat: render trapezoid-style interactive numerical chart
 - `a62d3df` feat: enrich detail routes with shared section drilldown
 - `5199456` feat: add interactive grade distribution card states
 - `8585b9d` feat: virtualize subject course list with back-to-top
