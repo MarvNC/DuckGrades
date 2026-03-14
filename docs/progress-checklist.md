@@ -21,6 +21,7 @@ Last updated: 2026-03-14
 - [x] Add runtime data client and search loading on homepage.
 - [x] Add subject sorting with URL query-state persistence.
 - [x] Add reusable aggregate summary card and wire it across subject/course/professor pages.
+- [x] Unify homepage/header search ranking model and remove homepage debounce lag.
 
 ## Spec Coverage Snapshot
 
@@ -32,7 +33,7 @@ Last updated: 2026-03-14
 - [x] 8 Runtime fetch uses versioned base URL (`VITE_DATA_BASE_URL` aware).
 - [x] 8 Fallback to same-origin when CDN fetch fails.
 - [~] 9 Numerical heatmap-style chart and non-numerical histogram UI (interactive bin/bar states added; full trapezoid fidelity still pending).
-- [x] 10 Search UX: grouped results + debounce + arrows/tab/shift+tab/esc/enter implemented.
+- [x] 10 Search UX: grouped results + arrows/tab/shift+tab/esc/enter and shared ranking model implemented.
 - [x] 10 Search shell is now available from persistent header quick-search across routes.
 - [~] 11 Subject page partial: sort + URL state + year/term filters + virtualization + back-to-top done; further polish pending.
 - [~] 12 Course page partial: aggregate + instructor metadata + shared collapsible section drilldown done; content-depth polish pending.
@@ -102,6 +103,8 @@ Last updated: 2026-03-14
 - [x] Re-ran `bun run check` after compact subject/course distribution revamp and search dropdown opacity fix on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after disabling Vite `emptyOutDir` to avoid intermittent Windows `ENOTEMPTY` dist cleanup failures on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after aggregate/card alignment and subject search restore on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after unifying homepage/header search logic and removing homepage debounce lag on 2026-03-14.
+- [x] Re-ran `bun run check` after removing homepage search-result animation classes on 2026-03-14.
 
 ## Recent Commits
 

@@ -1,76 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getSearchIndex, prefetchRouteData } from "../../lib/dataClient";
-import { searchIndex } from "../../lib/search";
-
-type SearchItem = {
-  key: string;
-  label: string;
-  subtitle: string;
-  to: string;
-  section: "Subjects" | "Courses" | "Professors";
-};
+import { prefetchRouteData } from "../../lib/dataClient";
+import { buildSearchItems, useRankedSearch } from "../components/searchModel";
 
 export function HomePage() {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const resultRefs = useRef<Array<HTMLAnchorElement | null>>([]);
   const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
-  const [index, setIndex] = useState<Awaited<ReturnType<typeof getSearchIndex>> | null>(null);
-
-  useEffect(() => {
-    if (index) {
-      return;
-    }
-    void getSearchIndex().then(setIndex).catch(() => setIndex({ subjects: [], courses: [], professors: [] }));
-  }, [index]);
-
-  useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      setDebouncedQuery(query);
-      setActiveIndex(0);
-    }, 275);
-    return () => window.clearTimeout(timeout);
-  }, [query]);
-
-  const ranked = useMemo(() => {
-    if (!index) {
-      return { subjects: [], courses: [], professors: [] };
-    }
-    return searchIndex(index, debouncedQuery);
-  }, [index, debouncedQuery]);
-
-  const grouped = useMemo(
-    () => ({
-      Subjects: ranked.subjects.map((subject) => ({
-        key: `subject:${subject.code}`,
-        label: subject.code,
-        subtitle: `${subject.popularity} sections indexed`,
-        to: `/subject/${subject.code}`,
-        section: "Subjects" as const,
-      })),
-      Courses: ranked.courses.map((course) => ({
-        key: `course:${course.code}`,
-        label: course.code,
-        subtitle: course.title,
-        to: `/course/${course.code}`,
-        section: "Courses" as const,
-      })),
-      Professors: ranked.professors.map((professor) => ({
-        key: `professor:${professor.id}`,
-        label: professor.name,
-        subtitle: `${professor.popularity} students`,
-        to: `/professor/${professor.id}`,
-        section: "Professors" as const,
-      })),
-    }),
-    [ranked],
-  );
-
-  const flattened: SearchItem[] = [...grouped.Subjects, ...grouped.Courses, ...grouped.Professors];
+  const ranked = useRankedSearch(query);
+  const { grouped, flattened } = useMemo(() => buildSearchItems(ranked), [ranked]);
   const hasQuery = query.trim().length > 0;
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [query]);
 
   function focusResult(indexValue: number) {
     const target = resultRefs.current[indexValue];
@@ -151,7 +96,6 @@ export function HomePage() {
                 }
                 if (event.key === "Escape") {
                   setQuery("");
-                  setDebouncedQuery("");
                   setActiveIndex(0);
                 }
               }}
@@ -186,7 +130,7 @@ export function HomePage() {
         </section>
 
         {hasQuery ? (
-          <section className="fade-in-up mx-auto mt-8 w-full max-w-2xl space-y-3 text-left" style={{ animationDelay: "320ms" }}>
+          <section className="mx-auto mt-8 w-full max-w-2xl space-y-3 text-left">
             {flattened.length === 0 ? (
               <p className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-600">No matches found.</p>
             ) : null}
@@ -206,7 +150,7 @@ export function HomePage() {
                         ref={(element) => {
                           resultRefs.current[indexValue] = element;
                         }}
-                        className={`block rounded-xl border px-4 py-3 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#86ac67] ${
+                        className={`block rounded-xl border px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#86ac67] ${
                           activeIndex === indexValue
                             ? "border-[#86ac67] bg-[#effadf]"
                             : "border-slate-200 bg-white hover:bg-[#f9fbf5]"
@@ -240,14 +184,16 @@ export function HomePage() {
                           if (event.key === "Escape") {
                             event.preventDefault();
                             setQuery("");
-                            setDebouncedQuery("");
                             setActiveIndex(0);
                             inputRef.current?.focus();
                           }
                         }}
                       >
-                        <p className="text-base font-semibold text-[var(--duck-fg)]">{item.label}</p>
-                        <p className="text-sm text-slate-500">{item.subtitle}</p>
+                        <p className="text-sm text-[var(--duck-fg)]">
+                          <span className="font-semibold">{item.label}</span>
+                          <span className="px-2 text-slate-300">-</span>
+                          <span className="text-slate-500">{item.subtitle}</span>
+                        </p>
                       </Link>
                     );
                   })}

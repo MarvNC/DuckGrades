@@ -1,15 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getSearchIndex, prefetchRouteData } from "../../lib/dataClient";
-import { searchIndex } from "../../lib/search";
-
-type SearchItem = {
-  key: string;
-  label: string;
-  subtitle: string;
-  to: string;
-  section: "Subjects" | "Courses" | "Professors";
-};
+import { prefetchRouteData } from "../../lib/dataClient";
+import { buildSearchItems, useRankedSearch } from "./searchModel";
 
 export function GlobalSearch() {
   const navigate = useNavigate();
@@ -17,14 +9,7 @@ export function GlobalSearch() {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const [open, setOpen] = useState(false);
-  const [index, setIndex] = useState<Awaited<ReturnType<typeof getSearchIndex>> | null>(null);
-
-  useEffect(() => {
-    if (index) {
-      return;
-    }
-    void getSearchIndex().then(setIndex).catch(() => setIndex({ subjects: [], courses: [], professors: [] }));
-  }, [index]);
+  const ranked = useRankedSearch(query);
 
   useEffect(() => {
     function onPointerDown(event: MouseEvent) {
@@ -37,36 +22,7 @@ export function GlobalSearch() {
     return () => window.removeEventListener("mousedown", onPointerDown);
   }, []);
 
-  const ranked = useMemo(() => {
-    if (!index) {
-      return { subjects: [], courses: [], professors: [] };
-    }
-    return searchIndex(index, query);
-  }, [index, query]);
-
-  const items: SearchItem[] = [
-    ...ranked.subjects.slice(0, 3).map((subject) => ({
-      key: `s-${subject.code}`,
-      label: subject.code,
-      subtitle: `${subject.popularity} sections`,
-      to: `/subject/${subject.code}`,
-      section: "Subjects" as const,
-    })),
-    ...ranked.courses.slice(0, 3).map((course) => ({
-      key: `c-${course.code}`,
-      label: course.code,
-      subtitle: course.title,
-      to: `/course/${course.code}`,
-      section: "Courses" as const,
-    })),
-    ...ranked.professors.slice(0, 3).map((professor) => ({
-      key: `p-${professor.id}`,
-      label: professor.name,
-      subtitle: `${professor.popularity} students`,
-      to: `/professor/${professor.id}`,
-      section: "Professors" as const,
-    })),
-  ];
+  const { flattened: items } = buildSearchItems(ranked, { subjects: 3, courses: 3, professors: 3 });
 
   return (
     <div ref={rootRef} className="group relative w-full max-w-md">
