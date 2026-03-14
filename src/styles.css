@@ -92,6 +92,18 @@ summary:focus-visible {
   color: #4f6e3d;
 }
 
+.brand-home .brand-duck,
+.brand-home .brand-grades {
+  font-size: 3rem;
+}
+
+@media (min-width: 768px) {
+  .brand-home .brand-duck,
+  .brand-home .brand-grades {
+    font-size: 3.35rem;
+  }
+}
+
 .pill-button {
   display: inline-flex;
   align-items: center;

@@ -93,6 +93,7 @@ Last updated: 2026-03-14
 - [x] Re-ran `bun run check` and `bun run build` after homepage logo weight/tracking and search-shadow refinement on 2026-03-14.
 - [x] Re-ran `bun run check` after tightening homepage subtitle-to-search spacing on 2026-03-14.
 - [x] Re-ran `bun run check` after increasing homepage logo scale on 2026-03-14.
+- [x] Re-ran `bun run check` after fixing homepage logo size consistency across viewport widths on 2026-03-14.
 
 ## Recent Commits
 

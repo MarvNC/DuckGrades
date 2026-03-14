@@ -86,7 +86,7 @@ export function HomePage() {
 
       <main className="relative z-10 w-full max-w-4xl">
         <section className="fade-in-up" style={{ animationDelay: "80ms" }}>
-          <Link to="/" className="brand justify-center">
+          <Link to="/" className="brand brand-home justify-center">
             <span className="brand-duck">Duck</span>
             <span className="brand-grades">Grades</span>
           </Link>
