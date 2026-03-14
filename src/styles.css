@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+:root {
+  --duck-bg: #f5f9ef;
+  --duck-fg: #182116;
+  --duck-primary: #b9e48c;
+  --duck-accent: #ffec8f;
+  --duck-muted: #5f6f5d;
+  --duck-border: #d4e2ca;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  font-family: "Sora", ui-sans-serif, system-ui, sans-serif;
+  color: var(--duck-fg);
+  background: radial-gradient(circle at 18% -12%, #e8f8cf 0%, transparent 45%),
+    radial-gradient(circle at 90% 15%, #fff4c7 0%, transparent 40%), var(--duck-bg);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.shell-bg {
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.5), transparent 240px);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.1rem;
+  text-decoration: none;
+  line-height: 1;
+}
+
+.brand-duck {
+  font-size: clamp(1.7rem, 3vw, 2.3rem);
+  font-weight: 800;
+  color: #1d2b16;
+}
+
+.brand-grades {
+  font-size: clamp(1.2rem, 2vw, 1.5rem);
+  font-weight: 700;
+  color: #51763d;
+}
+
+.hero-card {
+  position: relative;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.7));
+}
+
+.hero-glow {
+  position: absolute;
+  top: -90px;
+  right: -80px;
+  height: 240px;
+  width: 240px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(185, 228, 140, 0.8) 0%, rgba(185, 228, 140, 0) 72%);
+  pointer-events: none;
+}
+
+.pill-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid #9dc87b;
+  background: #c9eca8;
+  padding: 0.6rem 1rem;
+  text-decoration: none;
+  color: #172113;
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.pill-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px -12px #6e994d;
+}
+
+.pill-button-secondary {
+  border-color: #d7be58;
+  background: var(--duck-accent);
+}
