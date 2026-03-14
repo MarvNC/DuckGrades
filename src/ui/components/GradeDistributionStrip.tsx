@@ -109,10 +109,10 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
         <p className={`${size === "sm" ? "text-[9px]" : "text-[10px]"} max-w-[13rem] truncate text-right font-semibold text-slate-600 sm:max-w-[14rem]`}>{activeText}</p>
       </div>
 
-      <div className={`mt-1 flex items-end ${size === "sm" ? "gap-0.5" : "gap-1"}`}>
+      <div className="mt-1 flex items-end gap-0">
         <div className="shrink-0">
           <div
-            className={`grid items-end border-r border-dashed border-[var(--duck-border)] ${size === "sm" ? "pr-0.5" : "pr-1"}`}
+            className={`grid items-end border-r border-dashed border-[var(--duck-border)] ${size === "sm" ? "pr-1" : "pr-1.5"}`}
             style={{
               height: leftBarHeight,
               gridTemplateColumns: `repeat(${LEFT_BUCKET_ORDER.length}, ${barWidth}px)`,
@@ -160,7 +160,7 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
           </div>
         </div>
 
-        <div className="inline-block">
+        <div className={`${size === "sm" ? "pl-1" : "pl-1.5"} inline-block`}>
           <div
             className="grid items-end border-b border-[var(--duck-border)] pb-0.5"
             style={{
