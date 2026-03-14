@@ -57,8 +57,9 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
 
   const xStart = 0;
   const xEnd = 112;
-  const baseY = size === "sm" ? 34 : 40;
-  const graphHeight = size === "sm" ? 18 : 24;
+  const viewBoxHeight = size === "sm" ? 22 : 24;
+  const baseY = size === "sm" ? 20 : 22;
+  const graphHeight = size === "sm" ? 10 : 12;
   const xStep = (xEnd - xStart) / (NUMERICAL_GRADE_ORDER.length - 1);
   const maxNumerical = Math.max(1, ...numericalValues);
 
@@ -168,7 +169,7 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
 
         <div className={`${chartWidthClass} inline-block max-w-full`}>
           <svg
-            viewBox="0 0 112 42"
+            viewBox={`0 0 112 ${viewBoxHeight}`}
             className={`${size === "sm" ? "h-10" : "h-12"} w-full`}
             role="img"
             aria-label="Combined numerical and non-numerical grade distribution"
