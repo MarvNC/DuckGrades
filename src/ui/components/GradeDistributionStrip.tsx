@@ -50,7 +50,7 @@ export function GradeDistributionStrip({ aggregate, size = "md" }: GradeDistribu
   const nonNumericalValues = NON_NUMERICAL_GRADE_ORDER.map((grade) => aggregate?.nonNumericalCounts?.[grade] ?? 0);
   const visibleTotal = aggregate?.totalVisibleNonW ?? 0;
   const reportedTotal = aggregate?.totalNonWReported ?? 0;
-  const displayedTotal = visibleTotal > 0 ? visibleTotal : reportedTotal;
+  const displayedTotal = reportedTotal > 0 ? reportedTotal : visibleTotal;
   const withdrawals = aggregate?.withdrawals ?? 0;
   const allWithWithdrawals = displayedTotal + withdrawals;
 
@@ -64,7 +64,7 @@ export function GradeDistributionStrip({ aggregate, size = "md" }: GradeDistribu
   const points: Point[] = useMemo(() => {
     return numericalValues.map((count, index) => {
       const ratio = count / maxNumerical;
-      const scaled = count > 0 ? Math.max(ratio, 0.06) : 0;
+      const scaled = count > 0 ? 0.18 + 0.82 * Math.pow(ratio, 0.7) : 0;
       return {
         x: xStart + index * xStep,
         y: baseY - scaled * graphHeight,
@@ -112,7 +112,7 @@ export function GradeDistributionStrip({ aggregate, size = "md" }: GradeDistribu
 
   const leftMax = Math.max(1, ...LEFT_BUCKET_ORDER.map((code) => leftCounts[code] ?? 0));
   const leftMaxHeight = size === "sm" ? 14 : 18;
-  const chartWidthClass = size === "sm" ? "w-[16.5rem] sm:w-[18.5rem]" : "w-[22rem] sm:w-[24rem]";
+  const chartWidthClass = size === "sm" ? "w-[15rem] sm:w-[17rem] lg:w-[19rem]" : "w-[18rem] sm:w-[21rem] lg:w-[24rem]";
   const leftBarWidthClass = size === "sm" ? "w-3" : "w-3.5";
 
   const numericalTextSummary = NUMERICAL_GRADE_ORDER.map((_, index) => getNumericalDetails(index)).join(", ");
@@ -163,7 +163,7 @@ export function GradeDistributionStrip({ aggregate, size = "md" }: GradeDistribu
           })}
         </div>
 
-        <div className={chartWidthClass}>
+        <div className={`${chartWidthClass} max-w-full`}>
           <svg
             viewBox="0 0 112 42"
             className={`${size === "sm" ? "h-10" : "h-12"} w-full`}
