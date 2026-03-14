@@ -1,6 +1,6 @@
-import { useId, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Aggregate } from "../../lib/dataClient";
-import { NON_NUMERICAL_GRADE_ORDER, NUMERICAL_GRADE_ORDER, formatGradeCode, formatGradeDetailCode } from "../../lib/grades";
+import { NON_NUMERICAL_GRADE_ORDER, NUMERICAL_GRADE_ORDER, formatGradeDetailCode } from "../../lib/grades";
 
 type GradeDistributionStripProps = {
   aggregate: Aggregate | null | undefined;
@@ -8,7 +8,6 @@ type GradeDistributionStripProps = {
   showStudentCount?: boolean;
 };
 
-type Point = { x: number; y: number };
 type LeftBucketCode = (typeof NON_NUMERICAL_GRADE_ORDER)[number] | "W";
 type ActiveDatum =
   | {
@@ -37,7 +36,6 @@ function getPercent(count: number, total: number): number {
 }
 
 export function GradeDistributionStrip({ aggregate, size = "md", showStudentCount = true }: GradeDistributionStripProps) {
-  const gradientId = useId().replace(/:/g, "");
   const [activeDatum, setActiveDatum] = useState<ActiveDatum>(null);
 
   const numericalValues = NUMERICAL_GRADE_ORDER.map((grade) => aggregate?.numericalCounts?.[grade] ?? 0);
@@ -48,24 +46,14 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
   const withdrawals = aggregate?.withdrawals ?? 0;
   const allWithWithdrawals = displayedTotal + withdrawals;
 
-  const xStart = 0;
-  const xEnd = 112;
-  const viewBoxHeight = size === "sm" ? 22 : 24;
-  const baseY = size === "sm" ? 20 : 22;
-  const graphHeight = size === "sm" ? 10 : 12;
-  const xStep = (xEnd - xStart) / (NUMERICAL_GRADE_ORDER.length - 1);
-  const maxNumerical = Math.max(1, ...numericalValues);
-
-  const points: Point[] = useMemo(() => {
-    return numericalValues.map((count, index) => {
-      const ratio = count / maxNumerical;
-      const scaled = count > 0 ? 0.24 + 0.76 * Math.pow(ratio, 0.72) : 0;
-      return {
-        x: xStart + index * xStep,
-        y: baseY - scaled * graphHeight,
-      };
-    });
-  }, [baseY, graphHeight, maxNumerical, numericalValues, xStart, xStep]);
+  const numericalMax = Math.max(1, ...numericalValues);
+  const leftCounts: Record<LeftBucketCode, number> = {
+    P: nonNumericalValues[0] ?? 0,
+    N: nonNumericalValues[1] ?? 0,
+    OTHER: nonNumericalValues[2] ?? 0,
+    W: withdrawals,
+  };
+  const leftMax = Math.max(1, ...LEFT_BUCKET_ORDER.map((code) => leftCounts[code] ?? 0));
 
   const defaultNumericalIndex = useMemo(() => {
     let maxCount = -1;
@@ -83,15 +71,17 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
     const grade = NUMERICAL_GRADE_ORDER[index] ?? NUMERICAL_GRADE_ORDER[0];
     const count = numericalValues[index] ?? 0;
     const percent = getPercent(count, displayedTotal);
-    return `${formatGradeCode(grade)}: ${count.toLocaleString()} (${percent.toFixed(1)}%)`;
+    const displayGrade = grade
+      .replace("AP", "A+")
+      .replace("AM", "A-")
+      .replace("BP", "B+")
+      .replace("BM", "B-")
+      .replace("CP", "C+")
+      .replace("CM", "C-")
+      .replace("DP", "D+")
+      .replace("DM", "D-");
+    return `${displayGrade}: ${count.toLocaleString()} (${percent.toFixed(1)}%)`;
   }
-
-  const leftCounts: Record<LeftBucketCode, number> = {
-    P: nonNumericalValues[0] ?? 0,
-    N: nonNumericalValues[1] ?? 0,
-    OTHER: nonNumericalValues[2] ?? 0,
-    W: withdrawals,
-  };
 
   function getLeftBucketDetails(code: LeftBucketCode): string {
     const count = leftCounts[code] ?? 0;
@@ -100,24 +90,14 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
   }
 
   const resolvedActive = activeDatum ?? { kind: "numerical" as const, index: defaultNumericalIndex };
-  const isNumericalActive = resolvedActive.kind === "numerical";
-  const activeNumericalIndex = isNumericalActive ? resolvedActive.index : defaultNumericalIndex;
-  const activePoint = points[activeNumericalIndex] ?? { x: xStart, y: baseY };
   const activeText = resolvedActive.kind === "left" ? getLeftBucketDetails(resolvedActive.code) : getNumericalDetails(resolvedActive.index);
 
-  const leftMax = Math.max(1, ...LEFT_BUCKET_ORDER.map((code) => leftCounts[code] ?? 0));
-  const leftMaxHeight = size === "sm" ? 14 : 18;
+  const numericalBarHeight = size === "sm" ? 20 : 24;
+  const leftBarHeight = size === "sm" ? 14 : 18;
   const chartWidthClass = size === "sm" ? "w-[11.5rem] sm:w-[12.5rem] lg:w-[13.5rem]" : "w-[14rem] sm:w-[15.5rem] lg:w-[16.5rem]";
-  const leftBarWidthClass = size === "sm" ? "w-2" : "w-2.5";
-
-  const numericalTextSummary = NUMERICAL_GRADE_ORDER.map((_, index) => getNumericalDetails(index)).join(", ");
-  const nonNumericalTextSummary = LEFT_BUCKET_ORDER.map((code) => getLeftBucketDetails(code)).join(", ");
 
   return (
-    <div
-      className={`inline-flex w-fit max-w-full flex-col ${size === "sm" ? "p-0" : "p-0"}`}
-      onMouseLeave={() => setActiveDatum(null)}
-    >
+    <div className="inline-flex w-fit max-w-full flex-col" onMouseLeave={() => setActiveDatum(null)}>
       <div className={`flex items-center gap-2 ${showStudentCount ? "justify-between" : "justify-end"}`}>
         {showStudentCount ? (
           <p className={`rounded-md bg-white/95 px-2 py-0.5 font-semibold uppercase tracking-[0.09em] text-slate-700 ${size === "sm" ? "text-[9px]" : "text-[10px]"}`}>
@@ -127,102 +107,95 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
         <p className={`${size === "sm" ? "text-[9px]" : "text-[10px]"} max-w-[13rem] truncate text-right font-semibold text-slate-600 sm:max-w-[14rem]`}>{activeText}</p>
       </div>
 
-      <div className={`mt-1 flex items-end ${size === "sm" ? "gap-0" : "gap-0.5"}`}>
-        <div
-          className={`grid shrink-0 grid-cols-4 items-end border-r border-dashed border-[var(--duck-border)] ${
-            size === "sm" ? "w-[2.9rem] gap-0.5 pr-0.5" : "w-[3.8rem] gap-0.5 pr-1"
-          }`}
-        >
-          {LEFT_BUCKET_ORDER.map((code) => {
-            const count = leftCounts[code] ?? 0;
-            const height = Math.max(2, Math.round((count / leftMax) * leftMaxHeight));
-            const isSelected = resolvedActive.kind === "left" && resolvedActive.code === code;
-            return (
-              <button
-                key={code}
-                type="button"
-                className={`flex ${leftBarWidthClass} items-end rounded-sm`}
-                onMouseEnter={() => setActiveDatum({ kind: "left", code })}
-                onFocus={() => setActiveDatum({ kind: "left", code })}
-                onBlur={() => setActiveDatum(null)}
-                onTouchStart={() => setActiveDatum({ kind: "left", code })}
-                aria-label={getLeftBucketDetails(code)}
-              >
-                <span
-                  className="block w-full rounded-[3px] transition-opacity"
-                  style={{
-                    backgroundColor: LEFT_BUCKET_COLORS[code],
-                    height,
-                    opacity: isSelected ? 1 : count > 0 ? 0.82 : 0.35,
-                  }}
-                />
-              </button>
-            );
-          })}
+      <div className={`mt-1 flex items-end ${size === "sm" ? "gap-0.5" : "gap-1"}`}>
+        <div className="shrink-0">
+          <div
+            className={`grid grid-cols-4 items-end border-r border-dashed border-[var(--duck-border)] ${
+              size === "sm" ? "w-[2.9rem] gap-0.5 pr-0.5" : "w-[3.8rem] gap-0.5 pr-1"
+            }`}
+            style={{ height: leftBarHeight }}
+          >
+            {LEFT_BUCKET_ORDER.map((code) => {
+              const count = leftCounts[code] ?? 0;
+              const height = Math.max(2, Math.round((count / leftMax) * leftBarHeight));
+              const isSelected = resolvedActive.kind === "left" && resolvedActive.code === code;
+              return (
+                <button
+                  key={code}
+                  type="button"
+                  className="flex h-full items-end rounded-sm"
+                  onMouseEnter={() => setActiveDatum({ kind: "left", code })}
+                  onFocus={() => setActiveDatum({ kind: "left", code })}
+                  onBlur={() => setActiveDatum(null)}
+                  onTouchStart={() => setActiveDatum({ kind: "left", code })}
+                  aria-label={getLeftBucketDetails(code)}
+                >
+                  <span
+                    className="block w-full rounded-[3px]"
+                    style={{
+                      backgroundColor: LEFT_BUCKET_COLORS[code],
+                      height,
+                      opacity: isSelected ? 1 : count > 0 ? 0.82 : 0.35,
+                    }}
+                  />
+                </button>
+              );
+            })}
+          </div>
+          <div className={`${size === "sm" ? "text-[7px]" : "text-[8px]"} mt-0.5 grid grid-cols-4 font-semibold uppercase tracking-[0.06em] text-slate-500`}>
+            <span className="text-center">P</span>
+            <span className="text-center">NP</span>
+            <span className="text-center">O</span>
+            <span className="text-center">W</span>
+          </div>
         </div>
 
-        <div className={`${chartWidthClass} inline-block max-w-full`}>
-          <svg
-            viewBox={`0 0 112 ${viewBoxHeight}`}
-            className={`${size === "sm" ? "h-10" : "h-12"} w-full`}
-            role="img"
-            aria-label="Combined numerical and non-numerical grade distribution"
+        <div className={chartWidthClass}>
+          <div
+            className={`flex items-end gap-0.5 border-b border-[var(--duck-border)] pb-0.5 ${
+              size === "sm" ? "h-[1.5rem]" : "h-[1.9rem]"
+            }`}
+            style={{ height: numericalBarHeight }}
           >
-            <defs>
-              <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#ef9a84" />
-                <stop offset="35%" stopColor="#f2c487" />
-                <stop offset="65%" stopColor="#d7e48a" />
-                <stop offset="100%" stopColor="#9fdc84" />
-              </linearGradient>
-            </defs>
+            {NUMERICAL_GRADE_ORDER.map((grade, index) => {
+              const count = numericalValues[index] ?? 0;
+              const ratio = count / numericalMax;
+              const height = count > 0 ? Math.max(2, Math.round((0.16 + 0.84 * Math.pow(ratio, 0.72)) * numericalBarHeight)) : 0;
+              const hue = 10 + (index / (NUMERICAL_GRADE_ORDER.length - 1)) * 128;
+              const isSelected = resolvedActive.kind === "numerical" && resolvedActive.index === index;
 
-            {points.slice(0, -1).map((point, index) => {
-              const next = points[index + 1];
-              const hue = 10 + (index / (NUMERICAL_GRADE_ORDER.length - 2)) * 128;
               return (
-                <polygon
-                  key={`${NUMERICAL_GRADE_ORDER[index]}-${NUMERICAL_GRADE_ORDER[index + 1]}`}
-                  points={`${point.x},${baseY} ${point.x},${point.y} ${next.x},${next.y} ${next.x},${baseY}`}
-                  fill={`hsl(${hue} 62% 58%)`}
-                  fillOpacity="0.92"
-                />
-              );
-            })}
-
-            <line x1={xStart} y1={baseY} x2={xEnd} y2={baseY} stroke="#6f8270" strokeWidth="0.8" />
-
-            {isNumericalActive ? (
-              <>
-                <line x1={activePoint.x} y1={baseY - graphHeight - 1} x2={activePoint.x} y2={baseY} stroke="#1f2b1a" strokeOpacity="0.45" strokeDasharray="2 2" />
-                <circle cx={activePoint.x} cy={activePoint.y} r="1.8" fill="#1f2b1a" />
-              </>
-            ) : null}
-
-            {NUMERICAL_GRADE_ORDER.map((_, index) => {
-              const left = xStart + Math.max(0, index - 0.5) * xStep;
-              const width = index === 0 || index === NUMERICAL_GRADE_ORDER.length - 1 ? xStep / 2 : xStep;
-              return (
-                <rect
-                  key={`hitbox-${index}`}
-                  x={left}
-                  y={baseY - graphHeight - 2}
-                  width={width}
-                  height={graphHeight + 4}
-                  fill="transparent"
+                <button
+                  key={grade}
+                  type="button"
+                  className="flex h-full min-w-0 flex-1 items-end"
                   onMouseEnter={() => setActiveDatum({ kind: "numerical", index })}
+                  onFocus={() => setActiveDatum({ kind: "numerical", index })}
+                  onBlur={() => setActiveDatum(null)}
                   onTouchStart={() => setActiveDatum({ kind: "numerical", index })}
+                  aria-label={getNumericalDetails(index)}
                 >
-                  <title>{getNumericalDetails(index)}</title>
-                </rect>
+                  <span
+                    className="block w-full rounded-[2px]"
+                    style={{
+                      height,
+                      backgroundColor: `hsl(${hue} 62% 58%)`,
+                      opacity: isSelected ? 1 : 0.9,
+                    }}
+                  />
+                </button>
               );
             })}
-          </svg>
+          </div>
+          <div className={`${size === "sm" ? "text-[7px]" : "text-[8px]"} mt-0.5 grid grid-cols-5 font-semibold uppercase tracking-[0.06em] text-slate-500`}>
+            <span className="text-left">F</span>
+            <span className="text-center">D</span>
+            <span className="text-center">C</span>
+            <span className="text-center">B</span>
+            <span className="text-right">A</span>
+          </div>
         </div>
       </div>
-
-      <p className="sr-only">Numerical distribution values: {numericalTextSummary}.</p>
-      <p className="sr-only">Non numerical distribution values: {nonNumericalTextSummary}.</p>
     </div>
   );
 }

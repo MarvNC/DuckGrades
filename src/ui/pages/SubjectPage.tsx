@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getCourseShard, getSubjectShard, type SubjectShard } from "../../lib/dataClient";
-import { formatGradeCode, formatGradeStat } from "../../lib/grades";
 import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
-import { GradeDistributionStrip } from "../components/GradeDistributionStrip";
+import { EntityAggregateCard } from "../components/EntityAggregateCard";
 
 export function SubjectPage() {
   const { code } = useParams();
@@ -136,30 +135,16 @@ export function SubjectPage() {
             <Link
               key={course.courseCode}
               to={`/course/${course.courseCode}`}
-              className="block rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              className="block transition hover:-translate-y-0.5"
             >
-              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                <div className="min-w-0 sm:flex-1">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <p className="text-lg font-bold tracking-tight text-[var(--duck-fg)]">{course.courseCode}</p>
-                      <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5">{course.sectionCount} sections</span>
-                      <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5">{course.aggregate.totalNonWReported.toLocaleString()} students</span>
-                    </div>
-                    <p className="mt-1 truncate text-sm text-slate-600">{course.title}</p>
-                  </div>
-
-                  <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-semibold text-slate-600">
-                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5">Mean {formatGradeStat(course.aggregate.mean)}</span>
-                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5">Median {formatGradeStat(course.aggregate.median)}</span>
-                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5">Mode {formatGradeCode(course.aggregate.mode)}</span>
-                  </div>
-                </div>
-
-                <div className="flex w-full justify-end sm:w-auto sm:pl-2">
-                  <GradeDistributionStrip aggregate={course.aggregate} size="sm" showStudentCount={false} />
-                </div>
-              </div>
+              <EntityAggregateCard
+                title={course.courseCode}
+                subtitle={course.title}
+                aggregate={course.aggregate}
+                inlineMetaChips={[`${course.sectionCount} sections`, `${course.aggregate.totalNonWReported.toLocaleString()} students`]}
+                distributionSize="sm"
+                showStudentCountInDistribution={false}
+              />
             </Link>
           ))}
         </div>
