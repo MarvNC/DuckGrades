@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { getSubjectShard, type SubjectShard } from "../../lib/dataClient";
 import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
 
 export function SubjectPage() {
+  const listRef = useRef<HTMLDivElement | null>(null);
   const { code } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const [subject, setSubject] = useState<SubjectShard | null>(null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(560);
 
   const sort = searchParams.get("sort") ?? "code";
   const direction = searchParams.get("dir") ?? "asc";
@@ -30,33 +33,54 @@ export function SubjectPage() {
       });
   }, [code]);
 
-  const filteredCourses = (subject?.courses ?? []).filter((course) => {
-    const yearMatch = year === "all" ? true : String(course.yearBucket) === year;
-    const termMatch = term === "all" ? true : course.terms.includes(term as "fall" | "winter" | "spring" | "summer");
-    return yearMatch && termMatch;
-  });
-
-  const sortedCourses = [...filteredCourses].sort((a, b) => {
-    if (sort === "average") {
-      const diff = (a.aggregate.mean ?? -1) - (b.aggregate.mean ?? -1);
-      return direction === "asc" ? diff : -diff;
+  useEffect(() => {
+    const element = listRef.current;
+    if (!element) {
+      return;
     }
-    if (sort === "mode") {
-      const diff = (a.aggregate.mode ?? "").localeCompare(b.aggregate.mode ?? "");
-      return direction === "asc" ? diff : -diff;
-    }
-    const diff = a.courseCode.localeCompare(b.courseCode);
-    return direction === "asc" ? diff : -diff;
-  });
+    const update = () => setViewportHeight(element.clientHeight);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
 
-  const topCourses = sortedCourses.slice(0, 24);
+  const sortedCourses = useMemo(() => {
+    const filteredCourses = (subject?.courses ?? []).filter((course) => {
+      const yearMatch = year === "all" ? true : String(course.yearBucket) === year;
+      const termMatch = term === "all" ? true : course.terms.includes(term as "fall" | "winter" | "spring" | "summer");
+      return yearMatch && termMatch;
+    });
+
+    return [...filteredCourses].sort((a, b) => {
+      if (sort === "average") {
+        const diff = (a.aggregate.mean ?? -1) - (b.aggregate.mean ?? -1);
+        return direction === "asc" ? diff : -diff;
+      }
+      if (sort === "mode") {
+        const diff = (a.aggregate.mode ?? "").localeCompare(b.aggregate.mode ?? "");
+        return direction === "asc" ? diff : -diff;
+      }
+      const diff = a.courseCode.localeCompare(b.courseCode);
+      return direction === "asc" ? diff : -diff;
+    });
+  }, [subject?.courses, year, term, sort, direction]);
+
+  const itemHeight = 134;
+  const overscan = 7;
+  const visibleCount = Math.max(1, Math.ceil(viewportHeight / itemHeight));
+  const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
+  const endIndex = Math.min(sortedCourses.length, startIndex + visibleCount + overscan * 2);
+  const visibleCourses = sortedCourses.slice(startIndex, endIndex);
+  const topSpacerHeight = startIndex * itemHeight;
+  const bottomSpacerHeight = Math.max(0, (sortedCourses.length - endIndex) * itemHeight);
 
   return (
     <section className="space-y-5 rounded-3xl border border-[var(--duck-border)] bg-white/80 p-8 shadow-sm">
       <h1 className="text-3xl font-extrabold">{(code ?? "SUBJ").toUpperCase()} Subject</h1>
       <AggregateSummaryCard label="Subject aggregate" aggregate={subject?.aggregate} />
+      {loadState === "loading" ? <p className="text-sm text-[var(--duck-muted)]">Loading subject data...</p> : null}
       {loadState === "error" ? <p className="text-sm text-amber-700">Unable to load this subject shard right now.</p> : null}
-      {loadState === "ready" && topCourses.length === 0 ? <p className="text-sm text-[var(--duck-muted)]">No visible course data for this subject.</p> : null}
+      {loadState === "ready" && sortedCourses.length === 0 ? <p className="text-sm text-[var(--duck-muted)]">No visible course data for this subject.</p> : null}
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--duck-border)] bg-white p-3">
         <label className="text-sm font-semibold text-[var(--duck-muted)]" htmlFor="sort-select">
           Sort
@@ -130,27 +154,53 @@ export function SubjectPage() {
           className="rounded-lg border border-[var(--duck-border)] px-3 py-1 text-sm font-semibold"
           onClick={() => {
             setSearchParams(new URLSearchParams());
+            setScrollTop(0);
+            listRef.current?.scrollTo({ top: 0, behavior: "smooth" });
           }}
         >
           Reset
         </button>
+        <span className="ml-auto text-xs font-semibold uppercase tracking-[0.1em] text-[var(--duck-muted)]">
+          {sortedCourses.length} courses
+        </span>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {topCourses.map((course) => (
-          <Link
-            key={course.courseCode}
-            to={`/course/${course.courseCode}`}
-            className="rounded-2xl border border-[var(--duck-border)] bg-white p-4 transition hover:shadow-sm"
-          >
-            <p className="text-sm font-semibold text-[var(--duck-muted)]">{course.number}</p>
-            <p className="text-lg font-bold">{course.courseCode}</p>
-            <p className="mt-1 text-sm text-[var(--duck-muted)]">{course.title}</p>
-            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--duck-muted)]">
-              Mean {course.aggregate.mean?.toFixed(2) ?? "N/A"} · Mode {course.aggregate.mode ?? "N/A"}
-            </p>
-          </Link>
-        ))}
+      <div
+        ref={listRef}
+        className="relative max-h-[68vh] overflow-auto rounded-2xl border border-[var(--duck-border)] bg-[#f7faf2] p-3"
+        onScroll={(event) => {
+          setScrollTop(event.currentTarget.scrollTop);
+        }}
+      >
+        <div style={{ height: topSpacerHeight }} />
+        <div className="space-y-3">
+          {visibleCourses.map((course) => (
+            <Link
+              key={course.courseCode}
+              to={`/course/${course.courseCode}`}
+              className="block rounded-2xl border border-[var(--duck-border)] bg-white p-4 transition hover:shadow-sm"
+            >
+              <p className="text-sm font-semibold text-[var(--duck-muted)]">{course.number}</p>
+              <p className="text-lg font-bold">{course.courseCode}</p>
+              <p className="mt-1 text-sm text-[var(--duck-muted)]">{course.title}</p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--duck-muted)]">
+                Mean {course.aggregate.mean?.toFixed(2) ?? "N/A"} · Mode {course.aggregate.mode ?? "N/A"}
+              </p>
+            </Link>
+          ))}
+        </div>
+        <div style={{ height: bottomSpacerHeight }} />
       </div>
+      {scrollTop > 720 ? (
+        <button
+          type="button"
+          className="fixed bottom-6 right-5 rounded-full border border-[var(--duck-border)] bg-white px-4 py-2 text-sm font-bold shadow-md"
+          onClick={() => {
+            listRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        >
+          Back to top
+        </button>
+      ) : null}
     </section>
   );
 }
