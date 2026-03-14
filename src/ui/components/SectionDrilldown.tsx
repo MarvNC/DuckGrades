@@ -66,6 +66,7 @@ export function SectionDrilldown({ sections, summaryLabel = "Section details", i
           const coverage = section.totalNonWReported > 0 ? (visible / section.totalNonWReported) * 100 : 0;
           const sectionAggregate = buildSectionAggregate(section);
           const hasHiddenBuckets = section.totalNonWReported > visible;
+          const withdrawals = section.counts.W ?? 0;
 
           return (
             <article key={`${identityPrefix}-${section.crn}`} className="rounded-xl border border-slate-200 bg-white/95 px-3 py-2.5">
@@ -78,12 +79,12 @@ export function SectionDrilldown({ sections, summaryLabel = "Section details", i
                     <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5 text-[10px] font-semibold text-slate-700">
                       {section.totalNonWReported} students
                     </span>
-                    <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5 text-[10px] font-semibold text-slate-700">
-                      {visible} visible ({coverage.toFixed(1)}%)
-                    </span>
                   </div>
 
-                  {hasHiddenBuckets ? <p className="mt-1 text-[11px] text-slate-500">Some grade buckets are redacted for this section in source data.</p> : null}
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    {hasHiddenBuckets ? `Visible grade buckets: ${visible}/${section.totalNonWReported} (${coverage.toFixed(1)}%).` : "Visible grade buckets: 100%."}
+                    {withdrawals > 0 ? ` W: ${withdrawals}.` : ""}
+                  </p>
                 </div>
 
                 <div className="flex justify-end sm:pl-2">
