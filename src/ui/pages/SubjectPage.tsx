@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getSubjectShard, type SubjectShard } from "../../lib/dataClient";
+import { getCourseShard, getSubjectShard, type SubjectShard } from "../../lib/dataClient";
 import { formatGradeCode, formatGradeStat } from "../../lib/grades";
 import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
 import { GradeDistributionStrip } from "../components/GradeDistributionStrip";
@@ -10,6 +10,7 @@ export function SubjectPage() {
   const [subject, setSubject] = useState<SubjectShard | null>(null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [courseQuery, setCourseQuery] = useState("");
+  const [professorCount, setProfessorCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (!code) {
@@ -31,6 +32,43 @@ export function SubjectPage() {
     return [...(subject?.courses ?? [])].sort((a, b) => a.courseCode.localeCompare(b.courseCode));
   }, [subject?.courses]);
 
+  const sectionCount = useMemo(() => {
+    return courses.reduce((sum, course) => sum + course.sectionCount, 0);
+  }, [courses]);
+
+  useEffect(() => {
+    if (!subject || courses.length === 0) {
+      setProfessorCount(0);
+      return;
+    }
+
+    let cancelled = false;
+    setProfessorCount(null);
+
+    void Promise.all(
+      courses.map((course) =>
+        getCourseShard(course.courseCode)
+          .then((courseShard) => courseShard.instructors.map((instructor) => instructor.professorId))
+          .catch(() => []),
+      ),
+    ).then((professorGroups) => {
+      if (cancelled) {
+        return;
+      }
+      const unique = new Set<string>();
+      for (const group of professorGroups) {
+        for (const professorId of group) {
+          unique.add(professorId);
+        }
+      }
+      setProfessorCount(unique.size);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [courses, subject]);
+
   const filteredCourses = useMemo(() => {
     const query = courseQuery.trim().toLowerCase();
     if (!query) {
@@ -49,16 +87,22 @@ export function SubjectPage() {
     <section className="space-y-4 rounded-3xl border border-slate-200/90 bg-white/85 p-5 shadow-sm backdrop-blur-sm sm:p-7">
       <div className="space-y-1.5">
         <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">{(subject?.subjectCode ?? code ?? "SUBJ").toUpperCase()} Subject</h1>
-        {subject ? (
-          <p className="text-sm text-slate-600">
-            {courses.length} courses · {subject.aggregate.totalNonWReported.toLocaleString()} reported non-W students
-          </p>
-        ) : null}
       </div>
 
-      <div className="rounded-2xl border border-[#d5e4cc] bg-[#f8fbf5] p-2">
-        <AggregateSummaryCard label="Subject aggregate" aggregate={subject?.aggregate} />
-      </div>
+      <AggregateSummaryCard
+        label="Subject aggregate"
+        aggregate={subject?.aggregate}
+        totalStudentsOverride={subject?.aggregate.totalNonWReported ?? null}
+        metaChips={
+          loadState === "ready" && subject
+            ? [
+                `${courses.length} courses`,
+                `${sectionCount} sections`,
+                `${professorCount === null ? "..." : professorCount} professors`,
+              ]
+            : undefined
+        }
+      />
 
       {loadState === "loading" ? <p className="text-sm text-slate-600">Loading subject data...</p> : null}
       {loadState === "error" ? <p className="text-sm text-amber-700">Unable to load this subject shard right now.</p> : null}

@@ -5,6 +5,7 @@ import { NON_NUMERICAL_GRADE_ORDER, NUMERICAL_GRADE_ORDER, formatGradeCode, form
 type GradeDistributionStripProps = {
   aggregate: Aggregate | null | undefined;
   size?: "sm" | "md";
+  showStudentCount?: boolean;
 };
 
 type Point = { x: number; y: number };
@@ -42,7 +43,7 @@ function compactLeftLabel(code: LeftBucketCode): string {
   return formatGradeCode(code);
 }
 
-export function GradeDistributionStrip({ aggregate, size = "md" }: GradeDistributionStripProps) {
+export function GradeDistributionStrip({ aggregate, size = "md", showStudentCount = true }: GradeDistributionStripProps) {
   const gradientId = useId().replace(/:/g, "");
   const [activeDatum, setActiveDatum] = useState<ActiveDatum>(null);
 
@@ -123,10 +124,12 @@ export function GradeDistributionStrip({ aggregate, size = "md" }: GradeDistribu
       className={`inline-flex w-fit max-w-full flex-col rounded-lg border border-[var(--duck-border)] bg-[#f7faf2] ${size === "sm" ? "p-1.5" : "p-2"}`}
       onMouseLeave={() => setActiveDatum(null)}
     >
-      <div className="flex items-center justify-between gap-2">
-        <p className={`rounded-md bg-white/95 px-2 py-0.5 font-semibold uppercase tracking-[0.09em] text-slate-700 ${size === "sm" ? "text-[9px]" : "text-[10px]"}`}>
-          {displayedTotal.toLocaleString()} students
-        </p>
+      <div className={`flex items-center gap-2 ${showStudentCount ? "justify-between" : "justify-end"}`}>
+        {showStudentCount ? (
+          <p className={`rounded-md bg-white/95 px-2 py-0.5 font-semibold uppercase tracking-[0.09em] text-slate-700 ${size === "sm" ? "text-[9px]" : "text-[10px]"}`}>
+            {displayedTotal.toLocaleString()} students
+          </p>
+        ) : null}
         <p className={`${size === "sm" ? "text-[9px]" : "text-[10px]"} max-w-[13rem] truncate text-right font-semibold text-slate-600 sm:max-w-[14rem]`}>{activeText}</p>
       </div>
 
@@ -167,6 +170,7 @@ export function GradeDistributionStrip({ aggregate, size = "md" }: GradeDistribu
           <svg
             viewBox="0 0 112 42"
             className={`${size === "sm" ? "h-10" : "h-12"} w-full`}
+            preserveAspectRatio="none"
             role="img"
             aria-label="Combined numerical and non-numerical grade distribution"
           >
