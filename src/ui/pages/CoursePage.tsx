@@ -36,6 +36,10 @@ export function CoursePage() {
     return instructors.filter((instructor) => instructor.name.toLowerCase().includes(query));
   }, [course?.instructors, instructorQuery]);
 
+  const totalSections = useMemo(() => {
+    return (course?.instructors ?? []).reduce((sum, instructor) => sum + instructor.sectionCount, 0);
+  }, [course?.instructors]);
+
   return (
     <section className="space-y-4 rounded-3xl border border-slate-200/90 bg-white/85 p-5 shadow-sm backdrop-blur-sm sm:p-7">
       <Link
@@ -50,14 +54,21 @@ export function CoursePage() {
         <p className="text-sm text-slate-600">{course?.title ?? "Loading course details..."}</p>
       </div>
 
-      {course ? (
-        <div className="flex flex-wrap gap-2">
-          <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2.5 py-1 text-xs font-semibold text-slate-600">Subject {course.subject}</span>
-          <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2.5 py-1 text-xs font-semibold text-slate-600">{course.instructors.length} instructors</span>
-        </div>
-      ) : null}
-
-      <AggregateSummaryCard label="Course aggregate" aggregate={course?.aggregate} />
+      <AggregateSummaryCard
+        label="Course aggregate"
+        aggregate={course?.aggregate}
+        showDistributionStudentCount={false}
+        metaChips={
+          course
+            ? [
+                `Subject ${course.subject}`,
+                `${totalSections} sections`,
+                `${course.instructors.length} instructors`,
+                `${course.aggregate.totalNonWReported.toLocaleString()} students`,
+              ]
+            : undefined
+        }
+      />
 
       {loadState === "loading" ? <p className="text-sm text-slate-600">Loading course shard...</p> : null}
       {loadState === "error" ? <p className="text-sm text-amber-700">Unable to load this course shard right now.</p> : null}
