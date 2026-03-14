@@ -119,7 +119,7 @@ export function GlobalSearch() {
       />
 
       {open && query.trim() && (
-        <div className="absolute top-12 right-0 left-0 z-30 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg shadow-slate-200/60">
+        <div className="absolute top-12 right-0 left-0 z-50 rounded-2xl border border-slate-200 bg-white/100 p-2 shadow-xl shadow-slate-300/60 ring-1 ring-white">
           {items.length === 0 ? <p className="px-2 py-2 text-sm text-slate-600">No matches found.</p> : null}
           {items.map((item, indexValue) => (
             <Link

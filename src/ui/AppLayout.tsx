@@ -10,7 +10,7 @@ export function AppLayout() {
       <div className="home-grid-bg" aria-hidden="true" />
       <div className="home-bg-overlay" aria-hidden="true" />
       {isHome ? null : (
-        <header className="relative z-10 mx-auto w-full max-w-6xl px-5 py-6 sm:px-8">
+        <header className="relative z-30 mx-auto w-full max-w-6xl px-5 py-6 sm:px-8">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <Link to="/" className="brand">
               <span className="brand-duck">Duck</span>
