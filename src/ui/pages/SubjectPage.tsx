@@ -11,6 +11,8 @@ export function SubjectPage() {
 
   const sort = searchParams.get("sort") ?? "code";
   const direction = searchParams.get("dir") ?? "asc";
+  const year = searchParams.get("year") ?? "all";
+  const term = searchParams.get("term") ?? "all";
 
   useEffect(() => {
     if (!code) {
@@ -28,7 +30,13 @@ export function SubjectPage() {
       });
   }, [code]);
 
-  const sortedCourses = [...(subject?.courses ?? [])].sort((a, b) => {
+  const filteredCourses = (subject?.courses ?? []).filter((course) => {
+    const yearMatch = year === "all" ? true : String(course.yearBucket) === year;
+    const termMatch = term === "all" ? true : course.terms.includes(term as "fall" | "winter" | "spring" | "summer");
+    return yearMatch && termMatch;
+  });
+
+  const sortedCourses = [...filteredCourses].sort((a, b) => {
     if (sort === "average") {
       const diff = (a.aggregate.mean ?? -1) - (b.aggregate.mean ?? -1);
       return direction === "asc" ? diff : -diff;
@@ -77,6 +85,54 @@ export function SubjectPage() {
           }}
         >
           Direction: {direction}
+        </button>
+        <label className="text-sm font-semibold text-[var(--duck-muted)]" htmlFor="year-select">
+          Year
+        </label>
+        <select
+          id="year-select"
+          className="rounded-lg border border-[var(--duck-border)] px-2 py-1 text-sm"
+          value={year}
+          onChange={(event) => {
+            const next = new URLSearchParams(searchParams);
+            next.set("year", event.target.value);
+            setSearchParams(next);
+          }}
+        >
+          <option value="all">All</option>
+          <option value="1">100-level</option>
+          <option value="2">200-level</option>
+          <option value="3">300-level</option>
+          <option value="4">400-level</option>
+          <option value="5">500-level+</option>
+        </select>
+        <label className="text-sm font-semibold text-[var(--duck-muted)]" htmlFor="term-select">
+          Term
+        </label>
+        <select
+          id="term-select"
+          className="rounded-lg border border-[var(--duck-border)] px-2 py-1 text-sm"
+          value={term}
+          onChange={(event) => {
+            const next = new URLSearchParams(searchParams);
+            next.set("term", event.target.value);
+            setSearchParams(next);
+          }}
+        >
+          <option value="all">All</option>
+          <option value="fall">Fall</option>
+          <option value="winter">Winter</option>
+          <option value="spring">Spring</option>
+          <option value="summer">Summer</option>
+        </select>
+        <button
+          type="button"
+          className="rounded-lg border border-[var(--duck-border)] px-3 py-1 text-sm font-semibold"
+          onClick={() => {
+            setSearchParams(new URLSearchParams());
+          }}
+        >
+          Reset
         </button>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">

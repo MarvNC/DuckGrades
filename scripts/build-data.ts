@@ -48,6 +48,8 @@ type SectionRecord = {
   totalNonWReported: number;
 };
 
+type TermKey = "fall" | "winter" | "spring" | "summer";
+
 type Aggregate = {
   totalNonWReported: number;
   totalVisibleNonW: number;
@@ -113,6 +115,28 @@ function parseCount(raw: string): number | null {
   }
   const value = Number.parseInt(raw, 10);
   return Number.isFinite(value) ? value : null;
+}
+
+function getYearBucket(courseNumber: string): 1 | 2 | 3 | 4 | 5 {
+  const firstDigit = Number.parseInt(courseNumber.trim().charAt(0), 10);
+  if (firstDigit >= 1 && firstDigit <= 4) {
+    return firstDigit as 1 | 2 | 3 | 4;
+  }
+  return 5;
+}
+
+function getTermKey(termDesc: string): TermKey {
+  const normalized = termDesc.trim().toLowerCase();
+  if (normalized.startsWith("fall")) {
+    return "fall";
+  }
+  if (normalized.startsWith("winter")) {
+    return "winter";
+  }
+  if (normalized.startsWith("spring")) {
+    return "spring";
+  }
+  return "summer";
 }
 
 function buildAggregate(rows: SectionRecord[]): Aggregate {
@@ -291,14 +315,24 @@ async function main() {
     const payload = {
       subjectCode,
       aggregate: buildAggregate(rows),
+      availableTerms: ["fall", "winter", "spring", "summer"] as TermKey[],
       courses: [...courseRows.entries()]
-        .map(([courseCode, courseSections]) => ({
-          courseCode,
-          number: courseSections[0]?.number ?? "",
-          title: courseSections[0]?.title ?? "",
-          sectionCount: courseSections.length,
-          aggregate: buildAggregate(courseSections),
-        }))
+        .map(([courseCode, courseSections]) => {
+          const termSet = new Set<TermKey>();
+          for (const section of courseSections) {
+            termSet.add(getTermKey(section.termDesc));
+          }
+          const number = courseSections[0]?.number ?? "";
+          return {
+            courseCode,
+            number,
+            title: courseSections[0]?.title ?? "",
+            sectionCount: courseSections.length,
+            yearBucket: getYearBucket(number),
+            terms: [...termSet],
+            aggregate: buildAggregate(courseSections),
+          };
+        })
         .sort((a, b) => a.courseCode.localeCompare(b.courseCode)),
     };
     const relativePath = `${version}/subjects/${subjectCode}.json`;

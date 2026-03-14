@@ -27,11 +27,14 @@ export type SectionRow = {
 export type SubjectShard = {
   subjectCode: string;
   aggregate: Aggregate;
+  availableTerms: Array<"fall" | "winter" | "spring" | "summer">;
   courses: Array<{
     courseCode: string;
     number: string;
     title: string;
     sectionCount: number;
+    yearBucket: 1 | 2 | 3 | 4 | 5;
+    terms: Array<"fall" | "winter" | "spring" | "summer">;
     aggregate: Aggregate;
   }>;
 };
