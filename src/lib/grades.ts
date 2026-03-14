@@ -1,6 +1,22 @@
 export const NUMERICAL_GRADE_ORDER = ["F", "DM", "D", "DP", "CM", "C", "CP", "BM", "B", "BP", "AM", "A", "AP"] as const;
 export const NON_NUMERICAL_GRADE_ORDER = ["P", "N", "OTHER"] as const;
 
+const NUMERICAL_GRADE_POINTS: Record<(typeof NUMERICAL_GRADE_ORDER)[number], number> = {
+  F: 0,
+  DM: 0.7,
+  D: 1,
+  DP: 1.3,
+  CM: 1.7,
+  C: 2,
+  CP: 2.3,
+  BM: 2.7,
+  B: 3,
+  BP: 3.3,
+  AM: 3.7,
+  A: 4,
+  AP: 4.3,
+};
+
 const GRADE_LABELS: Record<string, string> = {
   AP: "A+",
   A: "A",
@@ -84,4 +100,47 @@ export function formatGradeStat(value: number | null | undefined): string {
     return value.toFixed(2);
   }
   return `${grade} (${value.toFixed(2)})`;
+}
+
+export function computeNumericalStats(
+  numericalCounts: Partial<Record<(typeof NUMERICAL_GRADE_ORDER)[number], number>>,
+): { mean: number | null; median: number | null; mode: string | null } {
+  let total = 0;
+  let weighted = 0;
+
+  for (const grade of NUMERICAL_GRADE_ORDER) {
+    const count = numericalCounts[grade] ?? 0;
+    total += count;
+    weighted += count * NUMERICAL_GRADE_POINTS[grade];
+  }
+
+  const mean = total > 0 ? Number((weighted / total).toFixed(3)) : null;
+
+  let mode: string | null = null;
+  let modeCount = -1;
+  for (const grade of NUMERICAL_GRADE_ORDER) {
+    const count = numericalCounts[grade] ?? 0;
+    if (count > modeCount) {
+      modeCount = count;
+      mode = grade;
+    }
+  }
+  if (modeCount <= 0) {
+    mode = null;
+  }
+
+  let median: number | null = null;
+  if (total > 0) {
+    const midpoint = total / 2;
+    let cumulative = 0;
+    for (const grade of NUMERICAL_GRADE_ORDER) {
+      cumulative += numericalCounts[grade] ?? 0;
+      if (cumulative >= midpoint) {
+        median = NUMERICAL_GRADE_POINTS[grade];
+        break;
+      }
+    }
+  }
+
+  return { mean, median, mode };
 }

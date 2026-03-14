@@ -1,6 +1,6 @@
 import type { Aggregate } from "../../lib/dataClient";
 import type { SectionRow } from "../../lib/dataClient";
-import { NON_NUMERICAL_GRADE_ORDER, NUMERICAL_GRADE_ORDER } from "../../lib/grades";
+import { NON_NUMERICAL_GRADE_ORDER, NUMERICAL_GRADE_ORDER, computeNumericalStats, formatGradeCode, formatGradeStat } from "../../lib/grades";
 import { GradeDistributionStrip } from "./GradeDistributionStrip";
 
 type SectionDrilldownProps = {
@@ -30,14 +30,15 @@ function buildSectionAggregate(section: SectionRow): Aggregate {
   const visibleNonW = visibleNumericalCount(section);
   const withdrawals = section.counts.W ?? 0;
   const coverage = section.totalNonWReported > 0 ? visibleNonW / section.totalNonWReported : null;
+  const stats = computeNumericalStats(numericalCounts);
 
   return {
     totalNonWReported: section.totalNonWReported,
     totalVisibleNonW: visibleNonW,
     coverage,
-    mean: null,
-    median: null,
-    mode: null,
+    mean: stats.mean,
+    median: stats.median,
+    mode: stats.mode,
     numericalCounts,
     nonNumericalCounts,
     withdrawals,
@@ -82,6 +83,18 @@ export function SectionDrilldown({ sections, summaryLabel = "Section details", i
                       {coverage.toFixed(1)}% visible
                     </span>
                     {hasHiddenBuckets ? <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">redacted</span> : null}
+                  </div>
+
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-medium text-slate-500">
+                    <span>
+                      <span className="uppercase tracking-[0.08em] text-slate-400">Mean</span> {formatGradeStat(sectionAggregate.mean)}
+                    </span>
+                    <span>
+                      <span className="uppercase tracking-[0.08em] text-slate-400">Median</span> {formatGradeStat(sectionAggregate.median)}
+                    </span>
+                    <span>
+                      <span className="uppercase tracking-[0.08em] text-slate-400">Mode</span> {formatGradeCode(sectionAggregate.mode)}
+                    </span>
                   </div>
                 </div>
 
