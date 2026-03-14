@@ -39,9 +39,15 @@ export function ProfessorPage() {
         </div>
       ) : null}
       <AggregateSummaryCard label="Professor aggregate" aggregate={professor?.aggregate} />
+      {loadState === "loading" ? <p className="text-sm text-[var(--duck-muted)]">Loading professor shard...</p> : null}
       {loadState === "error" ? <p className="text-sm text-amber-700">Unable to load this professor shard right now.</p> : null}
       {loadState === "ready" && (professor?.courses.length ?? 0) === 0 ? (
         <p className="text-sm text-[var(--duck-muted)]">No visible course data for this professor.</p>
+      ) : null}
+      {loadState === "ready" && professor && professor.aggregate.coverage !== null && professor.aggregate.coverage < 0.99 ? (
+        <p className="text-sm text-[var(--duck-muted)]">
+          Visible grade coverage is {(professor.aggregate.coverage * 100).toFixed(1)}%; source redaction may hide some section-level buckets.
+        </p>
       ) : null}
       <div className="space-y-3">
         {(professor?.courses ?? []).slice(0, 10).map((course) => (
