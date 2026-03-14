@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getProfessorShard, type ProfessorShard } from "../../lib/dataClient";
 import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
+import { SectionDrilldown } from "../components/SectionDrilldown";
 
 export function ProfessorPage() {
   const { id } = useParams();
@@ -27,6 +28,16 @@ export function ProfessorPage() {
   return (
     <section className="space-y-5 rounded-3xl border border-[var(--duck-border)] bg-white/80 p-8 shadow-sm">
       <h1 className="text-3xl font-extrabold">{professor?.name ?? `Professor ${id}`}</h1>
+      {professor ? (
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full border border-[var(--duck-border)] bg-[#f6faef] px-2.5 py-1 text-xs font-semibold text-[var(--duck-muted)]">
+            {professor.courses.length} courses
+          </span>
+          <span className="rounded-full border border-[var(--duck-border)] bg-[#f6faef] px-2.5 py-1 text-xs font-semibold text-[var(--duck-muted)]">
+            {professor.aggregate.totalNonWReported} reported non-W
+          </span>
+        </div>
+      ) : null}
       <AggregateSummaryCard label="Professor aggregate" aggregate={professor?.aggregate} />
       {loadState === "error" ? <p className="text-sm text-amber-700">Unable to load this professor shard right now.</p> : null}
       {loadState === "ready" && (professor?.courses.length ?? 0) === 0 ? (
@@ -44,19 +55,7 @@ export function ProfessorPage() {
               </div>
               <p className="text-sm font-semibold text-[var(--duck-muted)]">Mean {course.aggregate.mean?.toFixed(2) ?? "N/A"}</p>
             </div>
-            <details className="mt-3 rounded-xl border border-[var(--duck-border)] bg-[#f9fbf5] p-3">
-              <summary className="cursor-pointer text-sm font-semibold">Section details</summary>
-              <div className="mt-2 space-y-2">
-                {course.sections.map((section) => (
-                  <div key={`${course.courseCode}-${section.crn}`} className="rounded-lg border border-[var(--duck-border)] bg-white px-3 py-2">
-                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--duck-muted)]">
-                      {section.termDesc} · CRN {section.crn}
-                    </p>
-                    <p className="text-sm text-[var(--duck-muted)]">Reported non-W: {section.totalNonWReported}</p>
-                  </div>
-                ))}
-              </div>
-            </details>
+            <SectionDrilldown sections={course.sections} identityPrefix={course.courseCode} />
           </article>
         ))}
       </div>
