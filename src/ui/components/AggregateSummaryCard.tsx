@@ -1,4 +1,5 @@
 import type { Aggregate } from "../../lib/dataClient";
+import { GradeDistributionStrip } from "./GradeDistributionStrip";
 
 type AggregateSummaryCardProps = {
   aggregate: Aggregate | null | undefined;
@@ -47,6 +48,9 @@ export function AggregateSummaryCard({ aggregate, label }: AggregateSummaryCardP
           <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--duck-muted)]">Coverage</p>
           <p className="text-lg font-extrabold">{formatCoverage(aggregate?.coverage)}</p>
         </div>
+      </div>
+      <div className="mt-4">
+        <GradeDistributionStrip aggregate={aggregate} />
       </div>
     </section>
   );

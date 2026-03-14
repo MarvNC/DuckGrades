@@ -7,6 +7,7 @@ export function SubjectPage() {
   const { code } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const [subject, setSubject] = useState<SubjectShard | null>(null);
+  const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
 
   const sort = searchParams.get("sort") ?? "code";
   const direction = searchParams.get("dir") ?? "asc";
@@ -15,7 +16,16 @@ export function SubjectPage() {
     if (!code) {
       return;
     }
-    void getSubjectShard(code).then(setSubject).catch(() => setSubject(null));
+    setLoadState("loading");
+    void getSubjectShard(code)
+      .then((value) => {
+        setSubject(value);
+        setLoadState("ready");
+      })
+      .catch(() => {
+        setSubject(null);
+        setLoadState("error");
+      });
   }, [code]);
 
   const sortedCourses = [...(subject?.courses ?? [])].sort((a, b) => {
@@ -37,6 +47,8 @@ export function SubjectPage() {
     <section className="space-y-5 rounded-3xl border border-[var(--duck-border)] bg-white/80 p-8 shadow-sm">
       <h1 className="text-3xl font-extrabold">{(code ?? "SUBJ").toUpperCase()} Subject</h1>
       <AggregateSummaryCard label="Subject aggregate" aggregate={subject?.aggregate} />
+      {loadState === "error" ? <p className="text-sm text-amber-700">Unable to load this subject shard right now.</p> : null}
+      {loadState === "ready" && topCourses.length === 0 ? <p className="text-sm text-[var(--duck-muted)]">No visible course data for this subject.</p> : null}
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--duck-border)] bg-white p-3">
         <label className="text-sm font-semibold text-[var(--duck-muted)]" htmlFor="sort-select">
           Sort

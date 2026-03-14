@@ -11,6 +11,17 @@ export type Aggregate = {
   mean: number | null;
   median: number | null;
   mode: string | null;
+  numericalCounts: Record<string, number>;
+  nonNumericalCounts: Record<string, number>;
+  withdrawals: number;
+};
+
+export type SectionRow = {
+  term: string;
+  termDesc: string;
+  crn: string;
+  totalNonWReported: number;
+  counts: Record<string, number | null>;
 };
 
 export type SubjectShard = {
@@ -36,6 +47,7 @@ export type CourseShard = {
     name: string;
     sectionCount: number;
     aggregate: Aggregate;
+    sections: SectionRow[];
   }>;
 };
 
@@ -48,6 +60,7 @@ export type ProfessorShard = {
     title: string;
     sectionCount: number;
     aggregate: Aggregate;
+    sections: SectionRow[];
   }>;
 };
 
@@ -56,7 +69,9 @@ type VersionFile = { version: string };
 let cachedVersion: Promise<string> | null = null;
 let cachedSearchIndex: Promise<SearchIndex> | null = null;
 
-const baseUrl = (import.meta.env.VITE_DATA_BASE_URL as string | undefined)?.replace(/\/$/, "") ?? "/data";
+const configuredBase = (import.meta.env.VITE_DATA_BASE_URL as string | undefined)?.replace(/\/$/, "");
+const primaryBase = configuredBase ?? "/data";
+const fallbackBase = "/data";
 
 async function fetchJson<T>(path: string): Promise<T> {
   const response = await fetch(path);
@@ -66,10 +81,22 @@ async function fetchJson<T>(path: string): Promise<T> {
   return (await response.json()) as T;
 }
 
+async function fetchDataJson<T>(relativePath: string): Promise<T> {
+  const primaryPath = `${primaryBase}/${relativePath}`;
+  try {
+    return await fetchJson<T>(primaryPath);
+  } catch (error) {
+    if (primaryBase === fallbackBase) {
+      throw error;
+    }
+    return fetchJson<T>(`${fallbackBase}/${relativePath}`);
+  }
+}
+
 export async function getDatasetVersion(): Promise<string> {
   if (!cachedVersion) {
     cachedVersion = (async () => {
-      const currentVersion = await fetchJson<VersionFile>(`${baseUrl}/current-version.json`);
+      const currentVersion = await fetchDataJson<VersionFile>("current-version.json");
       return currentVersion.version;
     })();
   }
@@ -80,7 +107,7 @@ export async function getSearchIndex(): Promise<SearchIndex> {
   if (!cachedSearchIndex) {
     cachedSearchIndex = (async () => {
       const version = await getDatasetVersion();
-      return fetchJson<SearchIndex>(`${baseUrl}/${version}/search-index.json`);
+      return fetchDataJson<SearchIndex>(`${version}/search-index.json`);
     })();
   }
   return cachedSearchIndex;
@@ -88,15 +115,15 @@ export async function getSearchIndex(): Promise<SearchIndex> {
 
 export async function getSubjectShard(code: string): Promise<SubjectShard> {
   const version = await getDatasetVersion();
-  return fetchJson<SubjectShard>(`${baseUrl}/${version}/subjects/${code.toUpperCase()}.json`);
+  return fetchDataJson<SubjectShard>(`${version}/subjects/${code.toUpperCase()}.json`);
 }
 
 export async function getCourseShard(code: string): Promise<CourseShard> {
   const version = await getDatasetVersion();
-  return fetchJson<CourseShard>(`${baseUrl}/${version}/courses/${code.toUpperCase()}.json`);
+  return fetchDataJson<CourseShard>(`${version}/courses/${code.toUpperCase()}.json`);
 }
 
 export async function getProfessorShard(id: string): Promise<ProfessorShard> {
   const version = await getDatasetVersion();
-  return fetchJson<ProfessorShard>(`${baseUrl}/${version}/professors/${id}.json`);
+  return fetchDataJson<ProfessorShard>(`${version}/professors/${id}.json`);
 }
