@@ -1,31 +1,29 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { prefetchRouteData } from "../../lib/dataClient";
-import { buildSearchItems, useRankedSearch } from "../components/searchModel";
+import { useEffect, useRef } from "react";
+import { Link, useOutletContext } from "react-router-dom";
+import type { SearchLayoutContext } from "../AppLayout";
 
 export function HomePage() {
-  const navigate = useNavigate();
+  const { hasActiveSearch, query, setQuery, onSearchInputKeyDown } = useOutletContext<SearchLayoutContext>();
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const resultRefs = useRef<Array<HTMLAnchorElement | null>>([]);
-  const [query, setQuery] = useState("");
-  const [activeIndex, setActiveIndex] = useState(0);
-  const ranked = useRankedSearch(query);
-  const { grouped, flattened } = useMemo(() => buildSearchItems(ranked), [ranked]);
-  const hasQuery = query.trim().length > 0;
+  const wasActiveRef = useRef(hasActiveSearch);
 
   useEffect(() => {
-    setActiveIndex(0);
-  }, [query]);
-
-  function focusResult(indexValue: number) {
-    const target = resultRefs.current[indexValue];
-    if (target) {
-      target.focus();
+    if (wasActiveRef.current && !hasActiveSearch) {
+      window.requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
     }
-  }
+    wasActiveRef.current = hasActiveSearch;
+  }, [hasActiveSearch]);
 
   return (
-    <section className="relative mx-auto flex min-h-screen w-full max-w-4xl items-center justify-center py-12 text-center sm:py-16">
+    <section
+      className={`relative mx-auto w-full max-w-4xl text-center transition-all duration-300 ease-out ${
+        hasActiveSearch
+          ? "max-h-0 -translate-y-6 overflow-hidden py-0 opacity-0 sm:-translate-y-8"
+          : "flex min-h-screen items-center justify-center py-12 opacity-100 sm:py-16"
+      }`}
+    >
       <main className="relative z-10 w-full max-w-4xl">
         <section className="fade-in-up" style={{ animationDelay: "80ms" }}>
           <Link to="/" className="brand brand-home justify-center">
@@ -65,43 +63,10 @@ export function HomePage() {
               onChange={(event) => {
                 setQuery(event.target.value);
               }}
-              onKeyDown={(event) => {
-                if (event.key === "ArrowDown") {
-                  event.preventDefault();
-                  if (flattened.length > 0) {
-                    const next = (activeIndex + 1) % flattened.length;
-                    setActiveIndex(next);
-                    focusResult(next);
-                  }
-                }
-                if (event.key === "ArrowUp") {
-                  event.preventDefault();
-                  if (flattened.length > 0) {
-                    const prev = (activeIndex - 1 + flattened.length) % flattened.length;
-                    setActiveIndex(prev);
-                    focusResult(prev);
-                  }
-                }
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  const chosen = flattened[activeIndex];
-                  if (chosen) {
-                    navigate(chosen.to);
-                  }
-                }
-                if (event.key === "Tab" && !event.shiftKey && flattened.length > 0 && hasQuery) {
-                  event.preventDefault();
-                  setActiveIndex(0);
-                  focusResult(0);
-                }
-                if (event.key === "Escape") {
-                  setQuery("");
-                  setActiveIndex(0);
-                }
-              }}
+              onKeyDown={onSearchInputKeyDown}
               placeholder="Search by course, professor, or subject..."
               autoComplete="off"
-              autoFocus
+              autoFocus={!hasActiveSearch}
             />
           </div>
         </section>
@@ -129,82 +94,21 @@ export function HomePage() {
           </Link>
         </section>
 
-        {hasQuery ? (
-          <section className="mx-auto mt-8 w-full max-w-2xl space-y-3 text-left">
-            {flattened.length === 0 ? (
-              <p className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-600">No matches found.</p>
-            ) : null}
-            {(["Subjects", "Courses", "Professors"] as const).map((sectionName) => {
-              const items = grouped[sectionName];
-              if (items.length === 0) {
-                return null;
-              }
-              return (
-                <div key={sectionName} className="space-y-2">
-                  <p className="px-1 text-sm font-medium text-slate-500">{sectionName}</p>
-                  {items.map((item) => {
-                    const indexValue = flattened.findIndex((candidate) => candidate.key === item.key);
-                    return (
-                      <Link
-                        key={item.key}
-                        ref={(element) => {
-                          resultRefs.current[indexValue] = element;
-                        }}
-                        className={`block rounded-xl border px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#86ac67] ${
-                          activeIndex === indexValue
-                            ? "border-[#86ac67] bg-[#effadf]"
-                            : "border-slate-200 bg-white hover:bg-[#f9fbf5]"
-                        }`}
-                        to={item.to}
-                        onMouseEnter={() => {
-                          setActiveIndex(indexValue);
-                          prefetchRouteData(item.to);
-                        }}
-                        onFocus={() => {
-                          setActiveIndex(indexValue);
-                          prefetchRouteData(item.to);
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === "ArrowDown") {
-                            event.preventDefault();
-                            const next = (indexValue + 1) % flattened.length;
-                            setActiveIndex(next);
-                            focusResult(next);
-                          }
-                          if (event.key === "ArrowUp") {
-                            event.preventDefault();
-                            const prev = (indexValue - 1 + flattened.length) % flattened.length;
-                            setActiveIndex(prev);
-                            focusResult(prev);
-                          }
-                          if (event.key === "Tab" && event.shiftKey && indexValue === 0) {
-                            event.preventDefault();
-                            inputRef.current?.focus();
-                          }
-                          if (event.key === "Escape") {
-                            event.preventDefault();
-                            setQuery("");
-                            setActiveIndex(0);
-                            inputRef.current?.focus();
-                          }
-                        }}
-                      >
-                        <p className="text-sm text-[var(--duck-fg)]">
-                          <span className="font-semibold">{item.label}</span>
-                          <span className="px-2 text-slate-300">-</span>
-                          <span className="text-slate-500">{item.subtitle}</span>
-                        </p>
-                      </Link>
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </section>
-        ) : null}
-
         <footer className="fade-in-up mx-auto mt-20 w-full max-w-2xl border-t border-slate-200/70 pt-8" style={{ animationDelay: "400ms" }}>
-          <p className="text-sm text-slate-500">Data obtained via FOIA request.</p>
+          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-5">
+            <p className="text-sm text-slate-500">Data obtained via FOIA request.</p>
+            <a
+              href="https://github.com/MarvNC/DuckGrades"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-sm font-semibold text-slate-600 shadow-sm shadow-slate-200/50 transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:text-[#124734] hover:shadow-md"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+                <path d="M12 2C6.48 2 2 6.58 2 12.23c0 4.52 2.87 8.35 6.84 9.7.5.1.68-.22.68-.49 0-.24-.01-1.03-.01-1.87-2.78.62-3.37-1.21-3.37-1.21-.45-1.18-1.11-1.49-1.11-1.49-.91-.64.07-.62.07-.62 1 .07 1.53 1.05 1.53 1.05.9 1.57 2.35 1.12 2.92.86.09-.67.35-1.12.63-1.37-2.22-.26-4.56-1.14-4.56-5.09 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.31.1-2.74 0 0 .85-.28 2.78 1.05A9.43 9.43 0 0 1 12 6.84c.85 0 1.7.12 2.5.35 1.92-1.33 2.77-1.05 2.77-1.05.56 1.43.21 2.48.1 2.74.64.72 1.03 1.63 1.03 2.75 0 3.96-2.34 4.82-4.58 5.07.36.31.68.93.68 1.88 0 1.36-.01 2.45-.01 2.79 0 .27.18.59.69.49A10.28 10.28 0 0 0 22 12.23C22 6.58 17.52 2 12 2Z" />
+              </svg>
+              View on GitHub
+            </a>
+          </div>
         </footer>
       </main>
     </section>

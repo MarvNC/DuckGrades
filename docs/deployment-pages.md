@@ -1,4 +1,4 @@
-# Deployment Guide: GitHub Pages + Cloudflare Pages
+# Deployment Guide: Cloudflare Pages
 
 This project is designed for static hosting with free-tier friendly infrastructure.
 
@@ -20,34 +20,6 @@ bun run build
 - `VITE_DATA_BASE_URL`: optional external CDN/data origin.
   - Example jsDelivr branch URL: `https://cdn.jsdelivr.net/gh/<org>/<repo>@data-cdn/data`
   - If this URL fails, runtime falls back to same-origin `/data`.
-- `VITE_BASE_PATH`: optional base path for GitHub Pages project sites.
-  - Example: `/duck-grades/`
-
-## GitHub Pages
-
-Recommended setup:
-
-1. Keep app source on `main`.
-2. Publish generated data from an orphan `data-cdn` branch (static JSON only).
-3. Deploy app shell from GitHub Actions.
-
-One-time local setup for `data-cdn` branch:
-
-```bash
-git checkout --orphan data-cdn
-git rm -rf .
-mkdir data
-# copy generated public/data contents into ./data
-git add data
-git commit -m "chore: publish data shards"
-git checkout main
-```
-
-Project site deploy example with `gh`:
-
-```bash
-gh repo edit --enable-pages --pages-source=gh-pages
-```
 
 ## Cloudflare Pages
 

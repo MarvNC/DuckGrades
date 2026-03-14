@@ -25,6 +25,8 @@ Last updated: 2026-03-14
 - [x] Unify route-wide search experience (shared header input + inline result mode that clears back to page content).
 - [x] Restore original homepage hero-first search layout (centered search on home + header-only on non-home routes).
 - [x] Slightly reduce homepage search input height for tighter hero spacing.
+- [x] Remove GitHub Pages deployment workflow/config and keep deployment guidance Cloudflare-first.
+- [x] Implement shared in-memory search shell with hero-to-header transition and full-page results mode.
 
 ## Spec Coverage Snapshot
 
@@ -38,13 +40,14 @@ Last updated: 2026-03-14
 - [~] 9 Numerical heatmap-style chart and non-numerical histogram UI (interactive bin/bar states added; full trapezoid fidelity still pending).
 - [x] 10 Search UX: grouped results + arrows/tab/shift+tab/esc/enter and shared ranking model implemented.
 - [x] 10 Search shell is now available from persistent header quick-search across routes.
+- [x] 10 Search now uses a unified full-page results mode across routes; clearing query restores route content.
 - [~] 11 Subject page partial: sort + URL state + year/term filters + virtualization + back-to-top done; further polish pending.
 - [~] 12 Course page partial: aggregate + instructor metadata + shared collapsible section drilldown done; content-depth polish pending.
 - [~] 13 Professor page partial: aggregate + course metadata + shared collapsible section drilldown done; richer comparison views pending.
 - [~] 14 Performance budgets measured and enforced (analysis tooling added; hard limits + optimization pending).
 - [~] 14 Performance budgets measured and enforced (search-index compacted from ~984 KB to ~614 KB uncompressed; more optimization pending).
 - [~] 15 Build integrity checks partial: deterministic/collision behavior done; schema/hash/cross-ref validation pending.
-- [~] 16 Data CDN branch strategy + deployment workflow (docs + GH Pages workflow added; live branch wiring pending).
+- [~] 16 Data CDN branch strategy + deployment workflow (Cloudflare docs retained; GH Pages workflow removed).
 - [~] 17 Accessibility QA pass and edge-case QA plan execution (chart keyboard + text alternatives + global focus-visible styling landed; full audit pending).
 - [ ] 18 Legal/attribution validation notes.
 
@@ -64,6 +67,7 @@ Last updated: 2026-03-14
 - [x] Wire course/professor drill-down sections with collapsible section records.
 - [x] Add route-level data prefetch from search results (hover/focus).
 - [x] Add deployment docs for GitHub Pages and Cloudflare Pages with `VITE_DATA_BASE_URL`.
+- [x] Remove GitHub Pages deployment workflow and move deployment docs to Cloudflare Pages only.
 - [ ] Add virtualized course list + back-to-top behavior for deep subject scrolling.
 - [x] Add virtualized course list + back-to-top behavior for deep subject scrolling.
 - [ ] Reduce shard/index payload sizes to approach spec budget targets.
@@ -115,6 +119,10 @@ Last updated: 2026-03-14
 - [x] Re-ran `bun run check` after restoring homepage hero wordmark sizing while keeping header search unified on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after restoring original no-header-home + centered-search design on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after reducing homepage search input height on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after removing GitHub Pages deployment config and adding footer GitHub link on 2026-03-14.
+- [x] Ran `gh workflow disable 246261655 --repo MarvNC/DuckGrades`; verified `Deploy GitHub Pages` is `disabled_manually` on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after implementing hero-to-header search transition with unified full-page results on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after refining home-to-header focus handoff for the in-memory unified search shell on 2026-03-14.
 
 ## Recent Commits
 
