@@ -31,9 +31,9 @@ Last updated: 2026-03-14
 - [x] 7 Static sharded output + manifest/search index implemented.
 - [x] 8 Runtime fetch uses versioned base URL (`VITE_DATA_BASE_URL` aware).
 - [x] 8 Fallback to same-origin when CDN fetch fails.
-- [~] 9 Numerical heatmap-style chart and non-numerical histogram UI (lightweight strip/histogram started; full interactive chart pending).
+- [~] 9 Numerical heatmap-style chart and non-numerical histogram UI (interactive bin/bar states added; full trapezoid fidelity still pending).
 - [x] 10 Search UX: grouped results + debounce + arrows/tab/shift+tab/esc/enter implemented.
-- [~] 11 Subject page partial: sort + URL state + year/term filters done; virtualization pending.
+- [~] 11 Subject page partial: sort + URL state + year/term filters + virtualization + back-to-top done; further polish pending.
 - [~] 12 Course page partial: aggregate + instructor list + collapsible section summaries done; metadata/details depth pending.
 - [~] 13 Professor page partial: aggregate + course list + collapsible section summaries done; richer breakdown pending.
 - [ ] 14 Performance budgets measured and enforced.
@@ -55,6 +55,7 @@ Last updated: 2026-03-14
 - [x] Add route-level data prefetch from search results (hover/focus).
 - [x] Add deployment docs for GitHub Pages and Cloudflare Pages with `VITE_DATA_BASE_URL`.
 - [ ] Add virtualized course list + back-to-top behavior for deep subject scrolling.
+- [x] Add virtualized course list + back-to-top behavior for deep subject scrolling.
 
 ## Verification Log
 
@@ -66,9 +67,13 @@ Last updated: 2026-03-14
 - [x] Re-ran `bun run check` and `bun run build` after route prefetch integration on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after deployment workflow updates on 2026-03-14.
 - [x] Re-ran `bun run build:data`, `bun run check`, and `bun run build` after year/term filter implementation on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after subject virtualization + back-to-top implementation on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after interactive distribution chart improvements on 2026-03-14.
 
 ## Recent Commits
 
+- `5199456` feat: add interactive grade distribution card states
+- `8585b9d` feat: virtualize subject course list with back-to-top
 - `624bccb` feat: add subject year and term filtering model
 - `9e00c21` feat: add free-tier deployment docs and gh pages workflow
 - `35cf0b7` feat: prefetch shard routes from search interactions
