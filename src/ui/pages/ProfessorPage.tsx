@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getProfessorShard, type ProfessorShard } from "../../lib/dataClient";
+import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
 
 export function ProfessorPage() {
   const { id } = useParams();
@@ -16,14 +17,7 @@ export function ProfessorPage() {
   return (
     <section className="space-y-5 rounded-3xl border border-[var(--duck-border)] bg-white/80 p-8 shadow-sm">
       <h1 className="text-3xl font-extrabold">{professor?.name ?? `Professor ${id}`}</h1>
-      <p className="text-[var(--duck-muted)]">
-        Mean: <span className="font-semibold text-[var(--duck-fg)]">{professor?.aggregate.mean?.toFixed(2) ?? "N/A"}</span> | Coverage:{" "}
-        <span className="font-semibold text-[var(--duck-fg)]">
-          {professor?.aggregate.coverage !== null && professor?.aggregate.coverage !== undefined
-            ? `${(professor.aggregate.coverage * 100).toFixed(1)}%`
-            : "N/A"}
-        </span>
-      </p>
+      <AggregateSummaryCard label="Professor aggregate" aggregate={professor?.aggregate} />
       <div className="grid gap-3 sm:grid-cols-2">
         {(professor?.courses ?? []).slice(0, 8).map((course) => (
           <Link

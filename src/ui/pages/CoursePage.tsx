@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getCourseShard, type CourseShard } from "../../lib/dataClient";
+import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
 
 export function CoursePage() {
   const { code } = useParams();
@@ -23,10 +24,7 @@ export function CoursePage() {
       </Link>
       <h1 className="text-3xl font-extrabold">{course?.courseCode ?? (code ?? "COURSE").toUpperCase()}</h1>
       <p className="text-[var(--duck-muted)]">{course?.title ?? "Loading course details..."}</p>
-      <p className="text-sm text-[var(--duck-muted)]">
-        Mean: <span className="font-semibold text-[var(--duck-fg)]">{course?.aggregate.mean?.toFixed(2) ?? "N/A"}</span> | Mode:{" "}
-        <span className="font-semibold text-[var(--duck-fg)]">{course?.aggregate.mode ?? "N/A"}</span>
-      </p>
+      <AggregateSummaryCard label="Course aggregate" aggregate={course?.aggregate} />
       <div className="grid gap-3 sm:grid-cols-2">
         {(course?.instructors ?? []).slice(0, 8).map((instructor) => (
           <Link

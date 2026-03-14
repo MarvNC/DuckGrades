@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { getSubjectShard, type SubjectShard } from "../../lib/dataClient";
+import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
 
 export function SubjectPage() {
   const { code } = useParams();
@@ -35,14 +36,7 @@ export function SubjectPage() {
   return (
     <section className="space-y-5 rounded-3xl border border-[var(--duck-border)] bg-white/80 p-8 shadow-sm">
       <h1 className="text-3xl font-extrabold">{(code ?? "SUBJ").toUpperCase()} Subject</h1>
-      <p className="text-[var(--duck-muted)]">
-        Mean: <span className="font-semibold text-[var(--duck-fg)]">{subject?.aggregate.mean?.toFixed(2) ?? "N/A"}</span> | Coverage:{" "}
-        <span className="font-semibold text-[var(--duck-fg)]">
-          {subject?.aggregate.coverage !== null && subject?.aggregate.coverage !== undefined
-            ? `${(subject.aggregate.coverage * 100).toFixed(1)}%`
-            : "N/A"}
-        </span>
-      </p>
+      <AggregateSummaryCard label="Subject aggregate" aggregate={subject?.aggregate} />
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--duck-border)] bg-white p-3">
         <label className="text-sm font-semibold text-[var(--duck-muted)]" htmlFor="sort-select">
           Sort
