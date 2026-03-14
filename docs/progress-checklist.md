@@ -34,8 +34,8 @@ Last updated: 2026-03-14
 - [~] 9 Numerical heatmap-style chart and non-numerical histogram UI (interactive bin/bar states added; full trapezoid fidelity still pending).
 - [x] 10 Search UX: grouped results + debounce + arrows/tab/shift+tab/esc/enter implemented.
 - [~] 11 Subject page partial: sort + URL state + year/term filters + virtualization + back-to-top done; further polish pending.
-- [~] 12 Course page partial: aggregate + instructor list + collapsible section summaries done; metadata/details depth pending.
-- [~] 13 Professor page partial: aggregate + course list + collapsible section summaries done; richer breakdown pending.
+- [~] 12 Course page partial: aggregate + instructor metadata + shared collapsible section drilldown done; content-depth polish pending.
+- [~] 13 Professor page partial: aggregate + course metadata + shared collapsible section drilldown done; richer comparison views pending.
 - [ ] 14 Performance budgets measured and enforced.
 - [~] 15 Build integrity checks partial: deterministic/collision behavior done; schema/hash/cross-ref validation pending.
 - [~] 16 Data CDN branch strategy + deployment workflow (docs + GH Pages workflow added; live branch wiring pending).
@@ -69,9 +69,11 @@ Last updated: 2026-03-14
 - [x] Re-ran `bun run build:data`, `bun run check`, and `bun run build` after year/term filter implementation on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after subject virtualization + back-to-top implementation on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after interactive distribution chart improvements on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after shared section drilldown refactor on 2026-03-14.
 
 ## Recent Commits
 
+- `a62d3df` feat: enrich detail routes with shared section drilldown
 - `5199456` feat: add interactive grade distribution card states
 - `8585b9d` feat: virtualize subject course list with back-to-top
 - `624bccb` feat: add subject year and term filtering model
