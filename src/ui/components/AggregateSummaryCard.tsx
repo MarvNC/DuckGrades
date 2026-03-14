@@ -7,37 +7,22 @@ type AggregateSummaryCardProps = {
   label: string;
 };
 
-function formatCoverage(value: number | null | undefined): string {
-  if (value === null || value === undefined) {
-    return "N/A";
-  }
-  return `${(value * 100).toFixed(1)}%`;
-}
-
 export function AggregateSummaryCard({ aggregate, label }: AggregateSummaryCardProps) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+    <section className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm sm:p-4">
       <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
-      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Mean</p>
-          <p className="text-sm font-bold text-[var(--duck-fg)] sm:text-base">{formatGradeStat(aggregate?.mean)}</p>
+      <div className="mt-2.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div className="min-w-0 sm:flex-1">
+          <div className="flex flex-wrap gap-1.5 text-[11px] font-semibold text-slate-600">
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5">Mean {formatGradeStat(aggregate?.mean)}</span>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5">Median {formatGradeStat(aggregate?.median)}</span>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5">Mode {formatGradeCode(aggregate?.mode)}</span>
+          </div>
         </div>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Median</p>
-          <p className="text-sm font-bold text-[var(--duck-fg)] sm:text-base">{formatGradeStat(aggregate?.median)}</p>
+
+        <div className="flex w-full justify-end sm:w-auto">
+          <GradeDistributionStrip aggregate={aggregate} size="md" />
         </div>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Mode</p>
-          <p className="text-sm font-bold text-[var(--duck-fg)] sm:text-base">{formatGradeCode(aggregate?.mode)}</p>
-        </div>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Coverage</p>
-          <p className="text-sm font-bold text-[var(--duck-fg)] sm:text-base">{formatCoverage(aggregate?.coverage)}</p>
-        </div>
-      </div>
-      <div className="mt-4">
-        <GradeDistributionStrip aggregate={aggregate} size="md" />
       </div>
     </section>
   );

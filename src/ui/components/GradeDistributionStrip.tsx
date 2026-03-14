@@ -112,23 +112,25 @@ export function GradeDistributionStrip({ aggregate, size = "md" }: GradeDistribu
 
   const leftMax = Math.max(1, ...LEFT_BUCKET_ORDER.map((code) => leftCounts[code] ?? 0));
   const leftMaxHeight = size === "sm" ? 14 : 18;
+  const chartWidthClass = size === "sm" ? "w-[16.5rem] sm:w-[18.5rem]" : "w-[22rem] sm:w-[24rem]";
+  const leftBarWidthClass = size === "sm" ? "w-3" : "w-3.5";
 
   const numericalTextSummary = NUMERICAL_GRADE_ORDER.map((_, index) => getNumericalDetails(index)).join(", ");
   const nonNumericalTextSummary = LEFT_BUCKET_ORDER.map((code) => getLeftBucketDetails(code)).join(", ");
 
   return (
     <div
-      className={`rounded-lg border border-[var(--duck-border)] bg-[#f7faf2] ${size === "sm" ? "p-1.5" : "p-2"}`}
+      className={`inline-flex w-fit max-w-full flex-col rounded-lg border border-[var(--duck-border)] bg-[#f7faf2] ${size === "sm" ? "p-1.5" : "p-2"}`}
       onMouseLeave={() => setActiveDatum(null)}
     >
       <div className="flex items-center justify-between gap-2">
         <p className={`rounded-md bg-white/95 px-2 py-0.5 font-semibold uppercase tracking-[0.09em] text-slate-700 ${size === "sm" ? "text-[9px]" : "text-[10px]"}`}>
           {displayedTotal.toLocaleString()} students
         </p>
-        <p className={`${size === "sm" ? "text-[9px]" : "text-[10px]"} truncate text-right font-semibold text-slate-600`}>{activeText}</p>
+        <p className={`${size === "sm" ? "text-[9px]" : "text-[10px]"} max-w-[13rem] truncate text-right font-semibold text-slate-600 sm:max-w-[14rem]`}>{activeText}</p>
       </div>
 
-      <div className={`mt-1 flex items-end ${size === "sm" ? "gap-1" : "gap-1.5"}`}>
+      <div className={`mt-1 flex items-end ${size === "sm" ? "gap-0.5" : "gap-1"}`}>
         <div className={`flex shrink-0 items-end border-r border-dashed border-[var(--duck-border)] ${size === "sm" ? "gap-0.5 pr-1" : "gap-1 pr-1.5"}`}>
           {LEFT_BUCKET_ORDER.map((code) => {
             const count = leftCounts[code] ?? 0;
@@ -138,7 +140,7 @@ export function GradeDistributionStrip({ aggregate, size = "md" }: GradeDistribu
               <button
                 key={code}
                 type="button"
-                className="flex w-3 flex-col items-center gap-0.5 rounded-sm"
+                className={`flex ${leftBarWidthClass} flex-col items-center gap-0.5 rounded-sm`}
                 onMouseEnter={() => setActiveDatum({ kind: "left", code })}
                 onFocus={() => setActiveDatum({ kind: "left", code })}
                 onBlur={() => setActiveDatum(null)}
@@ -161,10 +163,10 @@ export function GradeDistributionStrip({ aggregate, size = "md" }: GradeDistribu
           })}
         </div>
 
-        <div className="min-w-0 flex-1">
+        <div className={chartWidthClass}>
           <svg
             viewBox="0 0 112 42"
-            className={`${size === "sm" ? "h-9" : "h-11"} w-full`}
+            className={`${size === "sm" ? "h-10" : "h-12"} w-full`}
             role="img"
             aria-label="Combined numerical and non-numerical grade distribution"
           >
