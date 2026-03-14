@@ -12,6 +12,18 @@ type CompactSearchIndex = {
   p: Array<[number, number, number]> | number[];
 };
 
+type CompactSubjectsOverview = {
+  v: 1;
+  k: string[];
+  t: [number, number, number, number];
+  o: Array<number | null>;
+  s: Array<number | null>;
+};
+
+const NUMERICAL_ORDER = ["F", "DM", "D", "DP", "CM", "C", "CP", "BM", "B", "BP", "AM", "A", "AP"] as const;
+const NON_NUMERICAL_ORDER = ["P", "N", "OTHER"] as const;
+const AGGREGATE_COMPACT_LENGTH = 7 + NUMERICAL_ORDER.length + NON_NUMERICAL_ORDER.length;
+
 export type Aggregate = {
   totalNonWReported: number;
   totalVisibleNonW: number;
@@ -187,6 +199,65 @@ function decodeSearchIndex(raw: SearchIndex | CompactSearchIndex): SearchIndex {
   };
 }
 
+function decodeCompactAggregate(values: Array<number | null>): Aggregate {
+  const modeIndexValue = Number(values[5] ?? -1);
+  const mode = modeIndexValue >= 0 && modeIndexValue < NUMERICAL_ORDER.length ? NUMERICAL_ORDER[modeIndexValue] : null;
+  const numericalCounts = Object.fromEntries(
+    NUMERICAL_ORDER.map((grade, index) => [grade, Number(values[7 + index] ?? 0)]),
+  ) as Record<string, number>;
+  const nonNumericalOffset = 7 + NUMERICAL_ORDER.length;
+  const nonNumericalCounts = Object.fromEntries(
+    NON_NUMERICAL_ORDER.map((grade, index) => [grade, Number(values[nonNumericalOffset + index] ?? 0)]),
+  ) as Record<string, number>;
+
+  return {
+    totalNonWReported: Number(values[0] ?? 0),
+    totalVisibleNonW: Number(values[1] ?? 0),
+    coverage: values[2] === null || values[2] === undefined ? null : Number(values[2]),
+    mean: values[3] === null || values[3] === undefined ? null : Number(values[3]),
+    median: values[4] === null || values[4] === undefined ? null : Number(values[4]),
+    mode,
+    numericalCounts,
+    nonNumericalCounts,
+    withdrawals: Number(values[6] ?? 0),
+  };
+}
+
+function decodeSubjectsOverview(raw: SubjectsOverviewShard | CompactSubjectsOverview): SubjectsOverviewShard {
+  if (!("v" in raw)) {
+    return raw;
+  }
+
+  const subjects: SubjectOverview[] = [];
+  const recordSize = 4 + AGGREGATE_COMPACT_LENGTH;
+  for (let i = 0; i < raw.s.length; i += recordSize) {
+    const codeIndex = Number(raw.s[i] ?? -1);
+    const code = raw.k[codeIndex];
+    if (!code) {
+      continue;
+    }
+    const aggregate = decodeCompactAggregate(raw.s.slice(i + 4, i + 4 + AGGREGATE_COMPACT_LENGTH));
+    subjects.push({
+      code,
+      courseCount: Number(raw.s[i + 1] ?? 0),
+      sectionCount: Number(raw.s[i + 2] ?? 0),
+      professorCount: Number(raw.s[i + 3] ?? 0),
+      aggregate,
+    });
+  }
+
+  return {
+    aggregate: decodeCompactAggregate(raw.o),
+    totals: {
+      subjectCount: raw.t[0] ?? 0,
+      courseCount: raw.t[1] ?? 0,
+      professorCount: raw.t[2] ?? 0,
+      sectionCount: raw.t[3] ?? 0,
+    },
+    subjects,
+  };
+}
+
 export async function getDatasetVersion(): Promise<string> {
   if (!cachedVersion) {
     cachedVersion = (async () => {
@@ -212,7 +283,8 @@ export async function getSubjectsOverviewShard(): Promise<SubjectsOverviewShard>
   if (!cachedSubjectsOverview) {
     cachedSubjectsOverview = (async () => {
       const version = await getDatasetVersion();
-      return fetchDataJson<SubjectsOverviewShard>(`${version}/subjects-overview.json`);
+      const raw = await fetchDataJson<SubjectsOverviewShard | CompactSubjectsOverview>(`${version}/subjects-overview.json`);
+      return decodeSubjectsOverview(raw);
     })();
   }
   return cachedSubjectsOverview;

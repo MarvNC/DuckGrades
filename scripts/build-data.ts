@@ -90,20 +90,18 @@ type SubjectOverview = {
 };
 
 type SubjectsOverviewPayload = {
-  aggregate: Aggregate;
-  totals: {
-    subjectCount: number;
-    courseCount: number;
-    professorCount: number;
-    sectionCount: number;
-  };
-  subjects: SubjectOverview[];
+  v: 1;
+  k: string[];
+  t: [number, number, number, number];
+  o: Array<number | null>;
+  s: Array<number | null>;
 };
 
 const INPUT_CSV = "data/pub_rec_master_w2016-f2025.csv";
 const OUTPUT_ROOT = "public/data";
 const NUMERICAL_ORDER = ["F", "DM", "D", "DP", "CM", "C", "CP", "BM", "B", "BP", "AM", "A", "AP"] as const;
 const NON_NUMERICAL_ORDER = ["P", "N", "OTHER"] as const;
+const AGGREGATE_COMPACT_LENGTH = 7 + NUMERICAL_ORDER.length + NON_NUMERICAL_ORDER.length;
 const GRADE_POINTS: Record<(typeof NUMERICAL_ORDER)[number], number> = {
   F: 0,
   DM: 0.7,
@@ -343,6 +341,21 @@ function compactSearchIndex(index: SearchIndexPayload): CompactSearchIndexPayloa
   };
 }
 
+function compactAggregate(aggregate: Aggregate): Array<number | null> {
+  const modeIndex = aggregate.mode ? NUMERICAL_ORDER.indexOf(aggregate.mode as (typeof NUMERICAL_ORDER)[number]) : -1;
+  return [
+    aggregate.totalNonWReported,
+    aggregate.totalVisibleNonW,
+    aggregate.coverage,
+    aggregate.mean,
+    aggregate.median,
+    modeIndex,
+    aggregate.withdrawals,
+    ...NUMERICAL_ORDER.map((grade) => aggregate.numericalCounts[grade]),
+    ...NON_NUMERICAL_ORDER.map((grade) => aggregate.nonNumericalCounts[grade]),
+  ];
+}
+
 async function main() {
   const version = `v${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`;
   const versionRoot = join(OUTPUT_ROOT, version);
@@ -467,16 +480,27 @@ async function main() {
   }
 
   subjectOverviewRows.sort((a, b) => a.code.localeCompare(b.code));
+  const subjectCodeTable = subjectOverviewRows.map((row) => row.code);
+  const codeToIndex = new Map(subjectCodeTable.map((code, index) => [code, index]));
+  const compactSubjectRows: Array<number | null> = [];
+  for (const subject of subjectOverviewRows) {
+    compactSubjectRows.push(
+      codeToIndex.get(subject.code) ?? -1,
+      subject.courseCount,
+      subject.sectionCount,
+      subject.professorCount,
+      ...compactAggregate(subject.aggregate),
+    );
+  }
+  const universityAggregate = buildAggregate(sections);
   const subjectsOverview: SubjectsOverviewPayload = {
-    aggregate: buildAggregate(sections),
-    totals: {
-      subjectCount: bySubject.size,
-      courseCount: byCourse.size,
-      professorCount: byProfessor.size,
-      sectionCount: sections.length,
-    },
-    subjects: subjectOverviewRows,
+    v: 1,
+    k: subjectCodeTable,
+    t: [bySubject.size, byCourse.size, byProfessor.size, sections.length],
+    o: compactAggregate(universityAggregate),
+    s: compactSubjectRows,
   };
+  assert(subjectsOverview.o.length === AGGREGATE_COMPACT_LENGTH, "Unexpected compact aggregate length");
   fileIndex[`${version}/subjects-overview.json`] = await writeJson(join(OUTPUT_ROOT, `${version}/subjects-overview.json`), subjectsOverview);
 
   for (const [courseCode, rows] of byCourse) {
