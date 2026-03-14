@@ -57,27 +57,31 @@ export function SectionDrilldown({ sections, summaryLabel = "Section details", i
 
           return (
             <div key={`${identityPrefix}-${section.crn}`} className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
-                  {section.termDesc} · CRN {section.crn}
-                </p>
-                <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5 text-[10px] font-semibold text-slate-700">
-                  {section.totalNonWReported} reported
-                </span>
-                <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5 text-[10px] font-semibold text-slate-700">
-                  {visible} visible ({coverage.toFixed(1)}%)
-                </span>
-                {(section.counts.W ?? 0) > 0 ? (
-                  <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5 text-[10px] font-semibold text-slate-700">
-                    {section.counts.W} withdrawals
-                  </span>
-                ) : null}
-              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                <div className="min-w-0 sm:flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      {section.termDesc} · CRN {section.crn}
+                    </p>
+                    <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+                      {section.totalNonWReported} reported
+                    </span>
+                    <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+                      {visible} visible ({coverage.toFixed(1)}%)
+                    </span>
+                    {(section.counts.W ?? 0) > 0 ? (
+                      <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+                        {section.counts.W} withdrawals
+                      </span>
+                    ) : null}
+                  </div>
 
-              {hasHiddenBuckets ? <p className="mt-1 text-[11px] text-slate-500">Some grade buckets are redacted in source data for this section.</p> : null}
+                  {hasHiddenBuckets ? <p className="mt-1 text-[11px] text-slate-500">Some grade buckets are redacted in source data for this section.</p> : null}
+                </div>
 
-              <div className="mt-1.5">
-                <GradeDistributionStrip aggregate={sectionAggregate} size="sm" showStudentCount={false} />
+                <div className="flex justify-end sm:pl-2">
+                  <GradeDistributionStrip aggregate={sectionAggregate} size="sm" showStudentCount={false} />
+                </div>
               </div>
             </div>
           );
