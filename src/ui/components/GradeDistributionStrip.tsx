@@ -44,6 +44,13 @@ export function GradeDistributionStrip({ aggregate }: GradeDistributionStripProp
 
   const selectedCount = numericalValues[selectedNumerical] ?? 0;
   const selectedPercent = numericalTotal > 0 ? (selectedCount / numericalTotal) * 100 : 0;
+  const numericalTextSummary = numericalOrder
+    .map((grade, index) => {
+      const count = numericalValues[index] ?? 0;
+      const percent = numericalTotal > 0 ? (count / numericalTotal) * 100 : 0;
+      return `${grade} ${count} (${percent.toFixed(1)}%)`;
+    })
+    .join(", ");
 
   function selectNearestByClientX(clientX: number, bounds: DOMRect) {
     const relativeX = clientX - bounds.left;
@@ -60,7 +67,22 @@ export function GradeDistributionStrip({ aggregate }: GradeDistributionStripProp
         <p className="mt-1 text-xs text-[var(--duck-muted)]">
           <span className="font-semibold text-[var(--duck-fg)]">{numericalOrder[selectedNumerical]}</span>: {selectedCount} students ({selectedPercent.toFixed(1)}%)
         </p>
-        <div className="mt-2 rounded-xl border border-[var(--duck-border)] bg-[#f7faf2] p-2">
+        <div
+          className="mt-2 rounded-xl border border-[var(--duck-border)] bg-[#f7faf2] p-2 focus-within:ring-2 focus-within:ring-[#86ac67]"
+          tabIndex={0}
+          role="group"
+          aria-label="Numerical distribution keyboard controls"
+          onKeyDown={(event) => {
+            if (event.key === "ArrowRight") {
+              event.preventDefault();
+              setSelectedNumerical((prev) => Math.min(prev + 1, numericalOrder.length - 1));
+            }
+            if (event.key === "ArrowLeft") {
+              event.preventDefault();
+              setSelectedNumerical((prev) => Math.max(prev - 1, 0));
+            }
+          }}
+        >
           <svg
             viewBox="0 0 108 58"
             className="h-20 w-full"
@@ -115,6 +137,7 @@ export function GradeDistributionStrip({ aggregate }: GradeDistributionStripProp
               fill="#1f2b1a"
             />
           </svg>
+          <p className="sr-only">Numerical distribution values: {numericalTextSummary}</p>
         </div>
       </div>
 
