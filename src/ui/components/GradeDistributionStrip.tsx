@@ -113,7 +113,7 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
 
   const leftMax = Math.max(1, ...LEFT_BUCKET_ORDER.map((code) => leftCounts[code] ?? 0));
   const leftMaxHeight = size === "sm" ? 14 : 18;
-  const chartWidthClass = size === "sm" ? "w-[15rem] sm:w-[17rem] lg:w-[19rem]" : "w-[18rem] sm:w-[21rem] lg:w-[24rem]";
+  const chartWidthClass = size === "sm" ? "w-[13rem] sm:w-[14.5rem] lg:w-[16rem]" : "w-[15.5rem] sm:w-[17.5rem] lg:w-[19rem]";
   const leftBarWidthClass = size === "sm" ? "w-3" : "w-3.5";
 
   const numericalTextSummary = NUMERICAL_GRADE_ORDER.map((_, index) => getNumericalDetails(index)).join(", ");
@@ -170,7 +170,6 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
           <svg
             viewBox="0 0 112 42"
             className={`${size === "sm" ? "h-10" : "h-12"} w-full`}
-            preserveAspectRatio="none"
             role="img"
             aria-label="Combined numerical and non-numerical grade distribution"
           >

@@ -6,20 +6,13 @@ type AggregateSummaryCardProps = {
   aggregate: Aggregate | null | undefined;
   label: string;
   metaChips?: string[];
-  totalStudentsOverride?: number | null;
 };
 
-export function AggregateSummaryCard({ aggregate, label, metaChips, totalStudentsOverride }: AggregateSummaryCardProps) {
-  const totalStudents = totalStudentsOverride ?? aggregate?.totalNonWReported ?? aggregate?.totalVisibleNonW ?? 0;
+export function AggregateSummaryCard({ aggregate, label, metaChips }: AggregateSummaryCardProps) {
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm sm:p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
-        <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-600">
-          {totalStudents.toLocaleString()} students
-        </span>
-      </div>
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
 
       <div className="mt-2.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="min-w-0 sm:flex-1">
@@ -36,7 +29,7 @@ export function AggregateSummaryCard({ aggregate, label, metaChips, totalStudent
         </div>
 
         <div className="flex w-full justify-end sm:w-auto">
-          <GradeDistributionStrip aggregate={aggregate} size="md" showStudentCount={false} />
+          <GradeDistributionStrip aggregate={aggregate} size="md" showStudentCount />
         </div>
       </div>
     </section>

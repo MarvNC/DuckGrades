@@ -92,7 +92,6 @@ export function SubjectPage() {
       <AggregateSummaryCard
         label="Subject aggregate"
         aggregate={subject?.aggregate}
-        totalStudentsOverride={subject?.aggregate.totalNonWReported ?? null}
         metaChips={
           loadState === "ready" && subject
             ? [
