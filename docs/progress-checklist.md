@@ -51,6 +51,7 @@ Last updated: 2026-03-14
 - [x] Add loading, no-data, and redaction coverage states across all route pages.
 - [~] Add build-time integrity checks (hash + cross-reference done; schema-contract validation still pending).
 - [~] Revamp subject/course distributions for dense inline cards (compact chart + hover details + clarified P/NP/Other/W semantics).
+- [~] Tighten aggregate/course visual consistency (right-aligned fit-content charts, section-count chip placement, and restored subject course search).
 
 ## Next Up (Priority)
 
@@ -100,9 +101,11 @@ Last updated: 2026-03-14
 - [x] Re-ran `bun run check` after unifying homepage/header search placeholder copy on 2026-03-14.
 - [x] Re-ran `bun run check` after compact subject/course distribution revamp and search dropdown opacity fix on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after disabling Vite `emptyOutDir` to avoid intermittent Windows `ENOTEMPTY` dist cleanup failures on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after aggregate/card alignment and subject search restore on 2026-03-14.
 
 ## Recent Commits
 
+- `e936de5` feat: align aggregate and course cards with compact charts
 - `0808803` feat: compact course distributions and clarify non-numeric grades
 - `7beb3f6` feat: compact search-index with string table and flat tuples
 - `47d97a2` feat: add consistent focus-visible accessibility styling
