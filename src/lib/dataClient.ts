@@ -47,6 +47,25 @@ export type SubjectShard = {
   }>;
 };
 
+export type SubjectOverview = {
+  code: string;
+  courseCount: number;
+  sectionCount: number;
+  professorCount: number;
+  aggregate: Aggregate;
+};
+
+export type SubjectsOverviewShard = {
+  aggregate: Aggregate;
+  totals: {
+    subjectCount: number;
+    courseCount: number;
+    professorCount: number;
+    sectionCount: number;
+  };
+  subjects: SubjectOverview[];
+};
+
 export type CourseShard = {
   courseCode: string;
   subject: string;
@@ -79,6 +98,7 @@ type VersionFile = { version: string };
 
 let cachedVersion: Promise<string> | null = null;
 let cachedSearchIndex: Promise<SearchIndex> | null = null;
+let cachedSubjectsOverview: Promise<SubjectsOverviewShard> | null = null;
 const subjectShardCache = new Map<string, Promise<SubjectShard>>();
 const courseShardCache = new Map<string, Promise<CourseShard>>();
 const professorShardCache = new Map<string, Promise<ProfessorShard>>();
@@ -188,6 +208,16 @@ export async function getSearchIndex(): Promise<SearchIndex> {
   return cachedSearchIndex;
 }
 
+export async function getSubjectsOverviewShard(): Promise<SubjectsOverviewShard> {
+  if (!cachedSubjectsOverview) {
+    cachedSubjectsOverview = (async () => {
+      const version = await getDatasetVersion();
+      return fetchDataJson<SubjectsOverviewShard>(`${version}/subjects-overview.json`);
+    })();
+  }
+  return cachedSubjectsOverview;
+}
+
 export async function getSubjectShard(code: string): Promise<SubjectShard> {
   const key = code.toUpperCase();
   const existing = subjectShardCache.get(key);
@@ -231,6 +261,10 @@ export async function getProfessorShard(id: string): Promise<ProfessorShard> {
 }
 
 export function prefetchRouteData(route: string): void {
+  if (route === "/subjects") {
+    void getSubjectsOverviewShard();
+    return;
+  }
   if (route.startsWith("/subject/")) {
     const code = route.slice("/subject/".length);
     if (code) {

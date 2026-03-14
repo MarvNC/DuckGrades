@@ -51,9 +51,9 @@ export function CoursePage() {
     <section className="space-y-4 rounded-3xl border border-slate-200/90 bg-white/85 p-5 shadow-sm backdrop-blur-sm sm:p-7">
       <Link
         className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-        to={`/subject/${course?.subject ?? "CS"}`}
+        to={course?.subject ? `/subject/${course.subject}` : "/subjects"}
       >
-        Back to subject
+        Back to subjects
       </Link>
 
       <div className="space-y-1.5">

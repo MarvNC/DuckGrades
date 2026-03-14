@@ -81,6 +81,25 @@ type CompactSearchIndexPayload = {
   p: number[];
 };
 
+type SubjectOverview = {
+  code: string;
+  courseCount: number;
+  sectionCount: number;
+  professorCount: number;
+  aggregate: Aggregate;
+};
+
+type SubjectsOverviewPayload = {
+  aggregate: Aggregate;
+  totals: {
+    subjectCount: number;
+    courseCount: number;
+    professorCount: number;
+    sectionCount: number;
+  };
+  subjects: SubjectOverview[];
+};
+
 const INPUT_CSV = "data/pub_rec_master_w2016-f2025.csv";
 const OUTPUT_ROOT = "public/data";
 const NUMERICAL_ORDER = ["F", "DM", "D", "DP", "CM", "C", "CP", "BM", "B", "BP", "AM", "A", "AP"] as const;
@@ -283,6 +302,7 @@ function verifyCrossReferences(params: {
     assert(byProfessor.has(professor.id), `Missing professor shard source for ${professor.id}`);
     assert(fileIndex[`${version}/professors/${professor.id}.json`], `Missing professor shard file for ${professor.id}`);
   }
+  assert(fileIndex[`${version}/subjects-overview.json`], "Missing subjects overview file");
 }
 
 function compactSearchIndex(index: SearchIndexPayload): CompactSearchIndexPayload {
@@ -404,15 +424,17 @@ async function main() {
   }
 
   const fileIndex: Record<string, FileMeta> = {};
+  const subjectOverviewRows: SubjectOverview[] = [];
 
   for (const [subjectCode, rows] of bySubject) {
     const courseRows = new Map<string, SectionRecord[]>();
     for (const row of rows) {
       courseRows.set(row.courseCode, [...(courseRows.get(row.courseCode) ?? []), row]);
     }
+    const subjectAggregate = buildAggregate(rows);
     const payload = {
       subjectCode,
-      aggregate: buildAggregate(rows),
+      aggregate: subjectAggregate,
       availableTerms: ["fall", "winter", "spring", "summer"] as TermKey[],
       courses: [...courseRows.entries()]
         .map(([courseCode, courseSections]) => {
@@ -433,9 +455,29 @@ async function main() {
         })
         .sort((a, b) => a.courseCode.localeCompare(b.courseCode)),
     };
+    subjectOverviewRows.push({
+      code: subjectCode,
+      courseCount: courseRows.size,
+      sectionCount: rows.length,
+      professorCount: new Set(rows.map((row) => row.professorId)).size,
+      aggregate: subjectAggregate,
+    });
     const relativePath = `${version}/subjects/${subjectCode}.json`;
     fileIndex[relativePath] = await writeJson(join(OUTPUT_ROOT, relativePath), payload);
   }
+
+  subjectOverviewRows.sort((a, b) => a.code.localeCompare(b.code));
+  const subjectsOverview: SubjectsOverviewPayload = {
+    aggregate: buildAggregate(sections),
+    totals: {
+      subjectCount: bySubject.size,
+      courseCount: byCourse.size,
+      professorCount: byProfessor.size,
+      sectionCount: sections.length,
+    },
+    subjects: subjectOverviewRows,
+  };
+  fileIndex[`${version}/subjects-overview.json`] = await writeJson(join(OUTPUT_ROOT, `${version}/subjects-overview.json`), subjectsOverview);
 
   for (const [courseCode, rows] of byCourse) {
     const byInstructor = new Map<string, SectionRecord[]>();

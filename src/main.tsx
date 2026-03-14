@@ -6,6 +6,7 @@ import { HomePage } from "./ui/pages/HomePage";
 import { CoursePage } from "./ui/pages/CoursePage";
 import { ProfessorPage } from "./ui/pages/ProfessorPage";
 import { SubjectPage } from "./ui/pages/SubjectPage";
+import { SubjectsOverviewPage } from "./ui/pages/SubjectsOverviewPage";
 import "./styles.css";
 
 const router = createBrowserRouter([
@@ -14,6 +15,7 @@ const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: <HomePage /> },
+      { path: "subjects", element: <SubjectsOverviewPage /> },
       { path: "subject/:code", element: <SubjectPage /> },
       { path: "course/:code", element: <CoursePage /> },
       { path: "professor/:id", element: <ProfessorPage /> },

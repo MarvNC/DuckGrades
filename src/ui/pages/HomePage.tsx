@@ -73,7 +73,7 @@ export function HomePage() {
 
         <section className="fade-in-up mt-7" style={{ animationDelay: "240ms" }}>
           <Link
-            to="/subject/CS"
+            to="/subjects"
             className="inline-flex items-center rounded-full border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-600 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-[#124734] hover:shadow-md"
           >
             <svg
