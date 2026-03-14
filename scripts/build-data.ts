@@ -67,6 +67,12 @@ type FileMeta = {
   sha256: string;
 };
 
+type SearchIndexPayload = {
+  subjects: Array<{ code: string; popularity: number }>;
+  courses: Array<{ code: string; title: string; subject: string; popularity: number }>;
+  professors: Array<{ id: string; name: string; popularity: number }>;
+};
+
 const INPUT_CSV = "data/pub_rec_master_w2016-f2025.csv";
 const OUTPUT_ROOT = "public/data";
 const NUMERICAL_ORDER = ["F", "DM", "D", "DP", "CM", "C", "CP", "BM", "B", "BP", "AM", "A", "AP"] as const;
@@ -223,6 +229,52 @@ async function writeJson(path: string, payload: unknown): Promise<FileMeta> {
   const bytes = Buffer.byteLength(text, "utf8");
   const sha256 = createHash("sha256").update(text).digest("hex");
   return { bytes, sha256 };
+}
+
+function assert(condition: unknown, message: string): asserts condition {
+  if (!condition) {
+    throw new Error(message);
+  }
+}
+
+async function verifyFileHashes(fileIndex: Record<string, FileMeta>) {
+  const entries = Object.entries(fileIndex);
+  for (const [relativePath, meta] of entries) {
+    const absolutePath = join(OUTPUT_ROOT, relativePath);
+    const text = await readFile(absolutePath, "utf8");
+    const bytes = Buffer.byteLength(text, "utf8");
+    const sha256 = createHash("sha256").update(text).digest("hex");
+    assert(bytes === meta.bytes, `Byte-size mismatch for ${relativePath}`);
+    assert(sha256 === meta.sha256, `SHA mismatch for ${relativePath}`);
+  }
+}
+
+function verifyCrossReferences(params: {
+  version: string;
+  searchIndex: SearchIndexPayload;
+  bySubject: Map<string, SectionRecord[]>;
+  byCourse: Map<string, SectionRecord[]>;
+  byProfessor: Map<string, SectionRecord[]>;
+  fileIndex: Record<string, FileMeta>;
+}) {
+  const { version, searchIndex, bySubject, byCourse, byProfessor, fileIndex } = params;
+
+  assert(searchIndex.subjects.length === bySubject.size, "Subject count mismatch in search index");
+  assert(searchIndex.courses.length === byCourse.size, "Course count mismatch in search index");
+  assert(searchIndex.professors.length === byProfessor.size, "Professor count mismatch in search index");
+
+  for (const subject of searchIndex.subjects) {
+    assert(bySubject.has(subject.code), `Missing subject shard source for ${subject.code}`);
+    assert(fileIndex[`${version}/subjects/${subject.code}.json`], `Missing subject shard file for ${subject.code}`);
+  }
+  for (const course of searchIndex.courses) {
+    assert(byCourse.has(course.code), `Missing course shard source for ${course.code}`);
+    assert(fileIndex[`${version}/courses/${course.code}.json`], `Missing course shard file for ${course.code}`);
+  }
+  for (const professor of searchIndex.professors) {
+    assert(byProfessor.has(professor.id), `Missing professor shard source for ${professor.id}`);
+    assert(fileIndex[`${version}/professors/${professor.id}.json`], `Missing professor shard file for ${professor.id}`);
+  }
 }
 
 async function main() {
@@ -399,7 +451,7 @@ async function main() {
     fileIndex[relativePath] = await writeJson(join(OUTPUT_ROOT, relativePath), payload);
   }
 
-  const searchIndex = {
+  const searchIndex: SearchIndexPayload = {
     subjects: [...bySubject.entries()]
       .map(([code, rows]) => ({ code, popularity: rows.length }))
       .sort((a, b) => b.popularity - a.popularity),
@@ -440,10 +492,21 @@ async function main() {
 
   await writeJson(join(OUTPUT_ROOT, "current-version.json"), { version });
 
+  verifyCrossReferences({
+    version,
+    searchIndex,
+    bySubject,
+    byCourse,
+    byProfessor,
+    fileIndex,
+  });
+  await verifyFileHashes(fileIndex);
+
   console.log(`Built data version ${version}`);
   console.log(`Subjects: ${bySubject.size}`);
   console.log(`Courses: ${byCourse.size}`);
   console.log(`Professors: ${byProfessor.size}`);
+  console.log(`Integrity checks: ${Object.keys(fileIndex).length} files verified`);
 }
 
 void main();
