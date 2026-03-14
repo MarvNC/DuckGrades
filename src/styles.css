@@ -79,14 +79,14 @@ summary:focus-visible {
 }
 
 .brand-duck {
-  font-size: clamp(2.45rem, 4.9vw, 3.45rem);
+  font-size: clamp(1.7rem, 2.8vw, 2.2rem);
   font-weight: 900;
   letter-spacing: -0.035em;
   color: #1d2b16;
 }
 
 .brand-grades {
-  font-size: clamp(2.45rem, 4.9vw, 3.45rem);
+  font-size: clamp(1.7rem, 2.8vw, 2.2rem);
   font-weight: 800;
   letter-spacing: -0.03em;
   color: #4f6e3d;

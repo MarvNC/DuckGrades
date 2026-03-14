@@ -14,18 +14,18 @@ function visibleNumericalCount(section: SectionRow): number {
 
 export function SectionDrilldown({ sections, summaryLabel = "Section details", identityPrefix }: SectionDrilldownProps) {
   return (
-    <details className="mt-3 rounded-xl border border-[var(--duck-border)] bg-[#f9fbf5] p-3">
-      <summary className="cursor-pointer text-sm font-semibold">{summaryLabel}</summary>
+    <details className="mt-3 rounded-xl border border-slate-200 bg-[#f7faf2] p-3">
+      <summary className="cursor-pointer text-sm font-semibold text-slate-700">{summaryLabel}</summary>
       <div className="mt-2 space-y-2">
         {sections.map((section) => {
           const visible = visibleNumericalCount(section);
           const coverage = section.totalNonWReported > 0 ? (visible / section.totalNonWReported) * 100 : 0;
           return (
-            <div key={`${identityPrefix}-${section.crn}`} className="rounded-lg border border-[var(--duck-border)] bg-white px-3 py-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--duck-muted)]">
+            <div key={`${identityPrefix}-${section.crn}`} className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
                 {section.termDesc} · CRN {section.crn}
               </p>
-              <p className="text-sm text-[var(--duck-muted)]">
+              <p className="text-sm text-slate-600">
                 Reported non-W: {section.totalNonWReported} · Visible: {visible} ({coverage.toFixed(1)}%)
               </p>
             </div>

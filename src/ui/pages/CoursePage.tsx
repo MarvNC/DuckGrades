@@ -26,47 +26,47 @@ export function CoursePage() {
   }, [code]);
 
   return (
-    <section className="space-y-5 rounded-3xl border border-[var(--duck-border)] bg-white/80 p-8 shadow-sm">
+    <section className="space-y-5 rounded-3xl border border-slate-200/90 bg-white/85 p-6 shadow-sm backdrop-blur-sm sm:p-8">
       <Link
-        className="inline-flex rounded-full border border-[var(--duck-border)] px-3 py-1 text-sm font-semibold"
+        className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
         to={`/subject/${course?.subject ?? "CS"}`}
       >
         Back to subject
       </Link>
-      <h1 className="text-3xl font-extrabold">{course?.courseCode ?? (code ?? "COURSE").toUpperCase()}</h1>
-      <p className="text-[var(--duck-muted)]">{course?.title ?? "Loading course details..."}</p>
+      <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">{course?.courseCode ?? (code ?? "COURSE").toUpperCase()}</h1>
+      <p className="text-slate-600">{course?.title ?? "Loading course details..."}</p>
       {course ? (
         <div className="flex flex-wrap gap-2">
-          <span className="rounded-full border border-[var(--duck-border)] bg-[#f6faef] px-2.5 py-1 text-xs font-semibold text-[var(--duck-muted)]">
+          <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2.5 py-1 text-xs font-semibold text-slate-600">
             Subject {course.subject}
           </span>
-          <span className="rounded-full border border-[var(--duck-border)] bg-[#f6faef] px-2.5 py-1 text-xs font-semibold text-[var(--duck-muted)]">
+          <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2.5 py-1 text-xs font-semibold text-slate-600">
             {course.instructors.length} instructors
           </span>
         </div>
       ) : null}
       <AggregateSummaryCard label="Course aggregate" aggregate={course?.aggregate} />
-      {loadState === "loading" ? <p className="text-sm text-[var(--duck-muted)]">Loading course shard...</p> : null}
+      {loadState === "loading" ? <p className="text-sm text-slate-600">Loading course shard...</p> : null}
       {loadState === "error" ? <p className="text-sm text-amber-700">Unable to load this course shard right now.</p> : null}
       {loadState === "ready" && (course?.instructors.length ?? 0) === 0 ? (
-        <p className="text-sm text-[var(--duck-muted)]">No visible instructor data for this course.</p>
+        <p className="text-sm text-slate-600">No visible instructor data for this course.</p>
       ) : null}
       {loadState === "ready" && course && course.aggregate.coverage !== null && course.aggregate.coverage < 0.99 ? (
-        <p className="text-sm text-[var(--duck-muted)]">
+        <p className="text-sm text-slate-600">
           Visible grade coverage is {(course.aggregate.coverage * 100).toFixed(1)}%; source redaction may hide some section-level buckets.
         </p>
       ) : null}
       <div className="space-y-3">
         {(course?.instructors ?? []).slice(0, 10).map((instructor) => (
-          <article key={instructor.professorId} className="rounded-2xl border border-[var(--duck-border)] bg-white p-4">
+          <article key={instructor.professorId} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <Link to={`/professor/${instructor.professorId}`} className="text-lg font-bold hover:underline">
                   {instructor.name}
                 </Link>
-                <p className="mt-1 text-sm text-[var(--duck-muted)]">{instructor.sectionCount} sections</p>
+                <p className="mt-1 text-sm text-slate-600">{instructor.sectionCount} sections</p>
               </div>
-              <p className="text-sm font-semibold text-[var(--duck-muted)]">Mean {instructor.aggregate.mean?.toFixed(2) ?? "N/A"}</p>
+              <p className="text-sm font-semibold text-slate-600">Mean {instructor.aggregate.mean?.toFixed(2) ?? "N/A"}</p>
             </div>
             <SectionDrilldown sections={instructor.sections} identityPrefix={instructor.professorId} />
           </article>

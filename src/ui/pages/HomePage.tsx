@@ -81,9 +81,6 @@ export function HomePage() {
 
   return (
     <section className="relative mx-auto flex min-h-screen w-full max-w-4xl items-center justify-center py-12 text-center sm:py-16">
-      <div className="home-grid-bg" aria-hidden="true" />
-      <div className="home-bg-overlay" aria-hidden="true" />
-
       <main className="relative z-10 w-full max-w-4xl">
         <section className="fade-in-up" style={{ animationDelay: "80ms" }}>
           <Link to="/" className="brand brand-home justify-center">

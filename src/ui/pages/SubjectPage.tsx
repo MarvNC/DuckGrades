@@ -75,19 +75,19 @@ export function SubjectPage() {
   const bottomSpacerHeight = Math.max(0, (sortedCourses.length - endIndex) * itemHeight);
 
   return (
-    <section className="space-y-5 rounded-3xl border border-[var(--duck-border)] bg-white/80 p-8 shadow-sm">
-      <h1 className="text-3xl font-extrabold">{(code ?? "SUBJ").toUpperCase()} Subject</h1>
+    <section className="space-y-5 rounded-3xl border border-slate-200/90 bg-white/85 p-6 shadow-sm backdrop-blur-sm sm:p-8">
+      <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">{(code ?? "SUBJ").toUpperCase()} Subject</h1>
       <AggregateSummaryCard label="Subject aggregate" aggregate={subject?.aggregate} />
-      {loadState === "loading" ? <p className="text-sm text-[var(--duck-muted)]">Loading subject data...</p> : null}
+      {loadState === "loading" ? <p className="text-sm text-slate-600">Loading subject data...</p> : null}
       {loadState === "error" ? <p className="text-sm text-amber-700">Unable to load this subject shard right now.</p> : null}
-      {loadState === "ready" && sortedCourses.length === 0 ? <p className="text-sm text-[var(--duck-muted)]">No visible course data for this subject.</p> : null}
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--duck-border)] bg-white p-3">
-        <label className="text-sm font-semibold text-[var(--duck-muted)]" htmlFor="sort-select">
+      {loadState === "ready" && sortedCourses.length === 0 ? <p className="text-sm text-slate-600">No visible course data for this subject.</p> : null}
+      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <label className="text-sm font-semibold text-slate-600" htmlFor="sort-select">
           Sort
         </label>
         <select
           id="sort-select"
-          className="rounded-lg border border-[var(--duck-border)] px-2 py-1 text-sm"
+          className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-medium text-[var(--duck-fg)]"
           value={sort}
           onChange={(event) => {
             const next = new URLSearchParams(searchParams);
@@ -101,7 +101,7 @@ export function SubjectPage() {
         </select>
         <button
           type="button"
-          className="rounded-lg border border-[var(--duck-border)] px-3 py-1 text-sm font-semibold"
+          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
           onClick={() => {
             const next = new URLSearchParams(searchParams);
             next.set("dir", direction === "asc" ? "desc" : "asc");
@@ -110,12 +110,12 @@ export function SubjectPage() {
         >
           Direction: {direction}
         </button>
-        <label className="text-sm font-semibold text-[var(--duck-muted)]" htmlFor="year-select">
+        <label className="text-sm font-semibold text-slate-600" htmlFor="year-select">
           Year
         </label>
         <select
           id="year-select"
-          className="rounded-lg border border-[var(--duck-border)] px-2 py-1 text-sm"
+          className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-medium text-[var(--duck-fg)]"
           value={year}
           onChange={(event) => {
             const next = new URLSearchParams(searchParams);
@@ -130,12 +130,12 @@ export function SubjectPage() {
           <option value="4">400-level</option>
           <option value="5">500-level+</option>
         </select>
-        <label className="text-sm font-semibold text-[var(--duck-muted)]" htmlFor="term-select">
+        <label className="text-sm font-semibold text-slate-600" htmlFor="term-select">
           Term
         </label>
         <select
           id="term-select"
-          className="rounded-lg border border-[var(--duck-border)] px-2 py-1 text-sm"
+          className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-medium text-[var(--duck-fg)]"
           value={term}
           onChange={(event) => {
             const next = new URLSearchParams(searchParams);
@@ -151,7 +151,7 @@ export function SubjectPage() {
         </select>
         <button
           type="button"
-          className="rounded-lg border border-[var(--duck-border)] px-3 py-1 text-sm font-semibold"
+          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
           onClick={() => {
             setSearchParams(new URLSearchParams());
             setScrollTop(0);
@@ -160,13 +160,13 @@ export function SubjectPage() {
         >
           Reset
         </button>
-        <span className="ml-auto text-xs font-semibold uppercase tracking-[0.1em] text-[var(--duck-muted)]">
+        <span className="ml-auto text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
           {sortedCourses.length} courses
         </span>
       </div>
       <div
         ref={listRef}
-        className="relative max-h-[68vh] overflow-auto rounded-2xl border border-[var(--duck-border)] bg-[#f7faf2] p-3"
+        className="relative max-h-[68vh] overflow-auto rounded-2xl border border-slate-200 bg-[#f7faf2] p-3"
         onScroll={(event) => {
           setScrollTop(event.currentTarget.scrollTop);
         }}
@@ -177,12 +177,12 @@ export function SubjectPage() {
             <Link
               key={course.courseCode}
               to={`/course/${course.courseCode}`}
-              className="block rounded-2xl border border-[var(--duck-border)] bg-white p-4 transition hover:shadow-sm"
+              className="block rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
-              <p className="text-sm font-semibold text-[var(--duck-muted)]">{course.number}</p>
-              <p className="text-lg font-bold">{course.courseCode}</p>
-              <p className="mt-1 text-sm text-[var(--duck-muted)]">{course.title}</p>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--duck-muted)]">
+              <p className="text-sm font-semibold text-slate-600">{course.number}</p>
+              <p className="text-lg font-bold text-[var(--duck-fg)]">{course.courseCode}</p>
+              <p className="mt-1 text-sm text-slate-600">{course.title}</p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
                 Mean {course.aggregate.mean?.toFixed(2) ?? "N/A"} · Mode {course.aggregate.mode ?? "N/A"}
               </p>
             </Link>
@@ -193,7 +193,7 @@ export function SubjectPage() {
       {scrollTop > 720 ? (
         <button
           type="button"
-          className="fixed bottom-6 right-5 rounded-full border border-[var(--duck-border)] bg-white px-4 py-2 text-sm font-bold shadow-md"
+          className="fixed right-5 bottom-6 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-md transition hover:bg-slate-50"
           onClick={() => {
             listRef.current?.scrollTo({ top: 0, behavior: "smooth" });
           }}
