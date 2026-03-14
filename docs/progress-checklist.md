@@ -33,7 +33,7 @@ Last updated: 2026-03-14
 - [x] 8 Fallback to same-origin when CDN fetch fails.
 - [~] 9 Numerical heatmap-style chart and non-numerical histogram UI (lightweight strip/histogram started; full interactive chart pending).
 - [x] 10 Search UX: grouped results + debounce + arrows/tab/shift+tab/esc/enter implemented.
-- [~] 11 Subject page partial: sort + URL state done; year/term filters + virtualization pending.
+- [~] 11 Subject page partial: sort + URL state + year/term filters done; virtualization pending.
 - [~] 12 Course page partial: aggregate + instructor list + collapsible section summaries done; metadata/details depth pending.
 - [~] 13 Professor page partial: aggregate + course list + collapsible section summaries done; richer breakdown pending.
 - [ ] 14 Performance budgets measured and enforced.
@@ -53,8 +53,8 @@ Last updated: 2026-03-14
 - [ ] Implement numerical/non-numerical chart primitives matching spec language.
 - [x] Wire course/professor drill-down sections with collapsible section records.
 - [x] Add route-level data prefetch from search results (hover/focus).
-- [ ] Add deployment docs for GitHub Pages and Cloudflare Pages with `VITE_DATA_BASE_URL`.
 - [x] Add deployment docs for GitHub Pages and Cloudflare Pages with `VITE_DATA_BASE_URL`.
+- [ ] Add virtualized course list + back-to-top behavior for deep subject scrolling.
 
 ## Verification Log
 
@@ -65,9 +65,11 @@ Last updated: 2026-03-14
 - [x] Re-ran `bun run check` and `bun run build` after search/drilldown upgrades on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after route prefetch integration on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after deployment workflow updates on 2026-03-14.
+- [x] Re-ran `bun run build:data`, `bun run check`, and `bun run build` after year/term filter implementation on 2026-03-14.
 
 ## Recent Commits
 
+- `624bccb` feat: add subject year and term filtering model
 - `9e00c21` feat: add free-tier deployment docs and gh pages workflow
 - `35cf0b7` feat: prefetch shard routes from search interactions
 - `a04803f` feat: improve search UX and add route drilldown states
@@ -83,3 +85,4 @@ Last updated: 2026-03-14
 - Spec authority is `docs/duckgrades-static-spec.md`; verify behavior against it before changing UX/data semantics.
 - Keep hosting constraints in mind: static files only, CDN-friendly immutable data versioning, free GH/CF Pages long-term.
 - Main CSVs are intentionally committed and treated as stable source input.
+- Research report from `uo.zone` deep dive is at `docs/uo-zone-ux-structure-report.md` (intentionally not committed).
