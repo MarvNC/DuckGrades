@@ -94,8 +94,8 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
 
   const numericalBarHeight = size === "sm" ? 20 : 24;
   const leftBarHeight = size === "sm" ? 14 : 18;
-  const barWidth = size === "sm" ? 5 : 6;
-  const barGap = size === "sm" ? 2 : 2;
+  const barWidth = 15;
+  const barGap = 2;
 
   return (
     <div className="inline-flex w-fit max-w-full flex-col" onMouseLeave={() => setActiveDatum(null)}>
