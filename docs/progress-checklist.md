@@ -30,12 +30,12 @@ Last updated: 2026-03-14
 - [x] 6 Deterministic professor IDs + unknown fallback implemented.
 - [x] 7 Static sharded output + manifest/search index implemented.
 - [x] 8 Runtime fetch uses versioned base URL (`VITE_DATA_BASE_URL` aware).
-- [ ] 8 Fallback to same-origin when CDN fetch fails.
-- [ ] 9 Numerical heatmap-style chart and non-numerical histogram UI.
-- [~] 10 Search UX partial: grouped results + arrows/enter/esc done; debounce/tab traversal pending.
+- [x] 8 Fallback to same-origin when CDN fetch fails.
+- [~] 9 Numerical heatmap-style chart and non-numerical histogram UI (lightweight strip/histogram started; full interactive chart pending).
+- [x] 10 Search UX: grouped results + debounce + arrows/tab/shift+tab/esc/enter implemented.
 - [~] 11 Subject page partial: sort + URL state done; year/term filters + virtualization pending.
-- [~] 12 Course page partial: aggregate + instructor list done; metadata/details/collapsibles pending.
-- [~] 13 Professor page partial: aggregate + course list done; collapsible section details pending.
+- [~] 12 Course page partial: aggregate + instructor list + collapsible section summaries done; metadata/details depth pending.
+- [~] 13 Professor page partial: aggregate + course list + collapsible section summaries done; richer breakdown pending.
 - [ ] 14 Performance budgets measured and enforced.
 - [~] 15 Build integrity checks partial: deterministic/collision behavior done; schema/hash/cross-ref validation pending.
 - [ ] 16 Data CDN branch strategy + deployment workflow.
@@ -45,13 +45,13 @@ Last updated: 2026-03-14
 ## In Progress
 
 - [ ] Replace placeholder page blocks with chart components and richer drill-down content.
-- [ ] Add keyboard-first grouped search behavior (tab/shift+tab focus travel and Esc close state polish).
-- [ ] Add loading, no-data, and redaction coverage states across all route pages.
+- [x] Add keyboard-first grouped search behavior (tab/shift+tab focus travel and Esc close state polish).
+- [~] Add loading, no-data, and redaction coverage states across all route pages.
 
 ## Next Up (Priority)
 
 - [ ] Implement numerical/non-numerical chart primitives matching spec language.
-- [ ] Wire course/professor drill-down sections with collapsible section records.
+- [x] Wire course/professor drill-down sections with collapsible section records.
 - [ ] Add route-level data prefetch from search results (hover/focus).
 - [ ] Add deployment docs for GitHub Pages and Cloudflare Pages with `VITE_DATA_BASE_URL`.
 
@@ -61,9 +61,11 @@ Last updated: 2026-03-14
 - [x] `bun run build:data` emits dataset `v20260314`.
 - [x] `bun run build` passes with production bundle output.
 - [x] Re-ran `bun run build:data`, `bun run check`, and `bun run build` on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after search/drilldown upgrades on 2026-03-14.
 
 ## Recent Commits
 
+- `a04803f` feat: improve search UX and add route drilldown states
 - `be97dd5` feat: share aggregate summary card across detail routes
 - `d22f02f` chore: add handoff progress checklist workflow
 - `251d21c` feat: add subject sorting with url state
