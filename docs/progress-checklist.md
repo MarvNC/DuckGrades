@@ -40,7 +40,7 @@ Last updated: 2026-03-14
 - [ ] 14 Performance budgets measured and enforced.
 - [~] 15 Build integrity checks partial: deterministic/collision behavior done; schema/hash/cross-ref validation pending.
 - [~] 16 Data CDN branch strategy + deployment workflow (docs + GH Pages workflow added; live branch wiring pending).
-- [ ] 17 Accessibility QA pass and edge-case QA plan execution.
+- [~] 17 Accessibility QA pass and edge-case QA plan execution (chart keyboard + text alternative improvements landed; full audit pending).
 - [ ] 18 Legal/attribution validation notes.
 
 ## In Progress
@@ -48,6 +48,7 @@ Last updated: 2026-03-14
 - [ ] Replace placeholder page blocks with chart components and richer drill-down content.
 - [x] Add keyboard-first grouped search behavior (tab/shift+tab focus travel and Esc close state polish).
 - [x] Add loading, no-data, and redaction coverage states across all route pages.
+- [~] Add build-time integrity checks (hash + cross-reference done; schema-contract validation still pending).
 
 ## Next Up (Priority)
 
@@ -74,9 +75,13 @@ Last updated: 2026-03-14
 - [x] Re-ran `bun run check` and `bun run build` after trapezoid-style chart fidelity update on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after loading/redaction state improvements on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after persistent header search-shell implementation on 2026-03-14.
+- [x] Re-ran `bun run build:data`, `bun run check`, and `bun run build` after integrity-check enhancements on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after chart keyboard/a11y improvements on 2026-03-14.
 
 ## Recent Commits
 
+- `640e5f1` feat: add keyboard and screenreader chart accessibility
+- `674569a` feat: add build-data hash and cross-reference integrity checks
 - `7e812db` feat: add persistent header quick-search shell
 - `6e85c53` feat: surface loading and coverage redaction states
 - `f8c838b` feat: render trapezoid-style interactive numerical chart
