@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getCourseShard, type CourseShard } from "../../lib/dataClient";
+import fuzzysort from "fuzzysort";
 import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
 import { EntityAggregateCard } from "../components/EntityAggregateCard";
 import { SectionDrilldown } from "../components/SectionDrilldown";
@@ -29,11 +30,17 @@ export function CoursePage() {
 
   const visibleInstructors = useMemo(() => {
     const instructors = course?.instructors ?? [];
-    const query = instructorQuery.trim().toLowerCase();
+    const query = instructorQuery.trim();
     if (!query) {
       return instructors;
     }
-    return instructors.filter((instructor) => instructor.name.toLowerCase().includes(query));
+    return fuzzysort
+      .go(query, instructors, {
+        keys: [(instructor) => instructor.name, (instructor) => instructor.name.toLowerCase().replace(/[^a-z0-9]+/g, "")],
+        threshold: query.length <= 4 ? 0.3 : 0.2,
+        limit: instructors.length,
+      })
+      .map((result) => result.obj);
   }, [course?.instructors, instructorQuery]);
 
   const totalSections = useMemo(() => {

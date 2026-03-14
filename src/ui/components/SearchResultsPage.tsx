@@ -20,6 +20,18 @@ type SearchResultsPageProps = {
   indexByKey: Map<string, number>;
 };
 
+function renderHighlightedText(text: string, indexes?: ReadonlyArray<number>) {
+  if (!indexes || indexes.length === 0) {
+    return text;
+  }
+  const highlighted = new Set(indexes);
+  return text.split("").map((character, index) => (
+    <span key={`${character}-${index}`} className={highlighted.has(index) ? "font-semibold text-[var(--duck-fg)]" : undefined}>
+      {character}
+    </span>
+  ));
+}
+
 export function SearchResultsPage({
   query,
   grouped,
@@ -105,9 +117,9 @@ export function SearchResultsPage({
                     }}
                   >
                     <p className="text-sm text-[var(--duck-fg)]">
-                      <span className="font-semibold">{item.label}</span>
+                      <span className="font-semibold">{renderHighlightedText(item.label, item.labelMatchIndexes)}</span>
                       <span className="px-2 text-slate-300">-</span>
-                      <span className="text-slate-500">{item.subtitle}</span>
+                      <span className="text-slate-500">{renderHighlightedText(item.subtitle, item.subtitleMatchIndexes)}</span>
                     </p>
                   </Link>
                 );

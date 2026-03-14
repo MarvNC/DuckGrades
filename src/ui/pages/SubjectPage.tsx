@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getCourseShard, getSubjectShard, type SubjectShard } from "../../lib/dataClient";
+import fuzzysort from "fuzzysort";
 import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
 import { EntityAggregateCard } from "../components/EntityAggregateCard";
 
@@ -69,17 +70,22 @@ export function SubjectPage() {
   }, [courses, subject]);
 
   const filteredCourses = useMemo(() => {
-    const query = courseQuery.trim().toLowerCase();
+    const query = courseQuery.trim();
     if (!query) {
       return courses;
     }
-    return courses.filter((course) => {
-      return (
-        course.courseCode.toLowerCase().includes(query) ||
-        course.number.toLowerCase().includes(query) ||
-        course.title.toLowerCase().includes(query)
-      );
-    });
+    return fuzzysort
+      .go(query, courses, {
+        keys: [
+          (course) => course.courseCode,
+          (course) => course.number,
+          (course) => course.title,
+          (course) => course.courseCode.toLowerCase().replace(/[^a-z0-9]+/g, ""),
+        ],
+        threshold: query.length <= 4 ? 0.3 : 0.2,
+        limit: courses.length,
+      })
+      .map((result) => result.obj);
   }, [courseQuery, courses]);
 
   return (

@@ -6,6 +6,8 @@ export type SearchItem = {
   key: string;
   label: string;
   subtitle: string;
+  labelMatchIndexes?: number[];
+  subtitleMatchIndexes?: number[];
   to: string;
   section: "Subjects" | "Courses" | "Professors";
 };
@@ -38,6 +40,7 @@ export function buildSearchItems(
     key: `subject:${subject.code}`,
     label: subject.code,
     subtitle: `${subject.popularity} sections`,
+    labelMatchIndexes: subject.labelMatchIndexes,
     to: `/subject/${subject.code}`,
     section: "Subjects" as const,
   }));
@@ -45,6 +48,8 @@ export function buildSearchItems(
     key: `course:${course.code}`,
     label: course.code,
     subtitle: course.title,
+    labelMatchIndexes: course.labelMatchIndexes,
+    subtitleMatchIndexes: course.subtitleMatchIndexes,
     to: `/course/${course.code}`,
     section: "Courses" as const,
   }));
@@ -52,6 +57,7 @@ export function buildSearchItems(
     key: `professor:${professor.id}`,
     label: professor.name,
     subtitle: `${professor.popularity} students`,
+    labelMatchIndexes: professor.labelMatchIndexes,
     to: `/professor/${professor.id}`,
     section: "Professors" as const,
   }));

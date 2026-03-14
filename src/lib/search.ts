@@ -1,49 +1,109 @@
 import type { SearchIndex } from "./dataClient";
+import fuzzysort from "fuzzysort";
 
-type Ranked<T> = T & { score: number };
+type MatchIndexes = number[];
 
-function rankValue(query: string, candidate: string): number {
-  const q = query.toLowerCase();
-  const c = candidate.toLowerCase();
-  if (c === q) {
-    return 100;
+type RankedSubject = SearchIndex["subjects"][number] & {
+  score: number;
+  labelMatchIndexes: MatchIndexes;
+};
+
+type RankedCourse = SearchIndex["courses"][number] & {
+  score: number;
+  labelMatchIndexes: MatchIndexes;
+  subtitleMatchIndexes: MatchIndexes;
+};
+
+type RankedProfessor = SearchIndex["professors"][number] & {
+  score: number;
+  labelMatchIndexes: MatchIndexes;
+};
+
+function normalizeLoose(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function getIndexes(result: { indexes: ReadonlyArray<number> } | undefined): number[] {
+  if (!result) {
+    return [];
   }
-  if (c.startsWith(q)) {
-    return 70;
+  return [...result.indexes];
+}
+
+function getFuzzyThreshold(query: string): number {
+  if (query.length <= 2) {
+    return 0.4;
   }
-  if (c.includes(q)) {
-    return 40;
+  if (query.length <= 4) {
+    return 0.3;
   }
-  return 0;
+  return 0.2;
+}
+
+function applyPopularityBoost(score: number, popularity: number): number {
+  const popularityBoost = Math.log10(popularity + 1) * 0.025;
+  return score + popularityBoost;
 }
 
 export function searchIndex(index: SearchIndex, query: string) {
   const normalized = query.trim();
   if (!normalized) {
     return {
-      subjects: [] as Ranked<SearchIndex["subjects"][number]>[],
-      courses: [] as Ranked<SearchIndex["courses"][number]>[],
-      professors: [] as Ranked<SearchIndex["professors"][number]>[],
+      subjects: [] as RankedSubject[],
+      courses: [] as RankedCourse[],
+      professors: [] as RankedProfessor[],
     };
   }
 
-  const subjects = index.subjects
-    .map((subject) => ({ ...subject, score: rankValue(normalized, subject.code) }))
-    .filter((subject) => subject.score > 0)
-    .sort((a, b) => b.score - a.score || b.popularity - a.popularity)
-    .slice(0, 6);
+  const threshold = getFuzzyThreshold(normalized);
 
-  const courses = index.courses
-    .map((course) => ({ ...course, score: Math.max(rankValue(normalized, course.code), rankValue(normalized, course.title)) }))
-    .filter((course) => course.score > 0)
-    .sort((a, b) => b.score - a.score || b.popularity - a.popularity)
-    .slice(0, 6);
+  const subjects = fuzzysort
+    .go(normalized, index.subjects, {
+      keys: [(subject) => subject.code, (subject) => normalizeLoose(subject.code)],
+      threshold,
+      limit: 6,
+      scoreFn: (result) => applyPopularityBoost(result.score, result.obj.popularity),
+    })
+    .map((result) => ({
+      ...result.obj,
+      score: result.score,
+      labelMatchIndexes: getIndexes(result[0]),
+    }))
+    .sort((a, b) => b.score - a.score || b.popularity - a.popularity);
 
-  const professors = index.professors
-    .map((professor) => ({ ...professor, score: rankValue(normalized, professor.name) }))
-    .filter((professor) => professor.score > 0)
-    .sort((a, b) => b.score - a.score || b.popularity - a.popularity)
-    .slice(0, 6);
+  const courses = fuzzysort
+    .go(normalized, index.courses, {
+      keys: [
+        (course) => course.code,
+        (course) => course.title,
+        (course) => normalizeLoose(course.code),
+        (course) => normalizeLoose(course.title),
+      ],
+      threshold,
+      limit: 6,
+      scoreFn: (result) => applyPopularityBoost(result.score, result.obj.popularity),
+    })
+    .map((result) => ({
+      ...result.obj,
+      score: result.score,
+      labelMatchIndexes: getIndexes(result[0]),
+      subtitleMatchIndexes: getIndexes(result[1]),
+    }))
+    .sort((a, b) => b.score - a.score || b.popularity - a.popularity);
+
+  const professors = fuzzysort
+    .go(normalized, index.professors, {
+      keys: [(professor) => professor.name, (professor) => normalizeLoose(professor.name)],
+      threshold,
+      limit: 6,
+      scoreFn: (result) => applyPopularityBoost(result.score, result.obj.popularity),
+    })
+    .map((result) => ({
+      ...result.obj,
+      score: result.score,
+      labelMatchIndexes: getIndexes(result[0]),
+    }))
+    .sort((a, b) => b.score - a.score || b.popularity - a.popularity);
 
   return { subjects, courses, professors };
 }
