@@ -60,6 +60,7 @@ Last updated: 2026-03-14
 - [~] Revamp subject/course distributions for dense inline cards (compact chart + hover details + clarified P/NP/Other/W semantics).
 - [~] Tighten aggregate/course visual consistency (right-aligned fit-content charts, section-count chip placement, and restored subject course search).
 - [~] Add section-level distribution strips in drilldowns with visible/reporting context and redaction note handling.
+- [~] Refine section drilldown hierarchy/layout for denser inline metadata + distribution readability.
 
 ## Next Up (Priority)
 
@@ -112,6 +113,7 @@ Last updated: 2026-03-14
 - [x] Re-ran `bun run check` and `bun run build` after disabling Vite `emptyOutDir` to avoid intermittent Windows `ENOTEMPTY` dist cleanup failures on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after aggregate/card alignment and subject search restore on 2026-03-14.
 - [x] Re-ran `bun run check` after per-section drilldown distribution integration on 2026-03-14.
+- [x] Re-ran `bun run check` after section drilldown hierarchy redesign on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after unifying homepage/header search logic and removing homepage debounce lag on 2026-03-14.
 - [x] Re-ran `bun run check` after removing homepage search-result animation classes on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after route-wide header search unification and inline result-mode rendering on 2026-03-14.
@@ -126,6 +128,7 @@ Last updated: 2026-03-14
 
 ## Recent Commits
 
+- `6339b2d` style: redesign section drilldown for compact hierarchy
 - `fe2d982` feat: add per-section grade distribution in drilldown
 - `e936de5` feat: align aggregate and course cards with compact charts
 - `0808803` feat: compact course distributions and clarify non-numeric grades
