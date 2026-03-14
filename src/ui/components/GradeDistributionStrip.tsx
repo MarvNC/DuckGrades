@@ -65,7 +65,7 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
   const points: Point[] = useMemo(() => {
     return numericalValues.map((count, index) => {
       const ratio = count / maxNumerical;
-      const scaled = count > 0 ? 0.18 + 0.82 * Math.pow(ratio, 0.7) : 0;
+      const scaled = count > 0 ? 0.24 + 0.76 * Math.pow(ratio, 0.72) : 0;
       return {
         x: xStart + index * xStep,
         y: baseY - scaled * graphHeight,
@@ -113,8 +113,8 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
 
   const leftMax = Math.max(1, ...LEFT_BUCKET_ORDER.map((code) => leftCounts[code] ?? 0));
   const leftMaxHeight = size === "sm" ? 14 : 18;
-  const chartWidthClass = size === "sm" ? "w-[16.25rem] sm:w-[18rem] lg:w-[20rem]" : "w-[19.5rem] sm:w-[22rem] lg:w-[24rem]";
-  const leftBarWidthClass = size === "sm" ? "w-3" : "w-3.5";
+  const chartWidthClass = size === "sm" ? "w-[13rem] sm:w-[14.5rem] lg:w-[16rem]" : "w-[15.5rem] sm:w-[17.5rem] lg:w-[19rem]";
+  const leftBarWidthClass = size === "sm" ? "w-2.5" : "w-3";
 
   const numericalTextSummary = NUMERICAL_GRADE_ORDER.map((_, index) => getNumericalDetails(index)).join(", ");
   const nonNumericalTextSummary = LEFT_BUCKET_ORDER.map((code) => getLeftBucketDetails(code)).join(", ");
@@ -133,8 +133,8 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
         <p className={`${size === "sm" ? "text-[9px]" : "text-[10px]"} max-w-[13rem] truncate text-right font-semibold text-slate-600 sm:max-w-[14rem]`}>{activeText}</p>
       </div>
 
-      <div className={`mt-1 flex items-end ${size === "sm" ? "gap-0.5" : "gap-1"}`}>
-        <div className={`flex shrink-0 items-end border-r border-dashed border-[var(--duck-border)] ${size === "sm" ? "gap-0.5 pr-1" : "gap-1 pr-1.5"}`}>
+      <div className={`mt-1 flex items-end ${size === "sm" ? "gap-0" : "gap-0.5"}`}>
+        <div className={`flex shrink-0 items-end border-r border-dashed border-[var(--duck-border)] ${size === "sm" ? "gap-0.5 pr-0.5" : "gap-0.5 pr-1"}`}>
           {LEFT_BUCKET_ORDER.map((code) => {
             const count = leftCounts[code] ?? 0;
             const height = Math.max(2, Math.round((count / leftMax) * leftMaxHeight));
