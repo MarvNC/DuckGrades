@@ -155,7 +155,7 @@ export function HomePage() {
                   setActiveIndex(0);
                 }
               }}
-              placeholder="Search by course (e.g., CS 161), professor, or subject..."
+              placeholder="Search by course, professor, or subject..."
               autoComplete="off"
               autoFocus
             />

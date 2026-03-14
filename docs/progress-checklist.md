@@ -96,6 +96,7 @@ Last updated: 2026-03-14
 - [x] Re-ran `bun run check` after fixing homepage logo size consistency across viewport widths on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after non-home page visual refresh for homepage design consistency on 2026-03-14.
 - [x] Re-ran `bun run check` after reducing non-home logo scale while preserving homepage hero sizing on 2026-03-14.
+- [x] Re-ran `bun run check` after unifying homepage/header search placeholder copy on 2026-03-14.
 
 ## Recent Commits
 
