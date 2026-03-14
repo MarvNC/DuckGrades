@@ -38,7 +38,7 @@ Last updated: 2026-03-14
 - [~] 13 Professor page partial: aggregate + course list + collapsible section summaries done; richer breakdown pending.
 - [ ] 14 Performance budgets measured and enforced.
 - [~] 15 Build integrity checks partial: deterministic/collision behavior done; schema/hash/cross-ref validation pending.
-- [ ] 16 Data CDN branch strategy + deployment workflow.
+- [~] 16 Data CDN branch strategy + deployment workflow (docs + GH Pages workflow added; live branch wiring pending).
 - [ ] 17 Accessibility QA pass and edge-case QA plan execution.
 - [ ] 18 Legal/attribution validation notes.
 
@@ -54,6 +54,7 @@ Last updated: 2026-03-14
 - [x] Wire course/professor drill-down sections with collapsible section records.
 - [x] Add route-level data prefetch from search results (hover/focus).
 - [ ] Add deployment docs for GitHub Pages and Cloudflare Pages with `VITE_DATA_BASE_URL`.
+- [x] Add deployment docs for GitHub Pages and Cloudflare Pages with `VITE_DATA_BASE_URL`.
 
 ## Verification Log
 
@@ -63,9 +64,11 @@ Last updated: 2026-03-14
 - [x] Re-ran `bun run build:data`, `bun run check`, and `bun run build` on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after search/drilldown upgrades on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after route prefetch integration on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after deployment workflow updates on 2026-03-14.
 
 ## Recent Commits
 
+- `9e00c21` feat: add free-tier deployment docs and gh pages workflow
 - `35cf0b7` feat: prefetch shard routes from search interactions
 - `a04803f` feat: improve search UX and add route drilldown states
 - `be97dd5` feat: share aggregate summary card across detail routes
