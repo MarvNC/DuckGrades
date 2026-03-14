@@ -33,6 +33,7 @@ Last updated: 2026-03-14
 - [x] 8 Fallback to same-origin when CDN fetch fails.
 - [~] 9 Numerical heatmap-style chart and non-numerical histogram UI (interactive bin/bar states added; full trapezoid fidelity still pending).
 - [x] 10 Search UX: grouped results + debounce + arrows/tab/shift+tab/esc/enter implemented.
+- [x] 10 Search shell is now available from persistent header quick-search across routes.
 - [~] 11 Subject page partial: sort + URL state + year/term filters + virtualization + back-to-top done; further polish pending.
 - [~] 12 Course page partial: aggregate + instructor metadata + shared collapsible section drilldown done; content-depth polish pending.
 - [~] 13 Professor page partial: aggregate + course metadata + shared collapsible section drilldown done; richer comparison views pending.
@@ -72,9 +73,11 @@ Last updated: 2026-03-14
 - [x] Re-ran `bun run check` and `bun run build` after shared section drilldown refactor on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after trapezoid-style chart fidelity update on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after loading/redaction state improvements on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after persistent header search-shell implementation on 2026-03-14.
 
 ## Recent Commits
 
+- `7e812db` feat: add persistent header quick-search shell
 - `6e85c53` feat: surface loading and coverage redaction states
 - `f8c838b` feat: render trapezoid-style interactive numerical chart
 - `a62d3df` feat: enrich detail routes with shared section drilldown
