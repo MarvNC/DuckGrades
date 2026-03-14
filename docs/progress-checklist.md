@@ -22,6 +22,26 @@ Last updated: 2026-03-14
 - [x] Add subject sorting with URL query-state persistence.
 - [x] Add reusable aggregate summary card and wire it across subject/course/professor pages.
 
+## Spec Coverage Snapshot
+
+- [x] 1-3 Purpose/IA/design baseline started (branding tokens + Sora + core routes).
+- [x] 4 Data source + grade mapping implemented in build script.
+- [x] 5 Aggregation metrics implemented (mean/mode/median/coverage).
+- [x] 6 Deterministic professor IDs + unknown fallback implemented.
+- [x] 7 Static sharded output + manifest/search index implemented.
+- [x] 8 Runtime fetch uses versioned base URL (`VITE_DATA_BASE_URL` aware).
+- [ ] 8 Fallback to same-origin when CDN fetch fails.
+- [ ] 9 Numerical heatmap-style chart and non-numerical histogram UI.
+- [~] 10 Search UX partial: grouped results + arrows/enter/esc done; debounce/tab traversal pending.
+- [~] 11 Subject page partial: sort + URL state done; year/term filters + virtualization pending.
+- [~] 12 Course page partial: aggregate + instructor list done; metadata/details/collapsibles pending.
+- [~] 13 Professor page partial: aggregate + course list done; collapsible section details pending.
+- [ ] 14 Performance budgets measured and enforced.
+- [~] 15 Build integrity checks partial: deterministic/collision behavior done; schema/hash/cross-ref validation pending.
+- [ ] 16 Data CDN branch strategy + deployment workflow.
+- [ ] 17 Accessibility QA pass and edge-case QA plan execution.
+- [ ] 18 Legal/attribution validation notes.
+
 ## In Progress
 
 - [ ] Replace placeholder page blocks with chart components and richer drill-down content.
@@ -40,9 +60,12 @@ Last updated: 2026-03-14
 - [x] `bun run check` passes after data pipeline + page integrations.
 - [x] `bun run build:data` emits dataset `v20260314`.
 - [x] `bun run build` passes with production bundle output.
+- [x] Re-ran `bun run build:data`, `bun run check`, and `bun run build` on 2026-03-14.
 
 ## Recent Commits
 
+- `be97dd5` feat: share aggregate summary card across detail routes
+- `d22f02f` chore: add handoff progress checklist workflow
 - `251d21c` feat: add subject sorting with url state
 - `42374d3` feat: add static data pipeline and route data loading
 - `7471017` feat: scaffold vite react tailwind app shell
