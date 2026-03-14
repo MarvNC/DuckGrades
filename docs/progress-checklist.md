@@ -40,7 +40,7 @@ Last updated: 2026-03-14
 - [~] 14 Performance budgets measured and enforced (analysis tooling added; hard limits + optimization pending).
 - [~] 15 Build integrity checks partial: deterministic/collision behavior done; schema/hash/cross-ref validation pending.
 - [~] 16 Data CDN branch strategy + deployment workflow (docs + GH Pages workflow added; live branch wiring pending).
-- [~] 17 Accessibility QA pass and edge-case QA plan execution (chart keyboard + text alternative improvements landed; full audit pending).
+- [~] 17 Accessibility QA pass and edge-case QA plan execution (chart keyboard + text alternatives + global focus-visible styling landed; full audit pending).
 - [ ] 18 Legal/attribution validation notes.
 
 ## In Progress
@@ -79,9 +79,11 @@ Last updated: 2026-03-14
 - [x] Re-ran `bun run build:data`, `bun run check`, and `bun run build` after integrity-check enhancements on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after chart keyboard/a11y improvements on 2026-03-14.
 - [x] Ran `bun run analyze:budgets` and re-ran `bun run check` + `bun run build` after budget tooling additions on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after global focus-visible accessibility polish on 2026-03-14.
 
 ## Recent Commits
 
+- `47d97a2` feat: add consistent focus-visible accessibility styling
 - `d829d88` feat: add dataset budget analysis script
 - `640e5f1` feat: add keyboard and screenreader chart accessibility
 - `674569a` feat: add build-data hash and cross-reference integrity checks
