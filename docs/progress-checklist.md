@@ -88,6 +88,7 @@ Last updated: 2026-03-14
 - [x] Re-ran `bun run check` after homepage logo hierarchy polish on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after centered homepage hierarchy cleanup on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after homepage logo scale and vertical-centering adjustments on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after homepage spacing and logo scale rebalance on 2026-03-14.
 
 ## Recent Commits
 

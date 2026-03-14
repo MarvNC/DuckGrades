@@ -80,79 +80,81 @@ export function HomePage() {
   }
 
   return (
-    <section className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-4xl flex-col items-center justify-center text-center">
-      <Link to="/" className="brand">
-        <span className="brand-duck">Duck</span>
-        <span className="brand-grades">Grades</span>
-      </Link>
-      <h1 className="mt-4 max-w-2xl text-xl font-medium tracking-tight text-[var(--duck-muted)] sm:text-2xl">
-        View past grades at the University of Oregon.
-      </h1>
-
-      <div className="mt-8 w-full max-w-2xl text-left">
-        <label htmlFor="search" className="sr-only">
-          Search subjects, courses, or professors
-        </label>
-        <input
-          id="search"
-          ref={inputRef}
-          className="w-full rounded-2xl border border-[var(--duck-border)] bg-white px-5 py-4 text-base font-medium shadow-sm outline-none transition focus:border-[#86ac67]"
-          value={query}
-          onChange={(event) => {
-            setQuery(event.target.value);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "ArrowDown") {
-              event.preventDefault();
-              if (flattened.length > 0) {
-                const next = (activeIndex + 1) % flattened.length;
-                setActiveIndex(next);
-                focusResult(next);
-              }
-            }
-            if (event.key === "ArrowUp") {
-              event.preventDefault();
-              if (flattened.length > 0) {
-                const prev = (activeIndex - 1 + flattened.length) % flattened.length;
-                setActiveIndex(prev);
-                focusResult(prev);
-              }
-            }
-            if (event.key === "Enter") {
-              event.preventDefault();
-              const chosen = flattened[activeIndex];
-              if (chosen) {
-                navigate(chosen.to);
-              }
-            }
-            if (event.key === "Tab" && !event.shiftKey && flattened.length > 0 && hasQuery) {
-              event.preventDefault();
-              setActiveIndex(0);
-              focusResult(0);
-            }
-            if (event.key === "Escape") {
-              setQuery("");
-              setDebouncedQuery("");
-              setActiveIndex(0);
-            }
-          }}
-          placeholder="CS, WR 121, or professor name"
-          autoComplete="off"
-          autoFocus
-        />
-      </div>
-
-      <div className="mt-5">
-        <Link
-          to="/subject/CS"
-          className="inline-flex items-center rounded-lg border border-[var(--duck-border)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--duck-fg)] transition hover:bg-[#f9fbf5]"
-        >
-          Browse subjects
+    <section className="mx-auto flex min-h-screen w-full max-w-4xl flex-col items-center justify-center py-10 text-center">
+      <div className="w-full max-w-2xl">
+        <Link to="/" className="brand">
+          <span className="brand-duck">Duck</span>
+          <span className="brand-grades">Grades</span>
         </Link>
+        <h1 className="mt-3 max-w-2xl text-lg font-medium tracking-tight text-[var(--duck-muted)] sm:text-xl">
+          View past grades at the University of Oregon.
+        </h1>
+
+        <div className="mt-6 w-full text-left">
+          <label htmlFor="search" className="sr-only">
+            Search subjects, courses, or professors
+          </label>
+          <input
+            id="search"
+            ref={inputRef}
+            className="w-full rounded-2xl border border-[var(--duck-border)] bg-white px-5 py-4 text-base font-medium shadow-sm outline-none transition focus:border-[#86ac67]"
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowDown") {
+                event.preventDefault();
+                if (flattened.length > 0) {
+                  const next = (activeIndex + 1) % flattened.length;
+                  setActiveIndex(next);
+                  focusResult(next);
+                }
+              }
+              if (event.key === "ArrowUp") {
+                event.preventDefault();
+                if (flattened.length > 0) {
+                  const prev = (activeIndex - 1 + flattened.length) % flattened.length;
+                  setActiveIndex(prev);
+                  focusResult(prev);
+                }
+              }
+              if (event.key === "Enter") {
+                event.preventDefault();
+                const chosen = flattened[activeIndex];
+                if (chosen) {
+                  navigate(chosen.to);
+                }
+              }
+              if (event.key === "Tab" && !event.shiftKey && flattened.length > 0 && hasQuery) {
+                event.preventDefault();
+                setActiveIndex(0);
+                focusResult(0);
+              }
+              if (event.key === "Escape") {
+                setQuery("");
+                setDebouncedQuery("");
+                setActiveIndex(0);
+              }
+            }}
+            placeholder="CS, WR 121, or professor name"
+            autoComplete="off"
+            autoFocus
+          />
+        </div>
+
+        <div className="mt-4">
+          <Link
+            to="/subject/CS"
+            className="inline-flex items-center rounded-lg border border-[var(--duck-border)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--duck-fg)] transition hover:bg-[#f9fbf5]"
+          >
+            Browse subjects
+          </Link>
+        </div>
       </div>
 
       {hasQuery ? (
-        <div className="mt-5 w-full max-w-2xl space-y-3 text-left">
+        <div className="mt-6 w-full max-w-2xl space-y-3 text-left">
           {flattened.length === 0 ? (
             <p className="rounded-xl border border-[var(--duck-border)] bg-white px-3 py-3 text-sm text-[var(--duck-muted)]">No matches found.</p>
           ) : null}

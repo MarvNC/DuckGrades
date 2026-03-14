@@ -24,7 +24,7 @@ export function AppLayout() {
           </div>
         </header>
       )}
-      <main className="mx-auto w-full max-w-6xl px-5 pb-16 sm:px-8">
+      <main className={`mx-auto w-full max-w-6xl px-5 sm:px-8 ${isHome ? "" : "pb-16"}`}>
         <Outlet />
       </main>
     </div>
