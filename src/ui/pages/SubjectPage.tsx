@@ -141,12 +141,12 @@ export function SubjectPage() {
               <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <div className="min-w-0 sm:flex-1">
                   <div className="min-w-0">
-                    <p className="text-lg font-bold tracking-tight text-[var(--duck-fg)]">{course.courseCode}</p>
-                    <div className="mt-1 flex flex-wrap gap-1.5 text-[11px] font-semibold text-slate-600">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <p className="text-lg font-bold tracking-tight text-[var(--duck-fg)]">{course.courseCode}</p>
                       <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5">{course.sectionCount} sections</span>
                       <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5">{course.aggregate.totalNonWReported.toLocaleString()} students</span>
                     </div>
-                    <p className="truncate text-sm text-slate-600">{course.title}</p>
+                    <p className="mt-1 truncate text-sm text-slate-600">{course.title}</p>
                   </div>
 
                   <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-semibold text-slate-600">

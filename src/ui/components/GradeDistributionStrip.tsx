@@ -36,13 +36,6 @@ function getPercent(count: number, total: number): number {
   return (count / total) * 100;
 }
 
-function compactLeftLabel(code: LeftBucketCode): string {
-  if (code === "OTHER") {
-    return "O";
-  }
-  return formatGradeCode(code);
-}
-
 export function GradeDistributionStrip({ aggregate, size = "md", showStudentCount = true }: GradeDistributionStripProps) {
   const gradientId = useId().replace(/:/g, "");
   const [activeDatum, setActiveDatum] = useState<ActiveDatum>(null);
@@ -114,15 +107,15 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
 
   const leftMax = Math.max(1, ...LEFT_BUCKET_ORDER.map((code) => leftCounts[code] ?? 0));
   const leftMaxHeight = size === "sm" ? 14 : 18;
-  const chartWidthClass = size === "sm" ? "w-[13rem] sm:w-[14.5rem] lg:w-[16rem]" : "w-[15.5rem] sm:w-[17.5rem] lg:w-[19rem]";
-  const leftBarWidthClass = size === "sm" ? "w-2.5" : "w-3";
+  const chartWidthClass = size === "sm" ? "w-[11.5rem] sm:w-[12.5rem] lg:w-[13.5rem]" : "w-[14rem] sm:w-[15.5rem] lg:w-[16.5rem]";
+  const leftBarWidthClass = size === "sm" ? "w-2" : "w-2.5";
 
   const numericalTextSummary = NUMERICAL_GRADE_ORDER.map((_, index) => getNumericalDetails(index)).join(", ");
   const nonNumericalTextSummary = LEFT_BUCKET_ORDER.map((code) => getLeftBucketDetails(code)).join(", ");
 
   return (
     <div
-      className={`inline-flex w-fit max-w-full flex-col rounded-lg border border-[var(--duck-border)] bg-[#f7faf2] ${size === "sm" ? "p-1.5" : "p-2"}`}
+      className={`inline-flex w-fit max-w-full flex-col ${size === "sm" ? "p-0" : "p-0"}`}
       onMouseLeave={() => setActiveDatum(null)}
     >
       <div className={`flex items-center gap-2 ${showStudentCount ? "justify-between" : "justify-end"}`}>
@@ -135,7 +128,11 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
       </div>
 
       <div className={`mt-1 flex items-end ${size === "sm" ? "gap-0" : "gap-0.5"}`}>
-        <div className={`flex shrink-0 items-end border-r border-dashed border-[var(--duck-border)] ${size === "sm" ? "gap-0.5 pr-0.5" : "gap-0.5 pr-1"}`}>
+        <div
+          className={`grid shrink-0 grid-cols-4 items-end border-r border-dashed border-[var(--duck-border)] ${
+            size === "sm" ? "w-[2.9rem] gap-0.5 pr-0.5" : "w-[3.8rem] gap-0.5 pr-1"
+          }`}
+        >
           {LEFT_BUCKET_ORDER.map((code) => {
             const count = leftCounts[code] ?? 0;
             const height = Math.max(2, Math.round((count / leftMax) * leftMaxHeight));
@@ -144,7 +141,7 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
               <button
                 key={code}
                 type="button"
-                className={`flex ${leftBarWidthClass} flex-col items-center gap-0.5 rounded-sm`}
+                className={`flex ${leftBarWidthClass} items-end rounded-sm`}
                 onMouseEnter={() => setActiveDatum({ kind: "left", code })}
                 onFocus={() => setActiveDatum({ kind: "left", code })}
                 onBlur={() => setActiveDatum(null)}
@@ -159,9 +156,6 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
                     opacity: isSelected ? 1 : count > 0 ? 0.82 : 0.35,
                   }}
                 />
-                <span className={`${size === "sm" ? "text-[8px]" : "text-[9px]"} font-semibold uppercase tracking-[0.06em] text-slate-500`}>
-                  {compactLeftLabel(code)}
-                </span>
               </button>
             );
           })}
@@ -182,8 +176,6 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
                 <stop offset="100%" stopColor="#9fdc84" />
               </linearGradient>
             </defs>
-
-            <rect x={xStart} y={baseY - graphHeight - 1} width={xEnd - xStart} height={graphHeight + 1} rx="4" fill={`url(#${gradientId})`} opacity="0.24" />
 
             {points.slice(0, -1).map((point, index) => {
               const next = points[index + 1];
