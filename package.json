@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build:data": "bun scripts/build-data.ts",
+    "analyze:budgets": "bun scripts/analyze-budgets.ts",
     "build": "tsc -b && vite build",
     "build:all": "bun run build:data && bun run build",
     "preview": "vite preview",
