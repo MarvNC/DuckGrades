@@ -68,6 +68,9 @@ type VersionFile = { version: string };
 
 let cachedVersion: Promise<string> | null = null;
 let cachedSearchIndex: Promise<SearchIndex> | null = null;
+const subjectShardCache = new Map<string, Promise<SubjectShard>>();
+const courseShardCache = new Map<string, Promise<CourseShard>>();
+const professorShardCache = new Map<string, Promise<ProfessorShard>>();
 
 const configuredBase = (import.meta.env.VITE_DATA_BASE_URL as string | undefined)?.replace(/\/$/, "");
 const primaryBase = configuredBase ?? "/data";
@@ -114,16 +117,66 @@ export async function getSearchIndex(): Promise<SearchIndex> {
 }
 
 export async function getSubjectShard(code: string): Promise<SubjectShard> {
-  const version = await getDatasetVersion();
-  return fetchDataJson<SubjectShard>(`${version}/subjects/${code.toUpperCase()}.json`);
+  const key = code.toUpperCase();
+  const existing = subjectShardCache.get(key);
+  if (existing) {
+    return existing;
+  }
+  const request = (async () => {
+    const version = await getDatasetVersion();
+    return fetchDataJson<SubjectShard>(`${version}/subjects/${key}.json`);
+  })();
+  subjectShardCache.set(key, request);
+  return request;
 }
 
 export async function getCourseShard(code: string): Promise<CourseShard> {
-  const version = await getDatasetVersion();
-  return fetchDataJson<CourseShard>(`${version}/courses/${code.toUpperCase()}.json`);
+  const key = code.toUpperCase();
+  const existing = courseShardCache.get(key);
+  if (existing) {
+    return existing;
+  }
+  const request = (async () => {
+    const version = await getDatasetVersion();
+    return fetchDataJson<CourseShard>(`${version}/courses/${key}.json`);
+  })();
+  courseShardCache.set(key, request);
+  return request;
 }
 
 export async function getProfessorShard(id: string): Promise<ProfessorShard> {
-  const version = await getDatasetVersion();
-  return fetchDataJson<ProfessorShard>(`${version}/professors/${id}.json`);
+  const key = id;
+  const existing = professorShardCache.get(key);
+  if (existing) {
+    return existing;
+  }
+  const request = (async () => {
+    const version = await getDatasetVersion();
+    return fetchDataJson<ProfessorShard>(`${version}/professors/${key}.json`);
+  })();
+  professorShardCache.set(key, request);
+  return request;
+}
+
+export function prefetchRouteData(route: string): void {
+  if (route.startsWith("/subject/")) {
+    const code = route.slice("/subject/".length);
+    if (code) {
+      void getSubjectShard(code);
+    }
+    return;
+  }
+  if (route.startsWith("/course/")) {
+    const code = route.slice("/course/".length);
+    if (code) {
+      void getCourseShard(code);
+    }
+    return;
+  }
+  if (route.startsWith("/professor/")) {
+    const id = route.slice("/professor/".length);
+    if (id) {
+      void getProfessorShard(id);
+    }
+  }
 }

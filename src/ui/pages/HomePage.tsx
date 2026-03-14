@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getSearchIndex } from "../../lib/dataClient";
+import { getSearchIndex, prefetchRouteData } from "../../lib/dataClient";
 import { searchIndex } from "../../lib/search";
 
 type SearchItem = {
@@ -167,8 +167,14 @@ export function HomePage() {
                               : "border-transparent bg-[#f9fbf5] hover:border-[var(--duck-border)]"
                           }`}
                           to={item.to}
-                          onMouseEnter={() => setActiveIndex(indexValue)}
-                          onFocus={() => setActiveIndex(indexValue)}
+                          onMouseEnter={() => {
+                            setActiveIndex(indexValue);
+                            prefetchRouteData(item.to);
+                          }}
+                          onFocus={() => {
+                            setActiveIndex(indexValue);
+                            prefetchRouteData(item.to);
+                          }}
                           onKeyDown={(event) => {
                             if (event.key === "ArrowDown") {
                               event.preventDefault();
