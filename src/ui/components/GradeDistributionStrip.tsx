@@ -94,7 +94,8 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
 
   const numericalBarHeight = size === "sm" ? 20 : 24;
   const leftBarHeight = size === "sm" ? 14 : 18;
-  const chartWidthClass = size === "sm" ? "w-[11.5rem] sm:w-[12.5rem] lg:w-[13.5rem]" : "w-[14rem] sm:w-[15.5rem] lg:w-[16.5rem]";
+  const barWidth = size === "sm" ? 5 : 6;
+  const barGap = size === "sm" ? 2 : 2;
 
   return (
     <div className="inline-flex w-fit max-w-full flex-col" onMouseLeave={() => setActiveDatum(null)}>
@@ -110,10 +111,12 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
       <div className={`mt-1 flex items-end ${size === "sm" ? "gap-0.5" : "gap-1"}`}>
         <div className="shrink-0">
           <div
-            className={`grid grid-cols-4 items-end border-r border-dashed border-[var(--duck-border)] ${
-              size === "sm" ? "w-[2.9rem] gap-0.5 pr-0.5" : "w-[3.8rem] gap-0.5 pr-1"
-            }`}
-            style={{ height: leftBarHeight }}
+            className={`grid items-end border-r border-dashed border-[var(--duck-border)] ${size === "sm" ? "pr-0.5" : "pr-1"}`}
+            style={{
+              height: leftBarHeight,
+              gridTemplateColumns: `repeat(${LEFT_BUCKET_ORDER.length}, ${barWidth}px)`,
+              columnGap: `${barGap}px`,
+            }}
           >
             {LEFT_BUCKET_ORDER.map((code) => {
               const count = leftCounts[code] ?? 0;
@@ -142,7 +145,13 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
               );
             })}
           </div>
-          <div className={`${size === "sm" ? "text-[7px]" : "text-[8px]"} mt-0.5 grid grid-cols-4 font-semibold uppercase tracking-[0.06em] text-slate-500`}>
+          <div
+            className={`${size === "sm" ? "text-[7px]" : "text-[8px]"} mt-0.5 grid font-semibold uppercase tracking-[0.06em] text-slate-500`}
+            style={{
+              gridTemplateColumns: `repeat(${LEFT_BUCKET_ORDER.length}, ${barWidth}px)`,
+              columnGap: `${barGap}px`,
+            }}
+          >
             <span className="text-center">P</span>
             <span className="text-center">NP</span>
             <span className="text-center">O</span>
@@ -150,12 +159,14 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
           </div>
         </div>
 
-        <div className={chartWidthClass}>
+        <div className="inline-block">
           <div
-            className={`flex items-end gap-0.5 border-b border-[var(--duck-border)] pb-0.5 ${
-              size === "sm" ? "h-[1.5rem]" : "h-[1.9rem]"
-            }`}
-            style={{ height: numericalBarHeight }}
+            className="grid items-end border-b border-[var(--duck-border)] pb-0.5"
+            style={{
+              height: numericalBarHeight,
+              gridTemplateColumns: `repeat(${NUMERICAL_GRADE_ORDER.length}, ${barWidth}px)`,
+              columnGap: `${barGap}px`,
+            }}
           >
             {NUMERICAL_GRADE_ORDER.map((grade, index) => {
               const count = numericalValues[index] ?? 0;
@@ -168,7 +179,7 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
                 <button
                   key={grade}
                   type="button"
-                  className="flex h-full min-w-0 flex-1 items-end"
+                  className="flex h-full items-end"
                   onMouseEnter={() => setActiveDatum({ kind: "numerical", index })}
                   onFocus={() => setActiveDatum({ kind: "numerical", index })}
                   onBlur={() => setActiveDatum(null)}
@@ -176,7 +187,7 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
                   aria-label={getNumericalDetails(index)}
                 >
                   <span
-                    className="block w-full rounded-[2px]"
+                    className="block w-full rounded-[1px]"
                     style={{
                       height,
                       backgroundColor: `hsl(${hue} 62% 58%)`,
@@ -187,12 +198,28 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
               );
             })}
           </div>
-          <div className={`${size === "sm" ? "text-[7px]" : "text-[8px]"} mt-0.5 grid grid-cols-5 font-semibold uppercase tracking-[0.06em] text-slate-500`}>
-            <span className="text-left">F</span>
-            <span className="text-center">D</span>
-            <span className="text-center">C</span>
-            <span className="text-center">B</span>
-            <span className="text-right">A</span>
+          <div
+            className={`${size === "sm" ? "text-[7px]" : "text-[8px]"} mt-0.5 grid font-semibold uppercase tracking-[0.06em] text-slate-500`}
+            style={{
+              gridTemplateColumns: `repeat(${NUMERICAL_GRADE_ORDER.length}, ${barWidth}px)`,
+              columnGap: `${barGap}px`,
+            }}
+          >
+            <span className="text-center" style={{ gridColumn: "span 1 / span 1" }}>
+              F
+            </span>
+            <span className="text-center" style={{ gridColumn: "span 3 / span 3" }}>
+              D
+            </span>
+            <span className="text-center" style={{ gridColumn: "span 3 / span 3" }}>
+              C
+            </span>
+            <span className="text-center" style={{ gridColumn: "span 3 / span 3" }}>
+              B
+            </span>
+            <span className="text-center" style={{ gridColumn: "span 3 / span 3" }}>
+              A
+            </span>
           </div>
         </div>
       </div>
