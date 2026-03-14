@@ -27,6 +27,7 @@ Last updated: 2026-03-14
 - [x] Slightly reduce homepage search input height for tighter hero spacing.
 - [x] Remove GitHub Pages deployment workflow/config and keep deployment guidance Cloudflare-first.
 - [x] Implement shared in-memory search shell with hero-to-header transition and full-page results mode.
+- [x] Integrate fuzzysort-based fuzzy matching for global search and route-level course/instructor filters.
 
 ## Spec Coverage Snapshot
 
@@ -61,6 +62,7 @@ Last updated: 2026-03-14
 - [~] Tighten aggregate/course visual consistency (right-aligned fit-content charts, section-count chip placement, and restored subject course search).
 - [~] Add section-level distribution strips in drilldowns with visible/reporting context and redaction note handling.
 - [~] Refine section drilldown hierarchy/layout for denser inline metadata + distribution readability.
+- [~] Add section-level mean/median/mode stats to align drilldown cards with aggregate card information hierarchy.
 
 ## Next Up (Priority)
 
@@ -114,6 +116,7 @@ Last updated: 2026-03-14
 - [x] Re-ran `bun run check` and `bun run build` after aggregate/card alignment and subject search restore on 2026-03-14.
 - [x] Re-ran `bun run check` after per-section drilldown distribution integration on 2026-03-14.
 - [x] Re-ran `bun run check` after section drilldown hierarchy redesign on 2026-03-14.
+- [x] Re-ran `bun run check` after adding section-level mean/median/mode stats on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after unifying homepage/header search logic and removing homepage debounce lag on 2026-03-14.
 - [x] Re-ran `bun run check` after removing homepage search-result animation classes on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after route-wide header search unification and inline result-mode rendering on 2026-03-14.
@@ -125,9 +128,11 @@ Last updated: 2026-03-14
 - [x] Ran `gh workflow disable 246261655 --repo MarvNC/DuckGrades`; verified `Deploy GitHub Pages` is `disabled_manually` on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after implementing hero-to-header search transition with unified full-page results on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after refining home-to-header focus handoff for the in-memory unified search shell on 2026-03-14.
+- [x] Re-ran `bun run check` and `bun run build` after fuzzysort search relevance and fuzzy matching integration on 2026-03-14.
 
 ## Recent Commits
 
+- `3f66e8d` feat: add mean median mode stats to section drilldown
 - `6339b2d` style: redesign section drilldown for compact hierarchy
 - `fe2d982` feat: add per-section grade distribution in drilldown
 - `e936de5` feat: align aggregate and course cards with compact charts
