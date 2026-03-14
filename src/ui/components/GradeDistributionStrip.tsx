@@ -55,8 +55,8 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
   const withdrawals = aggregate?.withdrawals ?? 0;
   const allWithWithdrawals = displayedTotal + withdrawals;
 
-  const xStart = 1;
-  const xEnd = 111;
+  const xStart = 0;
+  const xEnd = 112;
   const baseY = size === "sm" ? 34 : 40;
   const graphHeight = size === "sm" ? 18 : 24;
   const xStep = (xEnd - xStart) / (NUMERICAL_GRADE_ORDER.length - 1);
@@ -113,7 +113,7 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
 
   const leftMax = Math.max(1, ...LEFT_BUCKET_ORDER.map((code) => leftCounts[code] ?? 0));
   const leftMaxHeight = size === "sm" ? 14 : 18;
-  const chartWidthClass = size === "sm" ? "w-[13rem] sm:w-[14.5rem] lg:w-[16rem]" : "w-[15.5rem] sm:w-[17.5rem] lg:w-[19rem]";
+  const chartWidthClass = size === "sm" ? "w-[16.25rem] sm:w-[18rem] lg:w-[20rem]" : "w-[19.5rem] sm:w-[22rem] lg:w-[24rem]";
   const leftBarWidthClass = size === "sm" ? "w-3" : "w-3.5";
 
   const numericalTextSummary = NUMERICAL_GRADE_ORDER.map((_, index) => getNumericalDetails(index)).join(", ");
@@ -166,7 +166,7 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
           })}
         </div>
 
-        <div className={`${chartWidthClass} max-w-full`}>
+        <div className={`${chartWidthClass} inline-block max-w-full`}>
           <svg
             viewBox="0 0 112 42"
             className={`${size === "sm" ? "h-10" : "h-12"} w-full`}
