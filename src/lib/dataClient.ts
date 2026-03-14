@@ -1,0 +1,102 @@
+export type SearchIndex = {
+  subjects: Array<{ code: string; popularity: number }>;
+  courses: Array<{ code: string; title: string; subject: string; popularity: number }>;
+  professors: Array<{ id: string; name: string; popularity: number }>;
+};
+
+export type Aggregate = {
+  totalNonWReported: number;
+  totalVisibleNonW: number;
+  coverage: number | null;
+  mean: number | null;
+  median: number | null;
+  mode: string | null;
+};
+
+export type SubjectShard = {
+  subjectCode: string;
+  aggregate: Aggregate;
+  courses: Array<{
+    courseCode: string;
+    number: string;
+    title: string;
+    sectionCount: number;
+    aggregate: Aggregate;
+  }>;
+};
+
+export type CourseShard = {
+  courseCode: string;
+  subject: string;
+  number: string;
+  title: string;
+  aggregate: Aggregate;
+  instructors: Array<{
+    professorId: string;
+    name: string;
+    sectionCount: number;
+    aggregate: Aggregate;
+  }>;
+};
+
+export type ProfessorShard = {
+  professorId: string;
+  name: string;
+  aggregate: Aggregate;
+  courses: Array<{
+    courseCode: string;
+    title: string;
+    sectionCount: number;
+    aggregate: Aggregate;
+  }>;
+};
+
+type VersionFile = { version: string };
+
+let cachedVersion: Promise<string> | null = null;
+let cachedSearchIndex: Promise<SearchIndex> | null = null;
+
+const baseUrl = (import.meta.env.VITE_DATA_BASE_URL as string | undefined)?.replace(/\/$/, "") ?? "/data";
+
+async function fetchJson<T>(path: string): Promise<T> {
+  const response = await fetch(path);
+  if (!response.ok) {
+    throw new Error(`Request failed for ${path}: ${response.status}`);
+  }
+  return (await response.json()) as T;
+}
+
+export async function getDatasetVersion(): Promise<string> {
+  if (!cachedVersion) {
+    cachedVersion = (async () => {
+      const currentVersion = await fetchJson<VersionFile>(`${baseUrl}/current-version.json`);
+      return currentVersion.version;
+    })();
+  }
+  return cachedVersion;
+}
+
+export async function getSearchIndex(): Promise<SearchIndex> {
+  if (!cachedSearchIndex) {
+    cachedSearchIndex = (async () => {
+      const version = await getDatasetVersion();
+      return fetchJson<SearchIndex>(`${baseUrl}/${version}/search-index.json`);
+    })();
+  }
+  return cachedSearchIndex;
+}
+
+export async function getSubjectShard(code: string): Promise<SubjectShard> {
+  const version = await getDatasetVersion();
+  return fetchJson<SubjectShard>(`${baseUrl}/${version}/subjects/${code.toUpperCase()}.json`);
+}
+
+export async function getCourseShard(code: string): Promise<CourseShard> {
+  const version = await getDatasetVersion();
+  return fetchJson<CourseShard>(`${baseUrl}/${version}/courses/${code.toUpperCase()}.json`);
+}
+
+export async function getProfessorShard(id: string): Promise<ProfessorShard> {
+  const version = await getDatasetVersion();
+  return fetchJson<ProfessorShard>(`${baseUrl}/${version}/professors/${id}.json`);
+}
