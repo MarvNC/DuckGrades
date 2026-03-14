@@ -95,7 +95,7 @@ export function HomePage() {
           </p>
         </section>
 
-        <section className="fade-in-up mt-10" style={{ animationDelay: "160ms" }}>
+        <section className="fade-in-up mt-8" style={{ animationDelay: "160ms" }}>
           <div className="group relative mx-auto w-full max-w-2xl text-left">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-5">
               <svg
