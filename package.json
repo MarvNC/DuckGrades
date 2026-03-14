@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build:data": "bun scripts/build-data.ts",
+    "copy:data:dist": "bun scripts/copy-current-data-to-dist.ts",
     "analyze:budgets": "bun scripts/analyze-budgets.ts",
     "build": "tsc -b && vite build",
-    "build:all": "bun run build:data && bun run build",
+    "build:all": "bun run build:data && bun run build && bun run copy:data:dist",
     "preview": "vite preview",
     "check": "tsc -b --pretty false"
   },
