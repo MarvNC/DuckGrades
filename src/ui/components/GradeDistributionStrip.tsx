@@ -92,9 +92,10 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
   const resolvedActive = activeDatum ?? { kind: "numerical" as const, index: defaultNumericalIndex };
   const activeText = resolvedActive.kind === "left" ? getLeftBucketDetails(resolvedActive.code) : getNumericalDetails(resolvedActive.index);
 
-  const numericalBarHeight = size === "sm" ? 20 : 24;
-  const leftBarHeight = size === "sm" ? 14 : 18;
-  const barWidth = 15;
+  const baseBarHeight = size === "sm" ? 20 : 24;
+  const numericalBarHeight = baseBarHeight;
+  const leftBarHeight = Math.round(baseBarHeight * 0.75);
+  const barWidth = 12;
   const barGap = 2;
 
   return (
@@ -187,7 +188,7 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
                   aria-label={getNumericalDetails(index)}
                 >
                   <span
-                    className="block w-full rounded-[1px]"
+                    className="block w-full rounded-[3px]"
                     style={{
                       height,
                       backgroundColor: `hsl(${hue} 62% 58%)`,
