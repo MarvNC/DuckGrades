@@ -91,7 +91,7 @@ export function HomePage() {
             <span className="brand-grades">Grades</span>
           </Link>
           <p className="mx-auto mt-4 max-w-2xl text-lg font-medium leading-relaxed text-[#4a5d49] sm:text-xl">
-            View past grades at the University of Oregon.
+            View past grades at the <span className="font-semibold text-[#124734]">University of Oregon</span>.
           </p>
         </section>
 
@@ -118,7 +118,7 @@ export function HomePage() {
             <input
               id="search"
               ref={inputRef}
-              className="w-full rounded-2xl border border-slate-200 bg-white py-5 pr-4 pl-14 text-lg text-slate-900 shadow-xl shadow-slate-200/60 outline-none transition-all placeholder:text-slate-400 focus:border-[#4d8152] focus:ring-2 focus:ring-[#4d8152]/25"
+              className="w-full rounded-2xl border border-slate-200 bg-white py-5 pr-4 pl-14 text-lg text-slate-900 shadow-lg shadow-slate-200/35 outline-none transition-all placeholder:text-slate-400 focus:border-[#4d8152] focus:ring-2 focus:ring-[#4d8152]/25"
               value={query}
               onChange={(event) => {
                 setQuery(event.target.value);
