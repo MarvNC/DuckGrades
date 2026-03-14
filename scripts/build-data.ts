@@ -73,6 +73,14 @@ type SearchIndexPayload = {
   professors: Array<{ id: string; name: string; popularity: number }>;
 };
 
+type CompactSearchIndexPayload = {
+  v: 2;
+  t: string[];
+  s: number[];
+  c: number[];
+  p: number[];
+};
+
 const INPUT_CSV = "data/pub_rec_master_w2016-f2025.csv";
 const OUTPUT_ROOT = "public/data";
 const NUMERICAL_ORDER = ["F", "DM", "D", "DP", "CM", "C", "CP", "BM", "B", "BP", "AM", "A", "AP"] as const;
@@ -277,6 +285,44 @@ function verifyCrossReferences(params: {
   }
 }
 
+function compactSearchIndex(index: SearchIndexPayload): CompactSearchIndexPayload {
+  const table: string[] = [];
+  const stringToIndex = new Map<string, number>();
+
+  function encode(value: string): number {
+    const existing = stringToIndex.get(value);
+    if (existing !== undefined) {
+      return existing;
+    }
+    const nextIndex = table.length;
+    table.push(value);
+    stringToIndex.set(value, nextIndex);
+    return nextIndex;
+  }
+
+  const subjects: number[] = [];
+  const courses: number[] = [];
+  const professors: number[] = [];
+
+  for (const subject of index.subjects) {
+    subjects.push(encode(subject.code), subject.popularity);
+  }
+  for (const course of index.courses) {
+    courses.push(encode(course.code), encode(course.title), encode(course.subject), course.popularity);
+  }
+  for (const professor of index.professors) {
+    professors.push(encode(professor.id), encode(professor.name), professor.popularity);
+  }
+
+  return {
+    v: 2,
+    t: table,
+    s: subjects,
+    c: courses,
+    p: professors,
+  };
+}
+
 async function main() {
   const version = `v${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`;
   const versionRoot = join(OUTPUT_ROOT, version);
@@ -451,7 +497,7 @@ async function main() {
     fileIndex[relativePath] = await writeJson(join(OUTPUT_ROOT, relativePath), payload);
   }
 
-  const searchIndex: SearchIndexPayload = {
+  const expandedSearchIndex: SearchIndexPayload = {
     subjects: [...bySubject.entries()]
       .map(([code, rows]) => ({ code, popularity: rows.length }))
       .sort((a, b) => b.popularity - a.popularity),
@@ -471,7 +517,8 @@ async function main() {
       }))
       .sort((a, b) => b.popularity - a.popularity),
   };
-  fileIndex[`${version}/search-index.json`] = await writeJson(join(OUTPUT_ROOT, `${version}/search-index.json`), searchIndex);
+  const compactSearch = compactSearchIndex(expandedSearchIndex);
+  fileIndex[`${version}/search-index.json`] = await writeJson(join(OUTPUT_ROOT, `${version}/search-index.json`), compactSearch);
 
   const manifest = {
     schemaVersion: 1,
@@ -494,7 +541,7 @@ async function main() {
 
   verifyCrossReferences({
     version,
-    searchIndex,
+    searchIndex: expandedSearchIndex,
     bySubject,
     byCourse,
     byProfessor,
