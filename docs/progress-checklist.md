@@ -26,6 +26,7 @@ Last updated: 2026-03-14
 - [x] Restore original homepage hero-first search layout (centered search on home + header-only on non-home routes).
 - [x] Slightly reduce homepage search input height for tighter hero spacing.
 - [x] Remove GitHub Pages deployment workflow/config and keep deployment guidance Cloudflare-first.
+- [x] Remove residual GitHub Pages environment/deployment records from GitHub repository settings.
 - [x] Implement shared in-memory search shell with hero-to-header transition and full-page results mode.
 - [x] Integrate fuzzysort-based fuzzy matching for global search and route-level course/instructor filters.
 
@@ -130,9 +131,11 @@ Last updated: 2026-03-14
 - [x] Re-ran `bun run check` and `bun run build` after refining home-to-header focus handoff for the in-memory unified search shell on 2026-03-14.
 - [x] Re-ran `bun run check` and `bun run build` after fuzzysort search relevance and fuzzy matching integration on 2026-03-14.
 - [x] Triggered Cloudflare redeploy via empty commit push on 2026-03-14.
+- [x] Removed `github-pages` environment and deleted historical GitHub Pages deployments via `gh api` on 2026-03-14.
 
 ## Recent Commits
 
+- `bd7f9d5` chore: update progress checklist
 - `b4e4bf2` chore: trigger cloudflare redeploy
 - `3f66e8d` feat: add mean median mode stats to section drilldown
 - `6339b2d` style: redesign section drilldown for compact hierarchy
