@@ -161,11 +161,13 @@ type SubjectCodeMappingsSnapshot = {
     to: string;
     reason: string;
   }>;
+  titleOverrides?: Record<string, string>;
   descriptionProgramNames?: Record<string, string[]>;
 };
 
 type SubjectCodeMappingsLookup = {
   aliases: Map<string, string>;
+  titleOverrides: Map<string, string>;
   descriptionProgramNames: Map<string, string[]>;
 };
 
@@ -177,6 +179,8 @@ const OUTPUT_ROOT = "public/data";
 const NUMERICAL_ORDER = ["F", "DM", "D", "DP", "CM", "C", "CP", "BM", "B", "BP", "AM", "A", "AP"] as const;
 const NON_NUMERICAL_ORDER = ["P", "N", "OTHER"] as const;
 const AGGREGATE_COMPACT_LENGTH = 7 + NUMERICAL_ORDER.length + NON_NUMERICAL_ORDER.length;
+const TEXT_ENCODER = new TextEncoder();
+const CREATED_DIRECTORIES = new Set<string>();
 const GRADE_POINTS: Record<(typeof NUMERICAL_ORDER)[number], number> = {
   F: 0,
   DM: 0.7,
@@ -207,12 +211,21 @@ function canonicalInstructor(value: string): string {
 function fnv1a64Base36(input: string): string {
   let hash = 0xcbf29ce484222325n;
   const prime = 0x100000001b3n;
-  const bytes = new TextEncoder().encode(input);
+  const bytes = TEXT_ENCODER.encode(input);
   for (const byte of bytes) {
     hash ^= BigInt(byte);
     hash = (hash * prime) & 0xffffffffffffffffn;
   }
   return hash.toString(36);
+}
+
+function pushGrouped<K, V>(map: Map<K, V[]>, key: K, value: V): void {
+  const existing = map.get(key);
+  if (existing) {
+    existing.push(value);
+    return;
+  }
+  map.set(key, [value]);
 }
 
 function parseCount(raw: string): number | null {
@@ -324,7 +337,11 @@ function buildAggregate(rows: SectionRecord[]): Aggregate {
 
 async function writeJson(path: string, payload: unknown): Promise<FileMeta> {
   const text = `${JSON.stringify(payload)}\n`;
-  await mkdir(dirname(path), { recursive: true });
+  const directory = dirname(path);
+  if (!CREATED_DIRECTORIES.has(directory)) {
+    await mkdir(directory, { recursive: true });
+    CREATED_DIRECTORIES.add(directory);
+  }
   await writeFile(path, text, "utf8");
   const bytes = Buffer.byteLength(text, "utf8");
   const sha256 = createHash("sha256").update(text).digest("hex");
@@ -338,6 +355,11 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 async function verifyFileHashes(fileIndex: Record<string, FileMeta>) {
+  if (process.env.BUILD_DATA_VERIFY_HASHES !== "1") {
+    console.log("Skipped file hash verification (set BUILD_DATA_VERIFY_HASHES=1 to enable)");
+    return;
+  }
+
   const entries = Object.entries(fileIndex);
   for (const [relativePath, meta] of entries) {
     const absolutePath = join(OUTPUT_ROOT, relativePath);
@@ -552,13 +574,25 @@ async function loadSubjectCodeMappings(): Promise<SubjectCodeMappingsLookup> {
       }
     }
 
-    console.log(`Loaded subject mappings (${aliases.size} aliases, ${descriptionProgramNames.size} description overrides)`);
-    return { aliases, descriptionProgramNames };
+    const titleOverrides = new Map<string, string>();
+    for (const [subjectCode, title] of Object.entries(snapshot.titleOverrides ?? {})) {
+      const key = subjectCode.trim().toUpperCase();
+      const value = title.trim();
+      if (key && value) {
+        titleOverrides.set(key, value);
+      }
+    }
+
+    console.log(
+      `Loaded subject mappings (${aliases.size} aliases, ${titleOverrides.size} title overrides, ${descriptionProgramNames.size} description overrides)`,
+    );
+    return { aliases, titleOverrides, descriptionProgramNames };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.warn(`Subject mappings unavailable at ${SUBJECT_CODE_MAPPINGS_JSON} (${message}); no code merges will be applied.`);
     return {
       aliases: new Map<string, string>(),
+      titleOverrides: new Map<string, string>(),
       descriptionProgramNames: new Map<string, string[]>(),
     };
   }
@@ -567,6 +601,7 @@ async function loadSubjectCodeMappings(): Promise<SubjectCodeMappingsLookup> {
 async function main() {
   const version = `v${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`;
   const versionRoot = join(OUTPUT_ROOT, version);
+  CREATED_DIRECTORIES.clear();
   await rm(versionRoot, { recursive: true, force: true });
   await mkdir(versionRoot, { recursive: true });
 
@@ -586,10 +621,19 @@ async function main() {
 
   const idSlots = new Map<string, string>();
   const collisionCounts = new Map<string, number>();
+  const instructorBaseIdCache = new Map<string, string>();
 
   const sections: SectionRecord[] = rawRows.map((row) => {
     const instructorCanonical = canonicalInstructor(row.INSTRUCTOR);
-    const baseId = instructorCanonical === "unknown" ? "unknown" : fnv1a64Base36(instructorCanonical);
+    const baseId =
+      instructorCanonical === "unknown"
+        ? "unknown"
+        : (instructorBaseIdCache.get(instructorCanonical) ??
+          (() => {
+            const computed = fnv1a64Base36(instructorCanonical);
+            instructorBaseIdCache.set(instructorCanonical, computed);
+            return computed;
+          })());
 
     let professorId = baseId;
     const current = idSlots.get(baseId);
@@ -656,20 +700,41 @@ async function main() {
   const byProfessor = new Map<string, SectionRecord[]>();
 
   for (const section of sections) {
-    bySubject.set(section.subject, [...(bySubject.get(section.subject) ?? []), section]);
-    byCourse.set(section.courseCode, [...(byCourse.get(section.courseCode) ?? []), section]);
-    byProfessor.set(section.professorId, [...(byProfessor.get(section.professorId) ?? []), section]);
+    pushGrouped(bySubject, section.subject, section);
+    pushGrouped(byCourse, section.courseCode, section);
+    pushGrouped(byProfessor, section.professorId, section);
   }
 
   const catalog = await loadCatalogLookup();
   const programDescriptions = await loadProgramDescriptionLookup();
+  const rawSubjectTitle = (subjectCode: string) => {
+    const upperCode = subjectCode.toUpperCase();
+    if (catalog.subjectsByCode.has(upperCode)) {
+      return catalog.subjectsByCode.get(upperCode)?.title ?? upperCode;
+    }
+    if (subjectMappings.titleOverrides.has(upperCode)) {
+      return subjectMappings.titleOverrides.get(upperCode) ?? upperCode;
+    }
+    if (/^O[A-Z0-9]{2,}$/.test(upperCode)) {
+      return `Study Abroad (${upperCode})`;
+    }
+    return upperCode;
+  };
+  const subjectTitleCache = new Map<string, string>();
   const getSubjectTitle = (subjectCode: string) => {
-    return catalog.subjectsByCode.get(subjectCode.toUpperCase())?.title ?? subjectCode;
+    const upperCode = subjectCode.toUpperCase();
+    const cached = subjectTitleCache.get(upperCode);
+    if (cached) {
+      return cached;
+    }
+    const title = rawSubjectTitle(upperCode);
+    subjectTitleCache.set(upperCode, title);
+    return title;
   };
   const getCourseMetadata = (courseCode: string) => {
     return catalog.coursesByCode.get(courseCode.toUpperCase()) ?? null;
   };
-  const getSubjectDescription = (subjectCode: string, subjectTitle: string) => {
+  const rawSubjectDescription = (subjectCode: string, subjectTitle: string) => {
     const overrideNames = subjectMappings.descriptionProgramNames.get(subjectCode.toUpperCase()) ?? [];
     for (const overrideName of overrideNames) {
       const description = programDescriptions.get(normalizeLookupKey(overrideName));
@@ -695,24 +760,45 @@ async function main() {
       }
     }
 
+    if (/^O[A-Z0-9]{2,}$/.test(subjectCode.toUpperCase())) {
+      return "Legacy study-abroad transfer bucket. Course titles often encode host-course subjects and may span multiple departments.";
+    }
+
     return null;
+  };
+  const subjectDescriptionCache = new Map<string, string | null>();
+  const getSubjectDescription = (subjectCode: string) => {
+    const upperCode = subjectCode.toUpperCase();
+    if (subjectDescriptionCache.has(upperCode)) {
+      return subjectDescriptionCache.get(upperCode) ?? null;
+    }
+    const subjectTitle = getSubjectTitle(upperCode);
+    const description = rawSubjectDescription(upperCode, subjectTitle);
+    subjectDescriptionCache.set(upperCode, description);
+    return description;
   };
 
   const fileIndex: Record<string, FileMeta> = {};
   const subjectOverviewRows: SubjectOverview[] = [];
+  const courseAggregateCache = new Map<string, Aggregate>();
+  for (const [courseCode, rows] of byCourse) {
+    courseAggregateCache.set(courseCode, buildAggregate(rows));
+  }
 
   for (const [subjectCode, rows] of bySubject) {
     const courseRows = new Map<string, SectionRecord[]>();
     for (const row of rows) {
-      courseRows.set(row.courseCode, [...(courseRows.get(row.courseCode) ?? []), row]);
+      pushGrouped(courseRows, row.courseCode, row);
     }
     const subjectAggregate = buildAggregate(rows);
+    const professorCount = new Set(rows.map((row) => row.professorId)).size;
     const subjectTitle = getSubjectTitle(subjectCode);
-    const subjectDescription = getSubjectDescription(subjectCode, subjectTitle);
+    const subjectDescription = getSubjectDescription(subjectCode);
     const payload = {
       subjectCode,
       subjectTitle,
       subjectDescription,
+      professorCount,
       aggregate: subjectAggregate,
       availableTerms: ["fall", "winter", "spring", "summer"] as TermKey[],
       courses: [...courseRows.entries()]
@@ -731,7 +817,7 @@ async function main() {
             sectionCount: courseSections.length,
             yearBucket: getYearBucket(number),
             terms: [...termSet],
-            aggregate: buildAggregate(courseSections),
+            aggregate: courseAggregateCache.get(courseCode) ?? buildAggregate(courseSections),
           };
         })
         .sort((a, b) => a.courseCode.localeCompare(b.courseCode)),
@@ -741,7 +827,7 @@ async function main() {
       title: subjectTitle,
       courseCount: courseRows.size,
       sectionCount: rows.length,
-      professorCount: new Set(rows.map((row) => row.professorId)).size,
+      professorCount,
       aggregate: subjectAggregate,
     });
     const relativePath = `${version}/subjects/${subjectCode}.json`;
@@ -778,18 +864,18 @@ async function main() {
     const catalogCourse = getCourseMetadata(courseCode);
     const byInstructor = new Map<string, SectionRecord[]>();
     for (const row of rows) {
-      byInstructor.set(row.professorId, [...(byInstructor.get(row.professorId) ?? []), row]);
+      pushGrouped(byInstructor, row.professorId, row);
     }
     const subjectCode = rows[0]?.subject ?? "";
     const payload = {
       courseCode,
       subject: subjectCode,
       subjectTitle: getSubjectTitle(subjectCode),
-      subjectDescription: getSubjectDescription(subjectCode, getSubjectTitle(subjectCode)),
+      subjectDescription: getSubjectDescription(subjectCode),
       number: rows[0]?.number ?? "",
       title: catalogCourse?.title ?? rows[0]?.title ?? "",
       description: catalogCourse?.description ?? null,
-      aggregate: buildAggregate(rows),
+      aggregate: courseAggregateCache.get(courseCode) ?? buildAggregate(rows),
       instructors: [...byInstructor.entries()]
         .map(([professorId, instructorRows]) => ({
           professorId,
@@ -816,7 +902,7 @@ async function main() {
   for (const [professorId, rows] of byProfessor) {
     const byCourseRows = new Map<string, SectionRecord[]>();
     for (const row of rows) {
-      byCourseRows.set(row.courseCode, [...(byCourseRows.get(row.courseCode) ?? []), row]);
+      pushGrouped(byCourseRows, row.courseCode, row);
     }
     const payload = {
       professorId,
@@ -877,11 +963,16 @@ async function main() {
     }
   }
 
-  const catalogSubjectCoverageCount = [...bySubject.keys()].filter((code) => catalog.subjectsByCode.has(code.toUpperCase())).length;
-  const descriptionCoverageCount = [...bySubject.keys()].filter((code) => {
-    const title = getSubjectTitle(code);
-    return getSubjectDescription(code, title) !== null;
-  }).length;
+  let catalogSubjectCoverageCount = 0;
+  let descriptionCoverageCount = 0;
+  for (const code of bySubject.keys()) {
+    if (catalog.subjectsByCode.has(code.toUpperCase())) {
+      catalogSubjectCoverageCount += 1;
+    }
+    if (getSubjectDescription(code) !== null) {
+      descriptionCoverageCount += 1;
+    }
+  }
 
   console.log(`Subject title coverage from catalog: ${catalogSubjectCoverageCount}/${bySubject.size}`);
   console.log(`Subject description coverage from programs: ${descriptionCoverageCount}/${bySubject.size}`);

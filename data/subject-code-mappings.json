@@ -22,6 +22,11 @@
       "reason": "Legacy Geology offerings now represented in Earth Sciences (ERTH)."
     },
     {
+      "from": "INTL",
+      "to": "GLBL",
+      "reason": "Legacy International Studies offerings now represented in Global Studies (GLBL)."
+    },
+    {
       "from": "AEII",
       "to": "AEIS",
       "reason": "Academic English legacy code merged into Academic English for International Students (AEIS)."
@@ -35,11 +40,26 @@
       "from": "AEGP",
       "to": "AEIS",
       "reason": "Academic English legacy code merged into Academic English for International Students (AEIS)."
+    },
+    {
+      "from": "AA",
+      "to": "AAA",
+      "reason": "Legacy short Arts and Administration code normalized to AAA."
     }
   ],
+  "titleOverrides": {
+    "AAA": "Arts and Administration",
+    "AAD": "Arts and Administration",
+    "AIM": "Applied Information Management",
+    "FIG": "First-Year Interest Group",
+    "OGSI": "Global Studies Institute",
+    "SAPP": "Substance Abuse Prevention Program",
+    "TLC": "Teaching and Learning Center"
+  },
   "descriptionProgramNames": {
     "CS": ["Computer Science"],
     "ERTH": ["Earth Sciences"],
+    "GLBL": ["Global Studies"],
     "JCOM": ["Journalism", "Communication and Media Studies"]
   }
 }
