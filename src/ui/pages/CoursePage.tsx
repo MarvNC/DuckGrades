@@ -161,7 +161,7 @@ export function CoursePage() {
 
       {loadState === "ready" && course ? (
         <>
-          <div className="sticky top-4 z-20 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm backdrop-blur">
+          <div className="z-20 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm backdrop-blur lg:sticky lg:top-[calc(var(--duck-header-height,0px)+0.75rem)]">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--duck-muted)]" htmlFor="course-instructor-search">
                 Find instructor

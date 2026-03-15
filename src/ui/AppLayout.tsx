@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { Brand } from "./components/Brand";
@@ -42,7 +42,9 @@ export function AppLayout() {
     return "light";
   });
   const headerInputRef = useRef<HTMLInputElement | null>(null);
+  const headerRef = useRef<HTMLElement | null>(null);
   const resultRefs = useRef<Array<HTMLAnchorElement | null>>([]);
+  const [headerHeight, setHeaderHeight] = useState(0);
   const ranked = useRankedSearch(query);
   const { grouped, flattened } = useMemo(() => buildSearchItems(ranked), [ranked]);
   const indexByKey = useMemo(() => new Map(flattened.map((item, index) => [item.key, index])), [flattened]);
@@ -88,6 +90,32 @@ export function AppLayout() {
       });
     }
   }, [isHome, hasQuery]);
+
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) {
+      setHeaderHeight(0);
+      return;
+    }
+
+    const syncHeaderHeight = () => {
+      setHeaderHeight(Math.ceil(header.getBoundingClientRect().height));
+    };
+
+    syncHeaderHeight();
+
+    const observer = new ResizeObserver(() => {
+      syncHeaderHeight();
+    });
+
+    observer.observe(header);
+    window.addEventListener("resize", syncHeaderHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", syncHeaderHeight);
+    };
+  }, [showHeader]);
 
   function clearQuery() {
     setQuery("");
@@ -171,15 +199,21 @@ export function AppLayout() {
     cycleTheme,
   };
 
+  const shellStyle = {
+    "--duck-header-height": `${headerHeight}px`,
+  } as CSSProperties;
+
   return (
-    <div className="shell-bg relative flex min-h-screen flex-col">
+    <div className="shell-bg relative flex min-h-screen flex-col" style={shellStyle}>
       <div className="home-grid-bg" aria-hidden="true" />
       <div className="home-bg-overlay" aria-hidden="true" />
       {showHeader ? (
-        <header className={`relative z-30 mx-auto w-full max-w-6xl px-5 py-6 sm:px-8 ${isHome ? "home-search-header-enter" : ""}`}>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <Brand onClick={onHeaderBrandClick} />
-            <div className="group relative w-full flex-1 sm:min-w-0">
+        <header ref={headerRef} className="sticky top-0 z-30 w-full px-2 pt-2 sm:px-4 sm:pt-4">
+          <div
+            className={`mx-auto flex w-full max-w-6xl flex-wrap items-center gap-2 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/90 px-3 py-2.5 backdrop-blur-md sm:flex-nowrap sm:gap-4 sm:px-8 sm:py-5 ${isHome ? "home-search-header-enter" : ""}`}
+          >
+            <Brand onClick={onHeaderBrandClick} className="shrink-0" hideWordmarkOnTiny />
+            <div className="group order-3 relative w-full basis-full sm:order-none sm:basis-auto sm:flex-1 sm:min-w-0">
               <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
                 <Search className="h-4 w-4 text-[var(--duck-muted)] transition-colors group-focus-within:text-[var(--duck-accent-strong)]" aria-hidden="true" />
               </div>
@@ -200,7 +234,7 @@ export function AppLayout() {
                 className="w-full rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] py-2.5 pr-4 pl-10 text-sm font-semibold text-[var(--duck-fg)] shadow-sm outline-none transition-all placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
               />
             </div>
-            <div className="flex items-center justify-end gap-2 sm:flex-none">
+            <div className="ml-auto flex shrink-0 items-center justify-end gap-2 sm:flex-none">
               <ThemeToggleButton themePreference={themePreference} cycleTheme={cycleTheme} />
               <Link
                 to="/subjects"

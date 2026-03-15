@@ -151,7 +151,7 @@ export function SubjectPage() {
       {loadState === "ready" && courses.length === 0 ? <p className="text-sm text-[var(--duck-muted)]">No visible course data for this subject.</p> : null}
 
       {loadState === "ready" && courses.length > 0 ? (
-        <div className="sticky top-4 z-20 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm backdrop-blur">
+        <div className="z-20 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm backdrop-blur">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--duck-muted)]" htmlFor="subject-course-search">
               Search courses
