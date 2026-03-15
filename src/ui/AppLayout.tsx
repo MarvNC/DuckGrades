@@ -213,7 +213,7 @@ export function AppLayout() {
       <div className="home-grid-bg" aria-hidden="true" />
       <div className="home-bg-overlay" aria-hidden="true" />
       {showHeader ? (
-        <header ref={headerRef} className="sticky top-0 z-30 w-full px-5 pt-3 sm:px-8 sm:pt-4">
+        <header ref={headerRef} className="sticky top-0 z-30 w-full px-2 pt-3 sm:px-8 sm:pt-4">
           <div
             className={`mx-auto mb-2 flex w-full max-w-6xl items-center gap-2 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/90 px-3 py-2.5 shadow-[0_6px_18px_-14px_rgba(0,0,0,0.45)] backdrop-blur-md sm:mb-3 sm:gap-4 sm:px-8 sm:py-5 ${isHome ? "home-search-header-enter" : ""}`}
           >
@@ -251,7 +251,7 @@ export function AppLayout() {
         </header>
       ) : null}
       {showHeader ? (
-        <div className="fixed inset-x-2 bottom-2 z-40 sm:hidden">
+        <div className="fixed inset-x-1 bottom-2 z-40 sm:hidden">
           <div className="group relative mx-auto w-full max-w-6xl">
             <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
               <Search className="h-4 w-4 text-[var(--duck-muted)] transition-colors group-focus-within:text-[var(--duck-accent-strong)]" aria-hidden="true" />
