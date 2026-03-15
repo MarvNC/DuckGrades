@@ -263,8 +263,11 @@ export function SubjectPage() {
                 aggregate={course.aggregate}
                 inlineMetaChips={[
                   `${course.sectionCount} sections`,
+                  'professorCount' in course
+                    ? `${course.professorCount ?? '...'} professors`
+                    : null,
                   `${course.aggregate.totalNonWReported.toLocaleString()} students`,
-                ]}
+                ].filter((value): value is string => Boolean(value))}
                 distributionSize="sm"
                 showStudentCountInDistribution={false}
               />

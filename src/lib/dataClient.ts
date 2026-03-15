@@ -91,6 +91,7 @@ export type SubjectShard = {
     title: string;
     description?: string | null;
     sectionCount: number;
+    professorCount?: number;
     yearBucket: 1 | 2 | 3 | 4 | 5;
     terms: Array<'fall' | 'winter' | 'spring' | 'summer'>;
     aggregate: Aggregate;

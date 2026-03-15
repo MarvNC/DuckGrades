@@ -860,8 +860,10 @@ async function main() {
         .map(([courseCode, courseSections]) => {
           const catalogCourse = getCourseMetadata(courseCode);
           const termSet = new Set<TermKey>();
+          const professorIds = new Set<string>();
           for (const section of courseSections) {
             termSet.add(getTermKey(section.termDesc));
+            professorIds.add(section.professorId);
           }
           const number = courseSections[0]?.number ?? '';
           return {
@@ -870,6 +872,7 @@ async function main() {
             title: catalogCourse?.title ?? courseSections[0]?.title ?? '',
             description: catalogCourse?.description ?? null,
             sectionCount: courseSections.length,
+            professorCount: professorIds.size,
             yearBucket: getYearBucket(number),
             terms: [...termSet],
             aggregate: courseAggregateCache.get(courseCode) ?? buildAggregate(courseSections),
