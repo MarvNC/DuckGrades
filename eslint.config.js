@@ -37,25 +37,6 @@ export default tseslint.config(
             'object',
             'type',
           ],
-          pathGroups: [
-            {
-              pattern: 'react',
-              group: 'builtin',
-              position: 'before',
-            },
-            {
-              pattern: 'react-dom/**',
-              group: 'builtin',
-              position: 'before',
-            },
-            {
-              pattern: '@/**',
-              group: 'internal',
-              position: 'after',
-            },
-          ],
-          pathGroupsExcludedImportTypes: ['react', 'react-dom'],
-          'newlines-between': 'always',
           alphabetize: {
             order: 'asc',
             caseInsensitive: true,
