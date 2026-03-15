@@ -146,7 +146,7 @@ export function CoursePage() {
           {displayCourseCode}
           {course?.title ? (
             <>
-              <span className="px-1.5 text-[var(--duck-muted)]">-</span>
+              <span className="pr-0.5 pl-1 text-[var(--duck-muted)]">-</span>
               <span className="text-[var(--duck-muted-strong)]">{course.title}</span>
             </>
           ) : (

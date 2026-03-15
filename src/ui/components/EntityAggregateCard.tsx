@@ -30,7 +30,7 @@ export function EntityAggregateCard({
     <article className="rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3.5 shadow-sm">
       <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="min-w-0 sm:flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center">
             {titleHref ? (
               <Link
                 to={titleHref}
@@ -46,7 +46,7 @@ export function EntityAggregateCard({
 
             {subtitle ? (
               <p className="max-w-full truncate text-lg font-bold tracking-tight text-[var(--duck-muted-strong)]">
-                <span className="px-0.5 text-[var(--duck-muted)]">-</span>
+                <span className="px-1.5 text-[var(--duck-muted)]">-</span>
                 <span>{subtitle}</span>
               </p>
             ) : null}
