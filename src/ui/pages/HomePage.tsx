@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Link, useOutletContext } from "react-router-dom";
+import { List, Search } from "lucide-react";
 import type { SearchLayoutContext } from "../AppLayout";
 import { Brand } from "../components/Brand";
 import { usePageTitle } from "../usePageTitle";
@@ -41,19 +42,7 @@ export function HomePage() {
             <section className="fade-in-up mt-8" style={{ animationDelay: "160ms" }}>
               <div className="group relative mx-auto w-full max-w-2xl text-left">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-5">
-                  <svg
-                    className="h-5 w-5 text-slate-400 transition-colors group-focus-within:text-[#124734]"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M21 21l-6-6" />
-                    <circle cx="11" cy="11" r="7" />
-                  </svg>
+                  <Search className="h-5 w-5 text-[var(--duck-muted)] transition-colors group-focus-within:text-[#124734]" aria-hidden="true" />
                 </div>
                 <label htmlFor="search" className="sr-only">
                   Search subjects, courses, or professors
@@ -61,7 +50,7 @@ export function HomePage() {
                 <input
                   id="search"
                   ref={inputRef}
-                  className="w-full rounded-2xl border border-slate-200 bg-white py-4 pr-4 pl-14 text-lg text-slate-900 shadow-lg shadow-slate-200/35 outline-none transition-all placeholder:text-slate-400 focus:border-[#4d8152] focus:ring-2 focus:ring-[#4d8152]/25"
+                  className="w-full rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] py-4 pr-4 pl-14 text-lg text-[var(--duck-fg)] shadow-lg shadow-slate-200/35 outline-none transition-all placeholder:text-[var(--duck-muted)] focus:border-[#4d8152] focus:ring-2 focus:ring-[#4d8152]/25"
                   value={query}
                   onChange={(event) => {
                     setQuery(event.target.value);
@@ -77,22 +66,9 @@ export function HomePage() {
             <section className="fade-in-up mt-7" style={{ animationDelay: "240ms" }}>
               <Link
                 to="/subjects"
-                className="inline-flex items-center rounded-full border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-600 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-[#124734] hover:shadow-md"
+                className="inline-flex items-center rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-6 py-2.5 text-sm font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-[#124734] hover:shadow-md"
               >
-                <svg
-                  className="mr-2 h-4 w-4 text-slate-400"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M4 6h16" />
-                  <path d="M4 12h16" />
-                  <path d="M13 18h7" />
-                </svg>
+                <List className="mr-2 h-4 w-4" aria-hidden="true" />
                 Browse all subjects
               </Link>
             </section>

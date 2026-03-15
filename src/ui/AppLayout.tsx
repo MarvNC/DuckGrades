@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Monitor, Moon, Search, Sun } from "lucide-react";
 import { Brand } from "./components/Brand";
 import { SiteFooter } from "./components/SiteFooter";
 import { SearchResultsPage } from "./components/SearchResultsPage";
 import { buildSearchItems, type SearchItem, useRankedSearch } from "./components/searchModel";
+
+type ThemePreference = "system" | "light" | "dark";
+type ResolvedTheme = "light" | "dark";
+
+const THEME_CYCLE: ReadonlyArray<ThemePreference> = ["system", "light", "dark"];
 
 export type SearchLayoutContext = {
   hasActiveSearch: boolean;
@@ -18,6 +24,21 @@ export function AppLayout() {
   const isHome = location.pathname === "/";
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [themePreference, setThemePreference] = useState<ThemePreference>(() => {
+    const stored = window.localStorage.getItem("duckgrades-theme");
+    if (stored === "light" || stored === "dark" || stored === "system") {
+      return stored;
+    }
+
+    return "system";
+  });
+  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() => {
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      return "dark";
+    }
+
+    return "light";
+  });
   const headerInputRef = useRef<HTMLInputElement | null>(null);
   const resultRefs = useRef<Array<HTMLAnchorElement | null>>([]);
   const ranked = useRankedSearch(query);
@@ -25,6 +46,29 @@ export function AppLayout() {
   const indexByKey = useMemo(() => new Map(flattened.map((item, index) => [item.key, index])), [flattened]);
   const hasQuery = query.trim().length > 0;
   const showHeader = !isHome || hasQuery;
+  const resolvedTheme: ResolvedTheme = themePreference === "system" ? systemTheme : themePreference;
+  const ThemeIcon = themePreference === "system" ? Monitor : themePreference === "light" ? Sun : Moon;
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = (event: MediaQueryListEvent) => {
+      setSystemTheme(event.matches ? "dark" : "light");
+    };
+
+    mediaQuery.addEventListener("change", onChange);
+    return () => {
+      mediaQuery.removeEventListener("change", onChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("duckgrades-theme", themePreference);
+  }, [themePreference]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = resolvedTheme;
+    document.documentElement.style.colorScheme = resolvedTheme;
+  }, [resolvedTheme]);
 
   useEffect(() => {
     setActiveIndex(0);
@@ -57,6 +101,14 @@ export function AppLayout() {
     event.preventDefault();
     clearQuery();
     navigate("/");
+  }
+
+  function cycleTheme() {
+    setThemePreference((current) => {
+      const currentIndex = THEME_CYCLE.indexOf(current);
+      const nextIndex = (currentIndex + 1) % THEME_CYCLE.length;
+      return THEME_CYCLE[nextIndex] ?? "system";
+    });
   }
 
   function focusInput() {
@@ -126,19 +178,7 @@ export function AppLayout() {
             <Brand onClick={onHeaderBrandClick} />
             <div className="group relative w-full flex-1 sm:min-w-0">
               <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
-                <svg
-                  className="h-4 w-4 text-slate-400 transition-colors group-focus-within:text-[#124734]"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M21 21l-6-6" />
-                  <circle cx="11" cy="11" r="7" />
-                </svg>
+                <Search className="h-4 w-4 text-[var(--duck-muted)] transition-colors group-focus-within:text-[#124734]" aria-hidden="true" />
               </div>
               <label htmlFor="global-search" className="sr-only">
                 Search subjects, courses, or professors
@@ -154,13 +194,22 @@ export function AppLayout() {
                 placeholder="Search by course, professor, or subject..."
                 autoComplete="off"
                 autoFocus={isHome && hasQuery}
-                className="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pr-4 pl-10 text-sm font-semibold text-[var(--duck-fg)] shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-[#4d8152] focus:ring-2 focus:ring-[#4d8152]/20"
+                className="w-full rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] py-2.5 pr-4 pl-10 text-sm font-semibold text-[var(--duck-fg)] shadow-sm outline-none transition-all placeholder:text-[var(--duck-muted)] focus:border-[#4d8152] focus:ring-2 focus:ring-[#4d8152]/20"
               />
             </div>
-            <div className="flex justify-end sm:flex-none">
+            <div className="flex items-center justify-end gap-2 sm:flex-none">
+              <button
+                type="button"
+                onClick={cycleTheme}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] text-[var(--duck-muted)] transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-[#124734]"
+                aria-label={`Theme: ${themePreference}. Click to change.`}
+                title={`Theme: ${themePreference}`}
+              >
+                <ThemeIcon className="h-4 w-4" aria-hidden="true" />
+              </button>
               <Link
                 to="/subjects"
-                className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-[#124734]"
+                className="inline-flex items-center rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-4 py-2 text-sm font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-[#124734]"
               >
                 Subjects
               </Link>

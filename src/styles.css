@@ -2,11 +2,22 @@
 
 :root {
   --duck-bg: #f5f9ef;
+  --duck-bg-accent: #f8fbf4;
   --duck-fg: #182116;
   --duck-primary: #b9e48c;
   --duck-accent: #ffec8f;
   --duck-muted: #5f6f5d;
   --duck-border: #d4e2ca;
+  --duck-surface: #ffffff;
+}
+
+:root[data-theme="dark"] {
+  --duck-bg: #101712;
+  --duck-bg-accent: #16211a;
+  --duck-fg: #e6f0e5;
+  --duck-muted: #acc1ab;
+  --duck-border: #2f4336;
+  --duck-surface: #18231b;
 }
 
 * {
@@ -18,7 +29,7 @@ body {
   min-width: 320px;
   font-family: "Sora", ui-sans-serif, system-ui, sans-serif;
   color: var(--duck-fg);
-  background: linear-gradient(to bottom, #f8fbf4 0%, var(--duck-bg) 200px);
+  background: linear-gradient(to bottom, var(--duck-bg-accent) 0%, var(--duck-bg) 200px);
 }
 
 a:focus-visible,
@@ -41,8 +52,8 @@ summary:focus-visible {
 .home-grid-bg {
   position: fixed;
   inset: 0;
-  background-color: #f9faf8;
-  background-image: radial-gradient(#d1d5db 0.5px, transparent 0.5px);
+  background-color: var(--duck-bg-accent);
+  background-image: radial-gradient(color-mix(in oklab, var(--duck-border) 80%, transparent) 0.5px, transparent 0.5px);
   background-size: 30px 30px;
   pointer-events: none;
 }
@@ -50,7 +61,7 @@ summary:focus-visible {
 .home-bg-overlay {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.82) 0%, rgba(249, 250, 248, 0.55) 100%);
+  background: radial-gradient(circle at center, color-mix(in oklab, var(--duck-surface) 84%, transparent) 0%, color-mix(in oklab, var(--duck-bg-accent) 55%, transparent) 100%);
   pointer-events: none;
 }
 
@@ -112,14 +123,14 @@ summary:focus-visible {
   font-size: clamp(1.7rem, 2.8vw, 2.2rem);
   font-weight: 900;
   letter-spacing: -0.035em;
-  color: #1d2b16;
+  color: var(--duck-fg);
 }
 
 .brand-grades {
   font-size: clamp(1.7rem, 2.8vw, 2.2rem);
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: #4f6e3d;
+  color: color-mix(in oklab, var(--duck-fg) 78%, #6c9962);
 }
 
 .brand-home .brand-duck,
