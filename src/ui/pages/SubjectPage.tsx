@@ -73,7 +73,7 @@ export function SubjectPage() {
   const displaySubjectCode = (subject?.subjectCode ?? code ?? 'Subject').toUpperCase();
   const subjectTitle = subject?.subjectTitle;
   const pageTitle = subjectTitle
-    ? `${displaySubjectCode} ${subjectTitle} Grade Distributions and Statistics`
+    ? `${displaySubjectCode} - ${subjectTitle} Grade Distributions and Statistics`
     : `${displaySubjectCode} Grade Distributions and Statistics`;
 
   usePageTitle(pageTitle);
