@@ -3,21 +3,33 @@ import fuzzysort from "fuzzysort";
 
 type MatchIndexes = number[];
 
-type RankedSubject = SearchIndex["subjects"][number] & {
+export type RankedSubject = SearchIndex["subjects"][number] & {
   score: number;
   labelMatchIndexes: MatchIndexes;
   subtitleMatchIndexes: MatchIndexes;
 };
 
-type RankedCourse = SearchIndex["courses"][number] & {
+export type RankedCourse = SearchIndex["courses"][number] & {
   score: number;
   labelMatchIndexes: MatchIndexes;
   subtitleMatchIndexes: MatchIndexes;
 };
 
-type RankedProfessor = SearchIndex["professors"][number] & {
+export type RankedProfessor = SearchIndex["professors"][number] & {
   score: number;
   labelMatchIndexes: MatchIndexes;
+};
+
+export type RankedSearchResult = {
+  subjects: RankedSubject[];
+  courses: RankedCourse[];
+  professors: RankedProfessor[];
+};
+
+export const EMPTY_RANKED_RESULTS: RankedSearchResult = {
+  subjects: [],
+  courses: [],
+  professors: [],
 };
 
 function normalizeLoose(value: string): string {
@@ -49,11 +61,7 @@ function applyPopularityBoost(score: number, popularity: number): number {
 export function searchIndex(index: SearchIndex, query: string) {
   const normalized = query.trim();
   if (!normalized) {
-    return {
-      subjects: [] as RankedSubject[],
-      courses: [] as RankedCourse[],
-      professors: [] as RankedProfessor[],
-    };
+    return EMPTY_RANKED_RESULTS;
   }
 
   const threshold = getFuzzyThreshold(normalized);
@@ -107,5 +115,5 @@ export function searchIndex(index: SearchIndex, query: string) {
     }))
     .sort((a, b) => b.score - a.score || b.popularity - a.popularity);
 
-  return { subjects, courses, professors };
+  return { subjects, courses, professors } satisfies RankedSearchResult;
 }
