@@ -130,7 +130,7 @@ export function CoursePage() {
                 distributionSize="sm"
                 showStudentCountInDistribution={false}
               >
-                <SectionDrilldown sections={instructor.sections} identityPrefix={instructor.professorId} canonicalSubjectCode={course.subject} />
+                <SectionDrilldown sections={instructor.sections} identityPrefix={instructor.professorId} />
               </EntityAggregateCard>
             ))}
           </div>

@@ -42,6 +42,7 @@ export type SectionRow = {
   termDesc: string;
   crn: string;
   sourceSubject?: string;
+  sourceCourseCode?: string;
   csvTitle?: string;
   totalNonWReported: number;
   counts: Record<string, number | null>;

@@ -7,7 +7,6 @@ type SectionDrilldownProps = {
   sections: SectionRow[];
   summaryLabel?: string;
   identityPrefix: string;
-  canonicalSubjectCode?: string;
 };
 
 function visibleNumericalCount(section: SectionRow): number {
@@ -46,7 +45,7 @@ function buildSectionAggregate(section: SectionRow): Aggregate {
   };
 }
 
-export function SectionDrilldown({ sections, summaryLabel = "Section details", identityPrefix, canonicalSubjectCode }: SectionDrilldownProps) {
+export function SectionDrilldown({ sections, summaryLabel = "Section details", identityPrefix }: SectionDrilldownProps) {
   const totalReported = sections.reduce((sum, section) => sum + section.totalNonWReported, 0);
 
   return (
@@ -68,14 +67,15 @@ export function SectionDrilldown({ sections, summaryLabel = "Section details", i
           const coverage = section.totalNonWReported > 0 ? (visible / section.totalNonWReported) * 100 : 0;
           const sectionAggregate = buildSectionAggregate(section);
           const hasHiddenBuckets = section.totalNonWReported > visible;
-          const sourceSubject = section.sourceSubject?.toUpperCase();
-          const canonicalSubject = canonicalSubjectCode?.toUpperCase();
-          const hasSubjectMerge = sourceSubject && canonicalSubject && sourceSubject !== canonicalSubject;
+          const sourceLabel = section.sourceCourseCode
+            ? `${section.sourceCourseCode}${section.csvTitle ? ` ${section.csvTitle}` : ""}`
+            : section.csvTitle ?? "";
 
           return (
             <article key={`${identityPrefix}-${section.crn}`} className="rounded-xl border border-slate-200 bg-white/95 px-3 py-2.5">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                 <div className="min-w-0 sm:flex-1">
+                  {sourceLabel ? <p className="mb-0.5 text-xs font-semibold text-slate-600">{sourceLabel}</p> : null}
                   <div className="flex flex-wrap items-center gap-1.5">
                     <p className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
                       {section.termDesc} · CRN {section.crn}
@@ -86,11 +86,6 @@ export function SectionDrilldown({ sections, summaryLabel = "Section details", i
                     <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5 text-[10px] font-semibold text-slate-700">
                       {coverage.toFixed(1)}% visible
                     </span>
-                    {hasSubjectMerge ? (
-                      <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5 text-[10px] font-semibold text-slate-700">
-                        source {sourceSubject}
-                      </span>
-                    ) : null}
                     {hasHiddenBuckets ? <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">redacted</span> : null}
                   </div>
 
@@ -106,7 +101,6 @@ export function SectionDrilldown({ sections, summaryLabel = "Section details", i
                     </span>
                   </div>
 
-                  {section.csvTitle ? <p className="mt-1 text-xs text-slate-600">CSV title: {section.csvTitle}</p> : null}
                 </div>
 
                 <div className="flex justify-end sm:pl-2">

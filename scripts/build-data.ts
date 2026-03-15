@@ -37,6 +37,7 @@ type SectionRecord = {
   term: string;
   termDesc: string;
   sourceSubject: string;
+  sourceCourseCode: string;
   subject: string;
   number: string;
   title: string;
@@ -636,6 +637,7 @@ async function main() {
       term: row.TERM,
       termDesc: row.TERM_DESC,
       sourceSubject,
+      sourceCourseCode: `${sourceSubject}-${mappedNumber}`,
       subject: mappedSubject,
       number: mappedNumber,
       title: row.TITLE.trim(),
@@ -799,6 +801,7 @@ async function main() {
             termDesc: section.termDesc,
             crn: section.crn,
             sourceSubject: section.sourceSubject,
+            sourceCourseCode: section.sourceCourseCode,
             csvTitle: section.title,
             totalNonWReported: section.totalNonWReported,
             counts: section.counts,
@@ -832,6 +835,7 @@ async function main() {
               termDesc: section.termDesc,
               crn: section.crn,
               sourceSubject: section.sourceSubject,
+              sourceCourseCode: section.sourceCourseCode,
               csvTitle: section.title,
               totalNonWReported: section.totalNonWReported,
               counts: section.counts,
