@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import duckgradesLogo from "../../assets/duckgrades.png";
 
 type BrandProps = {
   home?: boolean;
@@ -10,7 +11,7 @@ export function Brand({ home = false, className = "" }: BrandProps) {
 
   return (
     <Link to="/" className={classes}>
-      <img src="/duckgrades.png" alt="" aria-hidden="true" className="brand-logo" width={512} height={512} />
+      <img src={duckgradesLogo} alt="" aria-hidden="true" className="brand-logo" width={512} height={512} />
       <span className="brand-wordmark">
         <span className="brand-duck">Duck</span>
         <span className="brand-grades">Grades</span>
