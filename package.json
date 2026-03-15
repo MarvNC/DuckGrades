@@ -8,6 +8,7 @@
     "build:catalog": "bun scripts/scrape-uo-catalog.ts",
     "build:programs": "bun scripts/scrape-uo-programs.ts",
     "build:data": "bun scripts/build-data.ts",
+    "build:sitemap": "bun scripts/generate-sitemap.ts",
     "copy:data:dist": "bun scripts/copy-current-data-to-dist.ts",
     "analyze:budgets": "bun scripts/analyze-budgets.ts",
     "build": "tsc -b && vite build",
