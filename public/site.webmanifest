@@ -1,7 +1,7 @@
 {
   "name": "DuckGrades",
   "short_name": "DuckGrades",
-  "description": "Explore University of Oregon grade trends by subject, course, and professor.",
+  "description": "Explore University of Oregon grade distributions and statistics by subject, course, and professor.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f5f9ef",
