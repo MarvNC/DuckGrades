@@ -26,6 +26,7 @@ type CatalogSnapshot = {
 
 const BASE_URL = "https://catalog.uoregon.edu";
 const COURSES_INDEX_PATH = "/courses/";
+const EXTRA_SUBJECT_INDEX_PATHS = ["/courses/crs-pe/"] as const;
 const OUTPUT_PATH = "data/uo-catalog-course-metadata.json";
 const SUBJECT_REQUEST_CONCURRENCY = 6;
 const REQUEST_RETRIES = 3;
@@ -80,6 +81,15 @@ function normalizePath(path: string): string {
   return withLeadingSlash.endsWith("/") ? withLeadingSlash : `${withLeadingSlash}/`;
 }
 
+function resolveCatalogPath(rawHref: string, basePath: string): string {
+  const trimmed = rawHref.trim();
+  if (!trimmed || trimmed.startsWith("#") || /^https?:/i.test(trimmed) || /\.pdf(?:$|[?#])/i.test(trimmed)) {
+    return "";
+  }
+  const resolved = new URL(trimmed, new URL(normalizePath(basePath), BASE_URL)).pathname;
+  return normalizePath(resolved);
+}
+
 async function fetchText(path: string): Promise<string> {
   const normalizedPath = normalizePath(path);
   const url = new URL(normalizedPath, BASE_URL).toString();
@@ -107,13 +117,17 @@ async function fetchText(path: string): Promise<string> {
   throw new Error(`Unable to fetch ${url}: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
 }
 
-function parseSubjectList(html: string): CatalogSubjectRecord[] {
+function parseSubjectList(html: string, sourcePath: string): CatalogSubjectRecord[] {
   const subjectByCode = new Map<string, CatalogSubjectRecord>();
-  const anchorPattern = /<a[^>]+href="(\/courses\/crs-[^"]*\/)"[^>]*>([\s\S]*?)<\/a>/gi;
+  const anchorPattern = /<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
 
   let match = anchorPattern.exec(html);
   while (match) {
-    const path = normalizePath(match[1]);
+    const path = resolveCatalogPath(match[1], sourcePath);
+    if (!path.startsWith("/courses/") || !path.includes("/crs-")) {
+      match = anchorPattern.exec(html);
+      continue;
+    }
     const label = normalizeText(match[2]);
     const codeMatch = label.match(/\(([A-Z]{2,6})\)\s*$/);
 
@@ -197,8 +211,19 @@ async function mapWithConcurrency<T>(
 }
 
 async function main() {
-  const indexHtml = await fetchText(COURSES_INDEX_PATH);
-  const subjects = parseSubjectList(indexHtml);
+  const indexPaths = [COURSES_INDEX_PATH, ...EXTRA_SUBJECT_INDEX_PATHS];
+  const subjectByCode = new Map<string, CatalogSubjectRecord>();
+
+  for (const indexPath of indexPaths) {
+    const indexHtml = await fetchText(indexPath);
+    for (const subject of parseSubjectList(indexHtml, indexPath)) {
+      if (!subjectByCode.has(subject.code)) {
+        subjectByCode.set(subject.code, subject);
+      }
+    }
+  }
+
+  const subjects = [...subjectByCode.values()].sort((a, b) => a.code.localeCompare(b.code));
   if (subjects.length === 0) {
     throw new Error("No subjects were discovered from the catalog courses index.");
   }
