@@ -166,7 +166,7 @@ export function ProfessorPage() {
             distributionSize="sm"
             showStudentCountInDistribution={false}
           >
-            <SectionDrilldown sections={course.sections} identityPrefix={course.courseCode} reportedTotal={course.aggregate.totalNonWReported} />
+            <SectionDrilldown sections={course.sections} identityPrefix={course.courseCode} />
           </EntityAggregateCard>
         ))}
       </div>

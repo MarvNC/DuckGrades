@@ -219,7 +219,6 @@ export function CoursePage() {
                 <SectionDrilldown
                   sections={instructor.sections}
                   identityPrefix={instructor.professorId}
-                  reportedTotal={instructor.aggregate.totalNonWReported}
                 />
               </EntityAggregateCard>
             ))}
