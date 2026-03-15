@@ -53,8 +53,8 @@ export function SubjectsOverviewPage() {
   const [overview, setOverview] = useState<SubjectsOverviewShard | null>(null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [subjectQuery, setSubjectQuery] = useState("");
-  const [sortKey, setSortKey] = useState<SubjectSortKey>("code");
-  const [sortDescending, setSortDescending] = useState(false);
+  const [sortKey, setSortKey] = useState<SubjectSortKey>("students");
+  const [sortDescending, setSortDescending] = useState(true);
 
   usePageTitle("All UO Subjects Grade Distributions and Statistics");
 
