@@ -325,7 +325,7 @@ export function AppLayout() {
               onKeyDown={onSearchInputKeyDown}
               placeholder="Search by course, professor, or subject..."
               autoComplete="off"
-              className="w-full rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/95 py-3 pr-4 pl-10 text-sm font-semibold text-[var(--duck-fg)] shadow-sm backdrop-blur outline-none placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
+              className="w-full rounded-2xl border border-[var(--duck-border-strong)] bg-[var(--duck-surface)]/95 py-3.5 pr-4 pl-10 text-sm font-semibold text-[var(--duck-fg)] shadow-lg backdrop-blur outline-none placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
             />
           </div>
         </div>
