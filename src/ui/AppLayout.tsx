@@ -41,7 +41,8 @@ export function AppLayout() {
 
     return "light";
   });
-  const headerInputRef = useRef<HTMLInputElement | null>(null);
+  const desktopSearchInputRef = useRef<HTMLInputElement | null>(null);
+  const mobileSearchInputRef = useRef<HTMLInputElement | null>(null);
   const headerRef = useRef<HTMLElement | null>(null);
   const resultRefs = useRef<Array<HTMLAnchorElement | null>>([]);
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -86,7 +87,7 @@ export function AppLayout() {
   useEffect(() => {
     if (isHome && hasQuery) {
       window.requestAnimationFrame(() => {
-        headerInputRef.current?.focus();
+        focusInput();
       });
     }
   }, [isHome, hasQuery]);
@@ -141,7 +142,11 @@ export function AppLayout() {
   }
 
   function focusInput() {
-    headerInputRef.current?.focus();
+    const isNarrowViewport = window.matchMedia("(max-width: 639px)").matches;
+    const target = isNarrowViewport
+      ? (mobileSearchInputRef.current ?? desktopSearchInputRef.current)
+      : (desktopSearchInputRef.current ?? mobileSearchInputRef.current);
+    target?.focus();
   }
 
   function focusResult(index: number) {
@@ -208,21 +213,21 @@ export function AppLayout() {
       <div className="home-grid-bg" aria-hidden="true" />
       <div className="home-bg-overlay" aria-hidden="true" />
       {showHeader ? (
-        <header ref={headerRef} className="sticky top-0 z-30 w-full px-2 pt-2 sm:px-4 sm:pt-4">
+        <header ref={headerRef} className="sticky top-0 z-30 w-full px-5 pt-3 sm:px-8 sm:pt-4">
           <div
-            className={`mx-auto flex w-full max-w-6xl flex-wrap items-center gap-2 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/90 px-3 py-2.5 backdrop-blur-md sm:flex-nowrap sm:gap-4 sm:px-8 sm:py-5 ${isHome ? "home-search-header-enter" : ""}`}
+            className={`mx-auto mb-2 flex w-full max-w-6xl items-center gap-2 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/90 px-3 py-2.5 shadow-[0_6px_18px_-14px_rgba(0,0,0,0.45)] backdrop-blur-md sm:mb-3 sm:gap-4 sm:px-8 sm:py-5 ${isHome ? "home-search-header-enter" : ""}`}
           >
             <Brand onClick={onHeaderBrandClick} className="shrink-0" hideWordmarkOnTiny />
-            <div className="group order-3 relative w-full basis-full sm:order-none sm:basis-auto sm:flex-1 sm:min-w-0">
+            <div className="group relative hidden flex-1 sm:block sm:min-w-0">
               <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
                 <Search className="h-4 w-4 text-[var(--duck-muted)] transition-colors group-focus-within:text-[var(--duck-accent-strong)]" aria-hidden="true" />
               </div>
-              <label htmlFor="global-search" className="sr-only">
+              <label htmlFor="global-search-desktop" className="sr-only">
                 Search subjects, courses, or professors
               </label>
               <input
-                id="global-search"
-                ref={headerInputRef}
+                id="global-search-desktop"
+                ref={desktopSearchInputRef}
                 value={query}
                 onChange={(event) => {
                   setQuery(event.target.value);
@@ -230,7 +235,6 @@ export function AppLayout() {
                 onKeyDown={onSearchInputKeyDown}
                 placeholder="Search by course, professor, or subject..."
                 autoComplete="off"
-                autoFocus={isHome && hasQuery}
                 className="w-full rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] py-2.5 pr-4 pl-10 text-sm font-semibold text-[var(--duck-fg)] shadow-sm outline-none transition-all placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
               />
             </div>
@@ -246,7 +250,31 @@ export function AppLayout() {
           </div>
         </header>
       ) : null}
-      <main className={`relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 sm:px-8 ${showHeader ? "pb-16" : ""}`}>
+      {showHeader ? (
+        <div className="fixed inset-x-2 bottom-2 z-40 sm:hidden">
+          <div className="group relative mx-auto w-full max-w-6xl">
+            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
+              <Search className="h-4 w-4 text-[var(--duck-muted)] transition-colors group-focus-within:text-[var(--duck-accent-strong)]" aria-hidden="true" />
+            </div>
+            <label htmlFor="global-search-mobile" className="sr-only">
+              Search subjects, courses, or professors
+            </label>
+            <input
+              id="global-search-mobile"
+              ref={mobileSearchInputRef}
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+              }}
+              onKeyDown={onSearchInputKeyDown}
+              placeholder="Search by course, professor, or subject..."
+              autoComplete="off"
+              className="w-full rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/95 py-3 pr-4 pl-10 text-sm font-semibold text-[var(--duck-fg)] shadow-sm outline-none backdrop-blur placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
+            />
+          </div>
+        </div>
+      ) : null}
+      <main className={`relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 sm:px-8 ${showHeader ? "pb-24 sm:pb-16" : ""}`}>
         {isHome || !hasQuery ? <Outlet context={outletContext} /> : null}
         {hasQuery ? (
           <SearchResultsPage
