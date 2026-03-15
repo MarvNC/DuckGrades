@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Brand } from "./components/Brand";
+import { SiteFooter } from "./components/SiteFooter";
 import { SearchResultsPage } from "./components/SearchResultsPage";
 import { buildSearchItems, type SearchItem, useRankedSearch } from "./components/searchModel";
 
@@ -106,7 +107,7 @@ export function AppLayout() {
   };
 
   return (
-    <div className="shell-bg relative min-h-screen">
+    <div className="shell-bg relative flex min-h-screen flex-col">
       <div className="home-grid-bg" aria-hidden="true" />
       <div className="home-bg-overlay" aria-hidden="true" />
       {showHeader ? (
@@ -155,7 +156,7 @@ export function AppLayout() {
           </div>
         </header>
       ) : null}
-      <main className={`relative z-10 mx-auto w-full max-w-6xl px-5 sm:px-8 ${showHeader ? "pb-16" : ""}`}>
+      <main className={`relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 sm:px-8 ${showHeader ? "pb-16" : ""}`}>
         {isHome || !hasQuery ? <Outlet context={outletContext} /> : null}
         {hasQuery ? (
           <SearchResultsPage
@@ -172,6 +173,7 @@ export function AppLayout() {
           />
         ) : null}
       </main>
+      <SiteFooter />
     </div>
   );
 }
