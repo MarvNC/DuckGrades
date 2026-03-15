@@ -47,6 +47,38 @@
       "reason": "Legacy short Arts and Administration code normalized to AAA."
     }
   ],
+  "courseAliases": [
+    {
+      "from": "WR-121",
+      "to": "WR-121Z",
+      "reason": "Catalog course description states WR 121Z was previously WR 121."
+    },
+    {
+      "from": "WR-122",
+      "to": "WR-122Z",
+      "reason": "Catalog course description states WR 122Z was previously WR 122."
+    },
+    {
+      "from": "MATH-105",
+      "to": "MATH-105Z",
+      "reason": "Catalog course description states MATH 105Z was previously MATH 105."
+    },
+    {
+      "from": "MATH-111",
+      "to": "MATH-111Z",
+      "reason": "Catalog course description states MATH 111Z was previously MATH 111."
+    },
+    {
+      "from": "MATH-112",
+      "to": "MATH-112Z",
+      "reason": "Catalog course description states MATH 112Z was previously MATH 112."
+    },
+    {
+      "from": "MATH-243",
+      "to": "STAT-243Z",
+      "reason": "MATH 243 was renumbered/re-homed as STAT 243Z in the catalog; merge historical sections for a continuous course view."
+    }
+  ],
   "titleOverrides": {
     "AAA": "Arts and Administration",
     "AAD": "Arts and Administration",

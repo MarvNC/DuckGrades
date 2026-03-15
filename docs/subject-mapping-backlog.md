@@ -20,6 +20,15 @@ Last updated: 2026-03-15
 - `AEGP -> AEIS`
 - `AA -> AAA`
 
+### Course-level aliases
+
+- `WR-121 -> WR-121Z`
+- `WR-122 -> WR-122Z`
+- `MATH-105 -> MATH-105Z`
+- `MATH-111 -> MATH-111Z`
+- `MATH-112 -> MATH-112Z`
+- `MATH-243 -> STAT-243Z`
+
 ## Accounted for without merge (non-O)
 
 - `AAD` (title override: Arts and Administration)

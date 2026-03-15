@@ -161,12 +161,25 @@ type SubjectCodeMappingsSnapshot = {
     to: string;
     reason: string;
   }>;
+  courseAliases?: Array<{
+    from: string;
+    to: string;
+    reason: string;
+  }>;
   titleOverrides?: Record<string, string>;
   descriptionProgramNames?: Record<string, string[]>;
 };
 
 type SubjectCodeMappingsLookup = {
   aliases: Map<string, string>;
+  courseAliases: Map<
+    string,
+    {
+      code: string;
+      subject: string;
+      number: string;
+    }
+  >;
   titleOverrides: Map<string, string>;
   descriptionProgramNames: Map<string, string[]>;
 };
@@ -614,6 +627,31 @@ async function loadSubjectCodeMappings(): Promise<SubjectCodeMappingsLookup> {
       }
     }
 
+    const courseAliases = new Map<
+      string,
+      {
+        code: string;
+        subject: string;
+        number: string;
+      }
+    >();
+    for (const alias of snapshot.courseAliases ?? []) {
+      const from = alias.from.trim().toUpperCase();
+      const to = alias.to.trim().toUpperCase();
+      if (!from || !to || from === to) {
+        continue;
+      }
+      const [toSubject = '', toNumber = ''] = to.split('-', 2);
+      if (!toSubject || !toNumber) {
+        continue;
+      }
+      courseAliases.set(from, {
+        code: to,
+        subject: toSubject,
+        number: toNumber,
+      });
+    }
+
     const descriptionProgramNames = new Map<string, string[]>();
     for (const [subjectCode, names] of Object.entries(snapshot.descriptionProgramNames ?? {})) {
       const key = subjectCode.trim().toUpperCase();
@@ -633,9 +671,9 @@ async function loadSubjectCodeMappings(): Promise<SubjectCodeMappingsLookup> {
     }
 
     console.log(
-      `Loaded subject mappings (${aliases.size} aliases, ${titleOverrides.size} title overrides, ${descriptionProgramNames.size} description overrides)`
+      `Loaded subject mappings (${aliases.size} subject aliases, ${courseAliases.size} course aliases, ${titleOverrides.size} title overrides, ${descriptionProgramNames.size} description overrides)`
     );
-    return { aliases, titleOverrides, descriptionProgramNames };
+    return { aliases, courseAliases, titleOverrides, descriptionProgramNames };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.warn(
@@ -643,6 +681,14 @@ async function loadSubjectCodeMappings(): Promise<SubjectCodeMappingsLookup> {
     );
     return {
       aliases: new Map<string, string>(),
+      courseAliases: new Map<
+        string,
+        {
+          code: string;
+          subject: string;
+          number: string;
+        }
+      >(),
       titleOverrides: new Map<string, string>(),
       descriptionProgramNames: new Map<string, string[]>(),
     };
@@ -672,6 +718,7 @@ async function main() {
     return subjectMappings.aliases.get(normalized) ?? normalized;
   };
   const aliasMergeCounts = new Map<string, number>();
+  const courseAliasMergeCounts = new Map<string, number>();
 
   const idSlots = new Map<string, string>();
   const collisionCounts = new Map<string, number>();
@@ -724,18 +771,25 @@ async function main() {
     };
 
     const sourceSubject = row.SUBJ.trim().toUpperCase();
-    const mappedSubject = mapSubjectCode(sourceSubject);
-    const mappedNumber = row.NUMB.trim();
-    if (mappedSubject !== sourceSubject) {
+    const sourceNumber = row.NUMB.trim().toUpperCase();
+    const sourceCourseCode = `${sourceSubject}-${sourceNumber}`;
+    const courseAlias = subjectMappings.courseAliases.get(sourceCourseCode);
+    const mappedSubject = courseAlias?.subject ?? mapSubjectCode(sourceSubject);
+    const mappedNumber = courseAlias?.number ?? sourceNumber;
+    if (!courseAlias && mappedSubject !== sourceSubject) {
       const aliasKey = `${sourceSubject}->${mappedSubject}`;
       aliasMergeCounts.set(aliasKey, (aliasMergeCounts.get(aliasKey) ?? 0) + 1);
+    }
+    if (courseAlias) {
+      const aliasKey = `${sourceCourseCode}->${courseAlias.code}`;
+      courseAliasMergeCounts.set(aliasKey, (courseAliasMergeCounts.get(aliasKey) ?? 0) + 1);
     }
 
     return {
       term: row.TERM,
       termDesc: row.TERM_DESC,
       sourceSubject,
-      sourceCourseCode: `${sourceSubject}-${mappedNumber}`,
+      sourceCourseCode,
       subject: mappedSubject,
       number: mappedNumber,
       title: row.TITLE.trim(),
@@ -1023,6 +1077,16 @@ async function main() {
     const topAliasMerges = [...aliasMergeCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12);
     console.log(`Applied ${aliasMergeCounts.size} subject code alias mappings`);
     for (const [alias, count] of topAliasMerges) {
+      console.log(`- ${alias} (${count} sections)`);
+    }
+  }
+
+  if (courseAliasMergeCounts.size > 0) {
+    const topCourseAliasMerges = [...courseAliasMergeCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 12);
+    console.log(`Applied ${courseAliasMergeCounts.size} course code alias mappings`);
+    for (const [alias, count] of topCourseAliasMerges) {
       console.log(`- ${alias} (${count} sections)`);
     }
   }
