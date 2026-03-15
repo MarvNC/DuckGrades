@@ -615,6 +615,9 @@ async function main() {
   const subjectMappings = await loadSubjectCodeMappings();
   const mapSubjectCode = (subjectCode: string) => {
     const normalized = subjectCode.trim().toUpperCase();
+    if (/^O[A-Z0-9]{2,}$/.test(normalized)) {
+      return normalized;
+    }
     return subjectMappings.aliases.get(normalized) ?? normalized;
   };
   const aliasMergeCounts = new Map<string, number>();
