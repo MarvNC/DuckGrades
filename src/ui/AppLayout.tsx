@@ -112,9 +112,9 @@ export function AppLayout() {
       <div className="home-bg-overlay" aria-hidden="true" />
       {showHeader ? (
         <header className={`relative z-30 mx-auto w-full max-w-6xl px-5 py-6 sm:px-8 ${isHome ? "home-search-header-enter" : ""}`}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <Brand />
-            <div className="group relative w-full max-w-md flex-1 min-w-[18rem]">
+            <div className="group relative w-full flex-1 sm:min-w-0">
               <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
                 <svg
                   className="h-4 w-4 text-slate-400 transition-colors group-focus-within:text-[#124734]"
@@ -147,12 +147,14 @@ export function AppLayout() {
                 className="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pr-4 pl-10 text-sm font-semibold text-[var(--duck-fg)] shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-[#4d8152] focus:ring-2 focus:ring-[#4d8152]/20"
               />
             </div>
-            <Link
-              to="/subjects"
-              className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-[#124734]"
-            >
-              Subjects
-            </Link>
+            <div className="flex justify-end sm:flex-none">
+              <Link
+                to="/subjects"
+                className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-[#124734]"
+              >
+                Subjects
+              </Link>
+            </div>
           </div>
         </header>
       ) : null}
