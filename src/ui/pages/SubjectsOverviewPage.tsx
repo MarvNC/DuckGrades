@@ -103,12 +103,6 @@ export function SubjectsOverviewPage() {
     return sortSubjects(filteredSubjects, sortKey, sortDescending);
   }, [filteredSubjects, sortDescending, sortKey]);
 
-  const topSubjects = useMemo(() => {
-    return [...(overview?.subjects ?? [])]
-      .sort((a, b) => b.aggregate.totalNonWReported - a.aggregate.totalNonWReported || a.code.localeCompare(b.code))
-      .slice(0, 5);
-  }, [overview?.subjects]);
-
   const totalStudents = overview?.aggregate.totalNonWReported ?? 0;
 
   return (
@@ -135,25 +129,6 @@ export function SubjectsOverviewPage() {
 
       {loadState === "loading" ? <p className="text-sm text-[var(--duck-muted)]">Loading subject overview...</p> : null}
       {loadState === "error" ? <p className="text-sm text-[var(--duck-danger-text)]">Unable to load subject overview data right now.</p> : null}
-
-      {loadState === "ready" && topSubjects.length > 0 ? (
-        <div className="rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3.5 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--duck-muted)]">Most enrolled subjects</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {topSubjects.map((subject) => (
-              <Link
-                key={subject.code}
-                to={`/subject/${subject.code}`}
-                className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-3 py-1 text-xs font-semibold text-[var(--duck-muted-strong)] transition hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface)] hover:text-[var(--duck-fg)]"
-              >
-                {subject.code}
-                <span className="ml-1.5 text-[var(--duck-muted)]">{subject.title}</span>
-                <span className="ml-1.5 text-[var(--duck-muted)]">{subject.aggregate.totalNonWReported.toLocaleString()}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      ) : null}
 
       {loadState === "ready" && overview ? (
         <div className="z-20 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm backdrop-blur">
