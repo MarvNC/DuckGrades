@@ -36,6 +36,7 @@ type GradeCode = (typeof NUMERICAL_ORDER)[number] | (typeof NON_NUMERICAL_ORDER)
 type SectionRecord = {
   term: string;
   termDesc: string;
+  sourceSubject: string;
   subject: string;
   number: string;
   title: string;
@@ -127,8 +128,50 @@ type CatalogLookup = {
   coursesByCode: Map<string, CatalogCourseMetadata>;
 };
 
+type ProgramMetadataSnapshot = {
+  schemaVersion: 1;
+  sourcePaths: string[];
+  scrapedAt: string;
+  programs: Array<{
+    name: string;
+    category:
+      | "ug-major"
+      | "ug-minor"
+      | "ug-certificate"
+      | "gr-degree"
+      | "gr-certificate"
+      | "gr-specialization"
+      | "gr-microcredential";
+    sourcePath: string;
+    sectionId: string;
+    path: string;
+    hash: string | null;
+    credentials: string | null;
+    pageTitle: string | null;
+    description: string | null;
+    overview: string[];
+  }>;
+};
+
+type SubjectCodeMappingsSnapshot = {
+  schemaVersion: 1;
+  aliases: Array<{
+    from: string;
+    to: string;
+    reason: string;
+  }>;
+  descriptionProgramNames?: Record<string, string[]>;
+};
+
+type SubjectCodeMappingsLookup = {
+  aliases: Map<string, string>;
+  descriptionProgramNames: Map<string, string[]>;
+};
+
 const INPUT_CSV = "data/pub_rec_master_w2016-f2025.csv";
 const CATALOG_METADATA_JSON = "data/uo-catalog-course-metadata.json";
+const PROGRAM_METADATA_JSON = "data/uo-catalog-program-metadata.json";
+const SUBJECT_CODE_MAPPINGS_JSON = "data/subject-code-mappings.json";
 const OUTPUT_ROOT = "public/data";
 const NUMERICAL_ORDER = ["F", "DM", "D", "DP", "CM", "C", "CP", "BM", "B", "BP", "AM", "A", "AP"] as const;
 const NON_NUMERICAL_ORDER = ["P", "N", "OTHER"] as const;
@@ -430,6 +473,96 @@ async function loadCatalogLookup(): Promise<CatalogLookup> {
   }
 }
 
+function normalizeLookupKey(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function buildProgramDescriptionLookup(snapshot: ProgramMetadataSnapshot): Map<string, string> {
+  const byName = new Map<string, { description: string; priority: number }>();
+  const categoryPriority: Record<ProgramMetadataSnapshot["programs"][number]["category"], number> = {
+    "ug-major": 4,
+    "gr-degree": 3,
+    "ug-minor": 2,
+    "ug-certificate": 2,
+    "gr-certificate": 2,
+    "gr-specialization": 1,
+    "gr-microcredential": 1,
+  };
+
+  for (const program of snapshot.programs) {
+    const description = program.description?.trim() ?? "";
+    if (!description) {
+      continue;
+    }
+    const key = normalizeLookupKey(program.name);
+    if (!key) {
+      continue;
+    }
+
+    const priority = categoryPriority[program.category] ?? 0;
+    const existing = byName.get(key);
+    if (!existing || priority > existing.priority || (priority === existing.priority && description.length > existing.description.length)) {
+      byName.set(key, { description, priority });
+    }
+  }
+
+  return new Map([...byName.entries()].map(([key, value]) => [key, value.description]));
+}
+
+async function loadProgramDescriptionLookup(): Promise<Map<string, string>> {
+  try {
+    const jsonText = await readFile(PROGRAM_METADATA_JSON, "utf8");
+    const snapshot = JSON.parse(jsonText) as ProgramMetadataSnapshot;
+    const lookup = buildProgramDescriptionLookup(snapshot);
+    console.log(`Loaded program metadata descriptions (${lookup.size} unique program names)`);
+    return lookup;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`Program metadata unavailable at ${PROGRAM_METADATA_JSON} (${message}); subject descriptions will be sparse.`);
+    return new Map<string, string>();
+  }
+}
+
+async function loadSubjectCodeMappings(): Promise<SubjectCodeMappingsLookup> {
+  try {
+    const jsonText = await readFile(SUBJECT_CODE_MAPPINGS_JSON, "utf8");
+    const snapshot = JSON.parse(jsonText) as SubjectCodeMappingsSnapshot;
+
+    const aliases = new Map<string, string>();
+    for (const alias of snapshot.aliases) {
+      const from = alias.from.trim().toUpperCase();
+      const to = alias.to.trim().toUpperCase();
+      if (from && to && from !== to) {
+        aliases.set(from, to);
+      }
+    }
+
+    const descriptionProgramNames = new Map<string, string[]>();
+    for (const [subjectCode, names] of Object.entries(snapshot.descriptionProgramNames ?? {})) {
+      const key = subjectCode.trim().toUpperCase();
+      const values = names.map((name) => name.trim()).filter((name) => name.length > 0);
+      if (key && values.length > 0) {
+        descriptionProgramNames.set(key, values);
+      }
+    }
+
+    console.log(`Loaded subject mappings (${aliases.size} aliases, ${descriptionProgramNames.size} description overrides)`);
+    return { aliases, descriptionProgramNames };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`Subject mappings unavailable at ${SUBJECT_CODE_MAPPINGS_JSON} (${message}); no code merges will be applied.`);
+    return {
+      aliases: new Map<string, string>(),
+      descriptionProgramNames: new Map<string, string[]>(),
+    };
+  }
+}
+
 async function main() {
   const version = `v${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`;
   const versionRoot = join(OUTPUT_ROOT, version);
@@ -442,6 +575,13 @@ async function main() {
     skip_empty_lines: true,
     trim: false,
   }) as CsvRow[];
+
+  const subjectMappings = await loadSubjectCodeMappings();
+  const mapSubjectCode = (subjectCode: string) => {
+    const normalized = subjectCode.trim().toUpperCase();
+    return subjectMappings.aliases.get(normalized) ?? normalized;
+  };
+  const aliasMergeCounts = new Map<string, number>();
 
   const idSlots = new Map<string, string>();
   const collisionCounts = new Map<string, number>();
@@ -484,13 +624,22 @@ async function main() {
       W: parseCount(row.W),
     };
 
+    const sourceSubject = row.SUBJ.trim().toUpperCase();
+    const mappedSubject = mapSubjectCode(sourceSubject);
+    const mappedNumber = row.NUMB.trim();
+    if (mappedSubject !== sourceSubject) {
+      const aliasKey = `${sourceSubject}->${mappedSubject}`;
+      aliasMergeCounts.set(aliasKey, (aliasMergeCounts.get(aliasKey) ?? 0) + 1);
+    }
+
     return {
       term: row.TERM,
       termDesc: row.TERM_DESC,
-      subject: row.SUBJ,
-      number: row.NUMB,
+      sourceSubject,
+      subject: mappedSubject,
+      number: mappedNumber,
       title: row.TITLE.trim(),
-      courseCode: `${row.SUBJ}-${row.NUMB}`,
+      courseCode: `${mappedSubject}-${mappedNumber}`,
       crn: row.CRN,
       instructor: row.INSTRUCTOR.trim() || "Unknown",
       instructorCanonical,
@@ -511,11 +660,40 @@ async function main() {
   }
 
   const catalog = await loadCatalogLookup();
+  const programDescriptions = await loadProgramDescriptionLookup();
   const getSubjectTitle = (subjectCode: string) => {
     return catalog.subjectsByCode.get(subjectCode.toUpperCase())?.title ?? subjectCode;
   };
   const getCourseMetadata = (courseCode: string) => {
     return catalog.coursesByCode.get(courseCode.toUpperCase()) ?? null;
+  };
+  const getSubjectDescription = (subjectCode: string, subjectTitle: string) => {
+    const overrideNames = subjectMappings.descriptionProgramNames.get(subjectCode.toUpperCase()) ?? [];
+    for (const overrideName of overrideNames) {
+      const description = programDescriptions.get(normalizeLookupKey(overrideName));
+      if (description) {
+        return description;
+      }
+    }
+
+    const titleCandidates = new Set<string>();
+    titleCandidates.add(subjectTitle);
+    if (subjectTitle.includes(":")) {
+      titleCandidates.add(subjectTitle.split(":")[0]?.trim() ?? "");
+    }
+    if (subjectTitle.includes(" and ")) {
+      titleCandidates.add(subjectTitle.replace(/\sand\s/gi, " & "));
+    }
+
+    for (const candidate of titleCandidates) {
+      const key = normalizeLookupKey(candidate);
+      const description = key ? programDescriptions.get(key) : undefined;
+      if (description) {
+        return description;
+      }
+    }
+
+    return null;
   };
 
   const fileIndex: Record<string, FileMeta> = {};
@@ -528,9 +706,11 @@ async function main() {
     }
     const subjectAggregate = buildAggregate(rows);
     const subjectTitle = getSubjectTitle(subjectCode);
+    const subjectDescription = getSubjectDescription(subjectCode, subjectTitle);
     const payload = {
       subjectCode,
       subjectTitle,
+      subjectDescription,
       aggregate: subjectAggregate,
       availableTerms: ["fall", "winter", "spring", "summer"] as TermKey[],
       courses: [...courseRows.entries()]
@@ -603,6 +783,7 @@ async function main() {
       courseCode,
       subject: subjectCode,
       subjectTitle: getSubjectTitle(subjectCode),
+      subjectDescription: getSubjectDescription(subjectCode, getSubjectTitle(subjectCode)),
       number: rows[0]?.number ?? "",
       title: catalogCourse?.title ?? rows[0]?.title ?? "",
       description: catalogCourse?.description ?? null,
@@ -617,6 +798,7 @@ async function main() {
             term: section.term,
             termDesc: section.termDesc,
             crn: section.crn,
+            sourceSubject: section.sourceSubject,
             csvTitle: section.title,
             totalNonWReported: section.totalNonWReported,
             counts: section.counts,
@@ -649,6 +831,7 @@ async function main() {
               term: section.term,
               termDesc: section.termDesc,
               crn: section.crn,
+              sourceSubject: section.sourceSubject,
               csvTitle: section.title,
               totalNonWReported: section.totalNonWReported,
               counts: section.counts,
@@ -681,6 +864,24 @@ async function main() {
       }))
       .sort((a, b) => b.popularity - a.popularity),
   };
+
+  if (aliasMergeCounts.size > 0) {
+    const topAliasMerges = [...aliasMergeCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12);
+    console.log(`Applied ${aliasMergeCounts.size} subject code alias mappings`);
+    for (const [alias, count] of topAliasMerges) {
+      console.log(`- ${alias} (${count} sections)`);
+    }
+  }
+
+  const catalogSubjectCoverageCount = [...bySubject.keys()].filter((code) => catalog.subjectsByCode.has(code.toUpperCase())).length;
+  const descriptionCoverageCount = [...bySubject.keys()].filter((code) => {
+    const title = getSubjectTitle(code);
+    return getSubjectDescription(code, title) !== null;
+  }).length;
+
+  console.log(`Subject title coverage from catalog: ${catalogSubjectCoverageCount}/${bySubject.size}`);
+  console.log(`Subject description coverage from programs: ${descriptionCoverageCount}/${bySubject.size}`);
+
   const compactSearch = compactSearchIndex(expandedSearchIndex);
   fileIndex[`${version}/search-index.json`] = await writeJson(join(OUTPUT_ROOT, `${version}/search-index.json`), compactSearch);
 

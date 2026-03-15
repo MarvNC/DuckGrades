@@ -41,6 +41,7 @@ export type SectionRow = {
   term: string;
   termDesc: string;
   crn: string;
+  sourceSubject?: string;
   csvTitle?: string;
   totalNonWReported: number;
   counts: Record<string, number | null>;
@@ -49,6 +50,7 @@ export type SectionRow = {
 export type SubjectShard = {
   subjectCode: string;
   subjectTitle?: string;
+  subjectDescription?: string | null;
   aggregate: Aggregate;
   availableTerms: Array<"fall" | "winter" | "spring" | "summer">;
   courses: Array<{
@@ -87,6 +89,7 @@ export type CourseShard = {
   courseCode: string;
   subject: string;
   subjectTitle?: string;
+  subjectDescription?: string | null;
   number: string;
   title: string;
   description?: string | null;

@@ -7,6 +7,7 @@ type SectionDrilldownProps = {
   sections: SectionRow[];
   summaryLabel?: string;
   identityPrefix: string;
+  canonicalSubjectCode?: string;
 };
 
 function visibleNumericalCount(section: SectionRow): number {
@@ -45,7 +46,7 @@ function buildSectionAggregate(section: SectionRow): Aggregate {
   };
 }
 
-export function SectionDrilldown({ sections, summaryLabel = "Section details", identityPrefix }: SectionDrilldownProps) {
+export function SectionDrilldown({ sections, summaryLabel = "Section details", identityPrefix, canonicalSubjectCode }: SectionDrilldownProps) {
   const totalReported = sections.reduce((sum, section) => sum + section.totalNonWReported, 0);
 
   return (
@@ -67,6 +68,9 @@ export function SectionDrilldown({ sections, summaryLabel = "Section details", i
           const coverage = section.totalNonWReported > 0 ? (visible / section.totalNonWReported) * 100 : 0;
           const sectionAggregate = buildSectionAggregate(section);
           const hasHiddenBuckets = section.totalNonWReported > visible;
+          const sourceSubject = section.sourceSubject?.toUpperCase();
+          const canonicalSubject = canonicalSubjectCode?.toUpperCase();
+          const hasSubjectMerge = sourceSubject && canonicalSubject && sourceSubject !== canonicalSubject;
 
           return (
             <article key={`${identityPrefix}-${section.crn}`} className="rounded-xl border border-slate-200 bg-white/95 px-3 py-2.5">
@@ -82,6 +86,11 @@ export function SectionDrilldown({ sections, summaryLabel = "Section details", i
                     <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5 text-[10px] font-semibold text-slate-700">
                       {coverage.toFixed(1)}% visible
                     </span>
+                    {hasSubjectMerge ? (
+                      <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+                        source {sourceSubject}
+                      </span>
+                    ) : null}
                     {hasHiddenBuckets ? <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">redacted</span> : null}
                   </div>
 

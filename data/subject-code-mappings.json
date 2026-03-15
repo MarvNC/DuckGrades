@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "aliases": [
+    {
+      "from": "CIS",
+      "to": "CS",
+      "reason": "Legacy Computer and Information Science code now represented in catalog as Computer Science (CS)."
+    },
+    {
+      "from": "J",
+      "to": "JCOM",
+      "reason": "Legacy Journalism code now represented under Journalism and Communication (JCOM)."
+    },
+    {
+      "from": "JC",
+      "to": "JCOM",
+      "reason": "Legacy Journalism/Communication variant folded into JCOM for consistency."
+    },
+    {
+      "from": "GEOL",
+      "to": "ERTH",
+      "reason": "Legacy Geology offerings now represented in Earth Sciences (ERTH)."
+    },
+    {
+      "from": "AEII",
+      "to": "AEIS",
+      "reason": "Academic English legacy code merged into Academic English for International Students (AEIS)."
+    },
+    {
+      "from": "AEIP",
+      "to": "AEIS",
+      "reason": "Academic English legacy code merged into Academic English for International Students (AEIS)."
+    },
+    {
+      "from": "AEGP",
+      "to": "AEIS",
+      "reason": "Academic English legacy code merged into Academic English for International Students (AEIS)."
+    }
+  ],
+  "descriptionProgramNames": {
+    "CS": ["Computer Science"],
+    "ERTH": ["Earth Sciences"],
+    "JCOM": ["Journalism", "Communication and Media Studies"]
+  }
+}
