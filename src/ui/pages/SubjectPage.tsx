@@ -142,7 +142,14 @@ export function SubjectPage() {
       <div className="space-y-2">
         <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">
           {displaySubjectCode}
-          {subject?.subjectTitle ? ` - ${subject.subjectTitle}` : ''}
+          {subject?.subjectTitle ? (
+            <>
+              <span className="px-1.5 text-[var(--duck-muted)]">-</span>
+              <span className="text-[var(--duck-muted-strong)]">{subject.subjectTitle}</span>
+            </>
+          ) : (
+            ''
+          )}
         </h1>
         {loadState === 'ready' && subject ? (
           <div className="flex flex-wrap gap-1.5">

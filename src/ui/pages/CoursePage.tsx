@@ -144,7 +144,14 @@ export function CoursePage() {
       <div className="space-y-2">
         <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">
           {displayCourseCode}
-          {course?.title ? ` - ${course.title}` : ''}
+          {course?.title ? (
+            <>
+              <span className="px-1.5 text-[var(--duck-muted)]">-</span>
+              <span className="text-[var(--duck-muted-strong)]">{course.title}</span>
+            </>
+          ) : (
+            ''
+          )}
         </h1>
         {course ? (
           <div className="flex flex-wrap gap-1.5">
