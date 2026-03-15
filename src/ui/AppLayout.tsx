@@ -262,7 +262,7 @@ export function AppLayout() {
       {showHeader ? (
         <header ref={headerRef} className="sticky top-0 z-30 w-full px-2 pt-3 sm:px-8 sm:pt-4">
           <div
-            className={`mx-auto mb-2 flex w-full max-w-6xl items-center gap-2 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/90 px-3 py-2.5 shadow-[0_6px_18px_-14px_rgba(0,0,0,0.45)] backdrop-blur-md sm:mb-3 sm:gap-4 sm:px-8 sm:py-5 ${isHome ? "home-search-header-enter" : ""}`}
+            className={`mx-auto mb-2 flex w-full max-w-6xl items-center gap-2 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/55 px-3 py-2.5 shadow-[0_6px_18px_-14px_rgba(0,0,0,0.45)] backdrop-blur-lg backdrop-saturate-125 sm:mb-3 sm:gap-4 sm:px-8 sm:py-5 ${isHome ? "home-search-header-enter" : ""}`}
           >
             <Brand onClick={onHeaderBrandClick} className="shrink-0" hideWordmarkOnTiny />
             <div className="group relative hidden flex-1 sm:block sm:min-w-0">
