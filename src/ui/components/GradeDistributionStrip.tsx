@@ -39,6 +39,14 @@ function getPercent(count: number, total: number): number {
   return (count / total) * 100;
 }
 
+function getCurvedBarHeight(count: number, maxCount: number, chartHeight: number): number {
+  if (count <= 0) {
+    return 0;
+  }
+  const ratio = count / maxCount;
+  return Math.max(2, Math.round((0.16 + 0.84 * Math.pow(ratio, 0.72)) * chartHeight));
+}
+
 export function GradeDistributionStrip({
   aggregate,
   size = 'md',
@@ -58,14 +66,17 @@ export function GradeDistributionStrip({
   const withdrawals = aggregate?.withdrawals ?? 0;
   const allWithWithdrawals = displayedTotal + withdrawals;
 
-  const numericalMax = Math.max(1, ...numericalValues);
   const leftCounts: Record<LeftBucketCode, number> = {
     P: nonNumericalValues[0] ?? 0,
     N: nonNumericalValues[1] ?? 0,
     OTHER: nonNumericalValues[2] ?? 0,
     W: withdrawals,
   };
-  const leftMax = Math.max(1, ...LEFT_BUCKET_ORDER.map((code) => leftCounts[code] ?? 0));
+  const combinedMax = Math.max(
+    1,
+    ...numericalValues,
+    ...LEFT_BUCKET_ORDER.map((code) => leftCounts[code] ?? 0)
+  );
 
   const defaultNumericalIndex = useMemo(() => {
     let maxCount = -1;
@@ -112,7 +123,7 @@ export function GradeDistributionStrip({
 
   const baseBarHeight = size === 'sm' ? 20 : 24;
   const numericalBarHeight = baseBarHeight;
-  const leftBarHeight = Math.round(baseBarHeight * 0.75);
+  const leftBarHeight = baseBarHeight;
   const barWidth = 12;
   const barGap = 2;
 
@@ -150,7 +161,7 @@ export function GradeDistributionStrip({
           >
             {LEFT_BUCKET_ORDER.map((code) => {
               const count = leftCounts[code] ?? 0;
-              const height = Math.max(2, Math.round((count / leftMax) * leftBarHeight));
+              const height = getCurvedBarHeight(count, combinedMax, leftBarHeight);
               const isSelected = resolvedActive.kind === 'left' && resolvedActive.code === code;
               return (
                 <button
@@ -200,14 +211,7 @@ export function GradeDistributionStrip({
           >
             {NUMERICAL_GRADE_ORDER.map((grade, index) => {
               const count = numericalValues[index] ?? 0;
-              const ratio = count / numericalMax;
-              const height =
-                count > 0
-                  ? Math.max(
-                      2,
-                      Math.round((0.16 + 0.84 * Math.pow(ratio, 0.72)) * numericalBarHeight)
-                    )
-                  : 0;
+              const height = getCurvedBarHeight(count, combinedMax, numericalBarHeight);
               const hue = 10 + (index / (NUMERICAL_GRADE_ORDER.length - 1)) * 128;
               const isSelected =
                 resolvedActive.kind === 'numerical' && resolvedActive.index === index;
