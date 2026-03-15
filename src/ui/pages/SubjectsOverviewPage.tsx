@@ -110,7 +110,6 @@ export function SubjectsOverviewPage() {
   }, [overview?.subjects]);
 
   const totalStudents = overview?.aggregate.totalNonWReported ?? 0;
-  const coverage = overview?.aggregate.coverage ?? null;
 
   return (
     <section className="space-y-4 rounded-3xl border border-slate-200/90 bg-white/85 p-5 shadow-sm backdrop-blur-sm sm:p-7">
@@ -136,11 +135,6 @@ export function SubjectsOverviewPage() {
         }
       />
 
-      {loadState === "ready" && coverage !== null && coverage < 0.99 ? (
-        <p className="text-sm text-slate-600">
-          Visible grade coverage is {(coverage * 100).toFixed(1)}%; source redaction may hide some grade buckets.
-        </p>
-      ) : null}
       {loadState === "loading" ? <p className="text-sm text-slate-600">Loading subject overview...</p> : null}
       {loadState === "error" ? <p className="text-sm text-amber-700">Unable to load subject overview data right now.</p> : null}
 
