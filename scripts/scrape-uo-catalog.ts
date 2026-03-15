@@ -160,7 +160,7 @@ function parseCourseBlocks(html: string, sourcePath: string): CatalogCourseRecor
   while (blockMatch) {
     const blockHtml = blockMatch[1];
     const titleMatch = blockHtml.match(
-      /<p class="courseblocktitle[^\"]*">\s*<strong>([\s\S]*?)<\/strong>\s*<\/p>/i
+      /<p class="courseblocktitle[^"]*">\s*<strong>([\s\S]*?)<\/strong>\s*<\/p>/i
     );
     if (!titleMatch) {
       blockMatch = courseBlockPattern.exec(html);

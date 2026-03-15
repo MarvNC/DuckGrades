@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { CalendarDays, ChevronDown, Eye, Hash, ShieldAlert, Users } from 'lucide-react';
-import type { Aggregate } from '../../lib/dataClient';
-import type { SectionRow } from '../../lib/dataClient';
+import type { Aggregate, SectionRow } from '../../lib/dataClient';
 import {
   NON_NUMERICAL_GRADE_ORDER,
   NUMERICAL_GRADE_ORDER,

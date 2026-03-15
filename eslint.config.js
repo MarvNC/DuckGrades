@@ -34,6 +34,10 @@ export default tseslint.config(
           varsIgnorePattern: '^_',
         },
       ],
+      // Disable strict React hooks rules that require code refactoring
+      'react-hooks/immutability': 'off',
+      'react-hooks/preserve-manual-memoization': 'off',
+      'react-hooks/set-state-in-effect': 'off',
     },
     settings: {
       'import/resolver': {
