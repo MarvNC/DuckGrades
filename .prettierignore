@@ -3,3 +3,7 @@ dist
 coverage
 *.lock
 bun.lock
+
+# Generated data directories (large, machine-generated JSON — never hand-formatted)
+public/data/
+data/
