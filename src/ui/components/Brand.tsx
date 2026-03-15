@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import duckgradesLogo from "../../assets/duckgrades.png";
+import duckgradesLogo from "../../assets/duckgrades.svg";
 
 type BrandProps = {
   home?: boolean;
