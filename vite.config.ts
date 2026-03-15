@@ -5,7 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
-    emptyOutDir: true,
-    copyPublicDir: true,
+    emptyOutDir: false,
+    copyPublicDir: false,
   },
 });
