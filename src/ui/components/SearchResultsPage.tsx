@@ -5,7 +5,7 @@ import type { SearchItem } from "./searchModel";
 
 type SearchResultsPageProps = {
   query: string;
-  grouped: {
+  grouped?: {
     Subjects: SearchItem[];
     Courses: SearchItem[];
     Professors: SearchItem[];
@@ -34,7 +34,6 @@ function renderHighlightedText(text: string, indexes?: ReadonlyArray<number>) {
 
 export function SearchResultsPage({
   query,
-  grouped,
   flattened,
   activeIndex,
   setActiveIndex,
@@ -60,73 +59,65 @@ export function SearchResultsPage({
         {flattened.length === 0 ? (
           <p className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-3 py-3 text-sm text-[var(--duck-muted)]">No matches found.</p>
         ) : null}
-        {(["Subjects", "Courses", "Professors"] as const).map((sectionName) => {
-          const items = grouped[sectionName];
-          if (items.length === 0) {
-            return null;
-          }
+        {flattened.map((item, listIndex) => {
+          const indexValue = indexByKey.get(item.key) ?? listIndex;
           return (
-            <div key={sectionName} className="space-y-2">
-              <p className="px-1 text-sm font-medium text-[var(--duck-muted)]">{sectionName}</p>
-              {items.map((item) => {
-                const indexValue = indexByKey.get(item.key) ?? 0;
-                return (
-                  <Link
-                    key={item.key}
-                    ref={(element) => {
-                      resultRefs.current[indexValue] = element;
-                    }}
-                    className={`block rounded-xl border px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--duck-focus)] ${
-                      activeIndex === indexValue
-                        ? "border-[var(--duck-focus)] bg-[var(--duck-surface-soft)]"
-                        : "border-[var(--duck-border)] bg-[var(--duck-surface)] hover:bg-[var(--duck-surface-soft)]"
-                    }`}
-                    to={item.to}
-                    onMouseEnter={() => {
-                      setActiveIndex(indexValue);
-                      prefetchRouteData(item.to);
-                    }}
-                    onFocus={() => {
-                      setActiveIndex(indexValue);
-                      prefetchRouteData(item.to);
-                    }}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      pickResult(item);
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === "ArrowDown") {
-                        event.preventDefault();
-                        const next = (indexValue + 1) % flattened.length;
-                        setActiveIndex(next);
-                        focusResult(next);
-                      }
-                      if (event.key === "ArrowUp") {
-                        event.preventDefault();
-                        const prev = (indexValue - 1 + flattened.length) % flattened.length;
-                        setActiveIndex(prev);
-                        focusResult(prev);
-                      }
-                      if (event.key === "Tab" && event.shiftKey && indexValue === 0) {
-                        event.preventDefault();
-                        focusInput();
-                      }
-                      if (event.key === "Escape") {
-                        event.preventDefault();
-                        clearQuery();
-                        focusInput();
-                      }
-                    }}
-                  >
-                    <p className="text-sm text-[var(--duck-fg)]">
-                      <span className="font-semibold">{renderHighlightedText(item.label, item.labelMatchIndexes)}</span>
-                      <span className="px-2 text-[var(--duck-muted)]">-</span>
-                      <span className="text-[var(--duck-muted)]">{renderHighlightedText(item.subtitle, item.subtitleMatchIndexes)}</span>
-                    </p>
-                  </Link>
-                );
-              })}
-            </div>
+            <Link
+              key={item.key}
+              ref={(element) => {
+                resultRefs.current[indexValue] = element;
+              }}
+              className={`block rounded-xl border px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--duck-focus)] ${
+                activeIndex === indexValue
+                  ? "border-[var(--duck-focus)] bg-[var(--duck-surface-soft)]"
+                  : "border-[var(--duck-border)] bg-[var(--duck-surface)] hover:bg-[var(--duck-surface-soft)]"
+              }`}
+              to={item.to}
+              onMouseEnter={() => {
+                setActiveIndex(indexValue);
+                prefetchRouteData(item.to);
+              }}
+              onFocus={() => {
+                setActiveIndex(indexValue);
+                prefetchRouteData(item.to);
+              }}
+              onClick={(event) => {
+                event.preventDefault();
+                pickResult(item);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "ArrowDown") {
+                  event.preventDefault();
+                  const next = (indexValue + 1) % flattened.length;
+                  setActiveIndex(next);
+                  focusResult(next);
+                }
+                if (event.key === "ArrowUp") {
+                  event.preventDefault();
+                  const prev = (indexValue - 1 + flattened.length) % flattened.length;
+                  setActiveIndex(prev);
+                  focusResult(prev);
+                }
+                if (event.key === "Tab" && event.shiftKey && indexValue === 0) {
+                  event.preventDefault();
+                  focusInput();
+                }
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  clearQuery();
+                  focusInput();
+                }
+              }}
+            >
+              <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--duck-fg)]">
+                <span className="font-semibold">{renderHighlightedText(item.label, item.labelMatchIndexes)}</span>
+                <span className="rounded-full border border-[var(--duck-border)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--duck-muted)]">
+                  {item.section}
+                </span>
+                <span className="text-[var(--duck-muted)]">-</span>
+                <span className="text-[var(--duck-muted)]">{renderHighlightedText(item.subtitle, item.subtitleMatchIndexes)}</span>
+              </div>
+            </Link>
           );
         })}
       </div>
