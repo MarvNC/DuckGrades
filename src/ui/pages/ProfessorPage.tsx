@@ -101,17 +101,22 @@ export function ProfessorPage() {
 
   return (
     <section className="space-y-4 rounded-3xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-5 shadow-sm backdrop-blur-sm sm:p-7">
-      <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">{professorDisplayName}</h1>
-      <AggregateSummaryCard
-        label="Professor aggregate"
-        aggregate={professor?.aggregate}
-        showDistributionStudentCount={false}
-        metaChips={
-          professor
-            ? [`${courses.length} courses`, `${sectionCount} sections`, `${totalStudents.toLocaleString()} students`]
-            : undefined
-        }
-      />
+      <div className="space-y-2">
+        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">{professorDisplayName}</h1>
+        {professor ? (
+          <div className="flex flex-wrap gap-1.5">
+            {[`${courses.length} courses`, `${sectionCount} sections`, `${totalStudents.toLocaleString()} students`].map((chip) => (
+              <span key={chip} className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]">
+                {chip}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="flex justify-start lg:justify-end">
+          <AggregateSummaryCard aggregate={professor?.aggregate} showDistributionStudentCount={false} embedded />
+        </div>
+      </div>
       {loadState === "loading" ? <p className="text-sm text-[var(--duck-muted)]">Loading professor shard...</p> : null}
       {loadState === "error" ? <p className="text-sm text-[var(--duck-danger-text)]">Unable to load this professor shard right now.</p> : null}
       {loadState === "ready" && courses.length === 0 ? <p className="text-sm text-[var(--duck-muted)]">No visible course data for this professor.</p> : null}

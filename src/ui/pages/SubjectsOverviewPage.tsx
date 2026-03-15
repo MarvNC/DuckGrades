@@ -113,27 +113,25 @@ export function SubjectsOverviewPage() {
 
   return (
     <section className="space-y-4 rounded-3xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-5 shadow-sm backdrop-blur-sm sm:p-7">
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">Subject overview</h1>
-        <p className="text-sm text-[var(--duck-muted)]">Browse all subjects and compare grade distributions and summary statistics across the university.</p>
-      </div>
+        {overview ? (
+          <div className="flex flex-wrap gap-1.5">
+            {[`${overview.totals.subjectCount} subjects`, `${overview.totals.courseCount.toLocaleString()} courses`, `${overview.totals.sectionCount.toLocaleString()} sections`, `${overview.totals.professorCount.toLocaleString()} professors`, `${totalStudents.toLocaleString()} students`].map((chip) => (
+              <span key={chip} className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]">
+                {chip}
+              </span>
+            ))}
+          </div>
+        ) : null}
 
-      <AggregateSummaryCard
-        label="University aggregate"
-        aggregate={overview?.aggregate}
-        showDistributionStudentCount={false}
-        metaChips={
-          overview
-            ? [
-                `${overview.totals.subjectCount} subjects`,
-                `${overview.totals.courseCount.toLocaleString()} courses`,
-                `${overview.totals.sectionCount.toLocaleString()} sections`,
-                `${overview.totals.professorCount.toLocaleString()} professors`,
-                `${totalStudents.toLocaleString()} students`,
-              ]
-            : undefined
-        }
-      />
+        <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between lg:gap-5">
+          <p className="min-w-0 text-sm text-[var(--duck-muted)] lg:max-w-4xl">Browse all subjects and compare grade distributions and summary statistics across the university.</p>
+          <div className="lg:self-stretch lg:border-l lg:border-[var(--duck-border)] lg:pl-4">
+            <AggregateSummaryCard aggregate={overview?.aggregate} showDistributionStudentCount={false} embedded />
+          </div>
+        </div>
+      </div>
 
       {loadState === "loading" ? <p className="text-sm text-[var(--duck-muted)]">Loading subject overview...</p> : null}
       {loadState === "error" ? <p className="text-sm text-[var(--duck-danger-text)]">Unable to load subject overview data right now.</p> : null}

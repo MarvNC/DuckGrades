@@ -127,28 +127,30 @@ export function CoursePage() {
         Back to {backToName}
       </Link>
 
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">{displayCourseCode}</h1>
-        <p className="text-sm text-[var(--duck-muted)]">{course?.title ?? "Loading course details..."}</p>
-        {course?.description ? <p className="max-w-4xl text-sm leading-relaxed text-[var(--duck-muted-strong)]">{course.description}</p> : null}
-      </div>
+        {course ? (
+          <div className="flex flex-wrap gap-1.5">
+            {[`Subject ${course.subject}`, course.subjectTitle ? course.subjectTitle : null, `${totalSections} sections`, `${course.instructors.length} instructors`, `${course.aggregate.totalNonWReported.toLocaleString()} students`]
+              .filter((value): value is string => Boolean(value))
+              .map((chip) => (
+                <span key={chip} className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]">
+                  {chip}
+                </span>
+              ))}
+          </div>
+        ) : null}
 
-      <AggregateSummaryCard
-        label="Course aggregate"
-        aggregate={course?.aggregate}
-        showDistributionStudentCount={false}
-        metaChips={
-          course
-            ? [
-                `Subject ${course.subject}`,
-                course.subjectTitle ? course.subjectTitle : null,
-                `${totalSections} sections`,
-                `${course.instructors.length} instructors`,
-                `${course.aggregate.totalNonWReported.toLocaleString()} students`,
-              ].filter((value): value is string => Boolean(value))
-            : undefined
-        }
-      />
+        <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between lg:gap-5">
+          <div className="min-w-0 lg:max-w-4xl">
+            <p className="text-sm text-[var(--duck-muted)]">{course?.title ?? "Loading course details..."}</p>
+            {course?.description ? <p className="mt-1 text-sm leading-relaxed text-[var(--duck-muted-strong)]">{course.description}</p> : null}
+          </div>
+          <div className="lg:self-stretch lg:border-l lg:border-[var(--duck-border)] lg:pl-4">
+            <AggregateSummaryCard aggregate={course?.aggregate} showDistributionStudentCount={false} embedded />
+          </div>
+        </div>
+      </div>
 
       {loadState === "loading" ? <p className="text-sm text-[var(--duck-muted)]">Loading course shard...</p> : null}
       {loadState === "error" ? <p className="text-sm text-[var(--duck-danger-text)]">Unable to load this course shard right now.</p> : null}

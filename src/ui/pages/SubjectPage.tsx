@@ -122,29 +122,30 @@ export function SubjectPage() {
 
   return (
     <section className="space-y-4 rounded-3xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-5 shadow-sm backdrop-blur-sm sm:p-7">
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">
           {displaySubjectCode}
           {subject?.subjectTitle ? ` - ${subject.subjectTitle}` : ""}
         </h1>
-        {subject?.subjectDescription ? <p className="max-w-4xl text-sm leading-relaxed text-[var(--duck-muted-strong)]">{subject.subjectDescription}</p> : null}
-      </div>
+        {loadState === "ready" && subject ? (
+          <div className="flex flex-wrap gap-1.5">
+            {[`${courses.length} courses`, `${sectionCount} sections`, "professorCount" in subject ? `${subject.professorCount ?? "..."} professors` : null, `${subject.aggregate.totalNonWReported.toLocaleString()} students`]
+              .filter((value): value is string => Boolean(value))
+              .map((chip) => (
+                <span key={chip} className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]">
+                  {chip}
+                </span>
+              ))}
+          </div>
+        ) : null}
 
-      <AggregateSummaryCard
-        label="Subject aggregate"
-        aggregate={subject?.aggregate}
-        showDistributionStudentCount={false}
-        metaChips={
-          loadState === "ready" && subject
-            ? [
-                `${courses.length} courses`,
-                `${sectionCount} sections`,
-                "professorCount" in subject ? `${subject.professorCount ?? "..."} professors` : null,
-                `${subject.aggregate.totalNonWReported.toLocaleString()} students`,
-              ].filter((value): value is string => Boolean(value))
-            : undefined
-        }
-      />
+        <div className={`flex flex-col gap-2.5 lg:flex-row lg:items-start lg:gap-5 ${subject?.subjectDescription ? "lg:justify-between" : "lg:justify-end"}`}>
+          {subject?.subjectDescription ? <p className="min-w-0 text-sm leading-relaxed text-[var(--duck-muted-strong)] lg:max-w-4xl">{subject.subjectDescription}</p> : null}
+          <div className="lg:self-stretch lg:border-l lg:border-[var(--duck-border)] lg:pl-4">
+            <AggregateSummaryCard aggregate={subject?.aggregate} showDistributionStudentCount={false} embedded />
+          </div>
+        </div>
+      </div>
 
       {loadState === "loading" ? <p className="text-sm text-[var(--duck-muted)]">Loading subject data...</p> : null}
       {loadState === "error" ? <p className="text-sm text-[var(--duck-danger-text)]">Unable to load this subject shard right now.</p> : null}
