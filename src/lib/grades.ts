@@ -52,6 +52,7 @@ const GRADE_LABELS: Record<string, string> = {
 };
 
 const GRADE_DETAIL_LABELS: Record<string, string> = {
+  P: 'P (Pass)',
   N: 'NP (No Pass)',
   OTHER: 'Other (not W)',
   W: 'W (Withdrawn)',
