@@ -51,11 +51,8 @@ export function useRankedSearch(query: string) {
   return ranked;
 }
 
-export function buildSearchItems(
-  ranked: RankedSearchResult,
-  limits: { subjects?: number; courses?: number; professors?: number; total?: number } = {}
-) {
-  const subjects = ranked.subjects.slice(0, limits.subjects ?? 6).map((subject) => ({
+export function buildSearchItems(ranked: RankedSearchResult, limits: { total?: number } = {}) {
+  const subjects = ranked.subjects.map((subject) => ({
     key: `subject:${subject.code}`,
     label: subject.code,
     subtitle: subject.title,
@@ -66,7 +63,7 @@ export function buildSearchItems(
     section: 'Subject' as const,
   }));
 
-  const courses = ranked.courses.slice(0, limits.courses ?? 6).map((course) => ({
+  const courses = ranked.courses.map((course) => ({
     key: `course:${course.code}`,
     label: course.code,
     subtitle: course.title,
@@ -77,7 +74,7 @@ export function buildSearchItems(
     section: 'Course' as const,
   }));
 
-  const professors = ranked.professors.slice(0, limits.professors ?? 6).map((professor) => ({
+  const professors = ranked.professors.map((professor) => ({
     key: `professor:${professor.id}`,
     label: professor.name,
     subtitle: `${professor.popularity.toLocaleString()} students`,
@@ -87,24 +84,24 @@ export function buildSearchItems(
     section: 'Professor' as const,
   }));
 
-  // Order sections by their top result's score so the most relevant type surfaces first
-  const allSections: SearchSection[] = [
-    { name: 'Subject' as const, items: subjects },
-    { name: 'Course' as const, items: courses },
-    { name: 'Professor' as const, items: professors },
-  ]
-    .filter((s) => s.items.length > 0)
+  // Merge all candidates into one pool and take the global top N by score
+  const flattened = [...subjects, ...courses, ...professors]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limits.total ?? 15) as SearchItem[];
+
+  // Group survivors into sections ordered by each section's best result
+  const bySection = new Map<SearchSection['name'], SearchItem[]>();
+  for (const item of flattened) {
+    const bucket = bySection.get(item.section) ?? [];
+    bucket.push(item);
+    bySection.set(item.section, bucket);
+  }
+
+  const sectionOrder: SearchSection['name'][] = ['Subject', 'Course', 'Professor'];
+  const orderedSections: SearchSection[] = sectionOrder
+    .filter((name) => bySection.has(name))
+    .map((name) => ({ name, items: bySection.get(name)! }))
     .sort((a, b) => (b.items[0]?.score ?? 0) - (a.items[0]?.score ?? 0));
-
-  // Build flattened in visual/section order so keyboard navigation matches what's on screen
-  const flattenedAll = allSections.flatMap((s) => s.items);
-  const flattened = flattenedAll.slice(0, limits.total ?? 18) as SearchItem[];
-
-  // Trim sections to only include items that survived the total cap
-  const keptKeys = new Set(flattened.map((i) => i.key));
-  const orderedSections = allSections
-    .map((s) => ({ ...s, items: s.items.filter((i) => keptKeys.has(i.key)) }))
-    .filter((s) => s.items.length > 0);
 
   return { orderedSections, flattened };
 }

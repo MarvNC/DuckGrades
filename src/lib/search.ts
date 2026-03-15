@@ -3,7 +3,7 @@ import fuzzysort from 'fuzzysort';
 
 type MatchIndexes = number[];
 
-const RESULT_LIMIT_PER_TYPE = 8;
+const RESULT_LIMIT_PER_TYPE = 15;
 const CANDIDATE_LIMIT_PER_VARIANT = 24;
 
 export type RankedSubject = SearchIndex['subjects'][number] & {
