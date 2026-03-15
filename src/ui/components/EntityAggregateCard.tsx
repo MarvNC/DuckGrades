@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { MetaChip } from './MetaChip';
 import { Link } from 'react-router-dom';
 import { prefetchRouteData, type Aggregate } from '../../lib/dataClient';
@@ -26,8 +26,18 @@ export function EntityAggregateCard({
   showStudentCountInDistribution = false,
   children,
 }: EntityAggregateCardProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const isExpandable = Boolean(children);
+
   return (
-    <article className="rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3.5 shadow-sm">
+    <article
+      className={`rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3.5 shadow-sm transition-colors ${isExpandable ? 'cursor-pointer hover:border-[var(--duck-muted)] hover:bg-[var(--duck-surface-soft)]' : ''}`}
+      onClick={(e) => {
+        if (isExpandable && !(e.target as HTMLElement).closest('a')) {
+          setIsOpen(!isOpen);
+        }
+      }}
+    >
       <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="min-w-0 sm:flex-1">
           <div className="flex flex-wrap items-center">
@@ -84,7 +94,9 @@ export function EntityAggregateCard({
         </div>
       </div>
 
-      {children ? <div className="mt-2">{children}</div> : null}
+      {children && isOpen ? (
+        <div className="mt-4 border-t border-[var(--duck-border)] pt-4">{children}</div>
+      ) : null}
     </article>
   );
 }

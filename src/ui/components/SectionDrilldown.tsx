@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { CalendarDays, ChevronDown, Eye, Hash, ShieldAlert, Users } from 'lucide-react';
+import { CalendarDays, Eye, Hash, ShieldAlert, Users } from 'lucide-react';
 import type { Aggregate, SectionRow } from '../../lib/dataClient';
 import {
   NON_NUMERICAL_GRADE_ORDER,
@@ -12,7 +11,6 @@ import { GradeDistributionStrip } from './GradeDistributionStrip';
 
 type SectionDrilldownProps = {
   sections: SectionRow[];
-  summaryLabel?: string;
   identityPrefix: string;
 };
 
@@ -52,116 +50,93 @@ function buildSectionAggregate(section: SectionRow): Aggregate {
   };
 }
 
-export function SectionDrilldown({
-  sections,
-  summaryLabel = 'Section details',
-  identityPrefix,
-}: SectionDrilldownProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
+export function SectionDrilldown({ sections, identityPrefix }: SectionDrilldownProps) {
   return (
-    <details
-      className="mt-3 rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] p-3 open:shadow-sm"
-      onToggle={(event) => setIsOpen(event.currentTarget.open)}
-    >
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-1 py-0.5 text-sm font-semibold text-[var(--duck-muted-strong)] marker:content-none">
-        <span className="inline-flex items-center gap-2">
-          <ChevronDown
-            className={`h-4 w-4 text-[var(--duck-muted)] transition-transform ${isOpen ? 'rotate-180' : 'rotate-0'}`}
-            aria-hidden="true"
-          />
-          {summaryLabel}
-        </span>
-      </summary>
+    <div className="space-y-2.5">
+      {sections.map((section) => {
+        const visible = visibleNumericalCount(section);
+        const coverage =
+          section.totalNonWReported > 0 ? (visible / section.totalNonWReported) * 100 : 0;
+        const sectionAggregate = buildSectionAggregate(section);
+        const hasHiddenBuckets = section.totalNonWReported > visible;
+        const sourceLabel =
+          section.sourceCourseCode && section.csvTitle
+            ? `${section.sourceCourseCode} · ${section.csvTitle}`
+            : (section.sourceCourseCode ?? section.csvTitle ?? '');
 
-      {isOpen ? (
-        <div className="mt-2 space-y-2.5">
-          {sections.map((section) => {
-            const visible = visibleNumericalCount(section);
-            const coverage =
-              section.totalNonWReported > 0 ? (visible / section.totalNonWReported) * 100 : 0;
-            const sectionAggregate = buildSectionAggregate(section);
-            const hasHiddenBuckets = section.totalNonWReported > visible;
-            const sourceLabel =
-              section.sourceCourseCode && section.csvTitle
-                ? `${section.sourceCourseCode} · ${section.csvTitle}`
-                : (section.sourceCourseCode ?? section.csvTitle ?? '');
-
-            return (
-              <article
-                key={`${identityPrefix}-${section.crn}`}
-                className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-3 py-3 shadow-sm"
-              >
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-                  <div className="min-w-0 sm:flex-1">
-                    <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[var(--duck-muted-strong)]">
-                      <span className="inline-flex items-center gap-1.5">
-                        <CalendarDays
-                          className="h-3.5 w-3.5 text-[var(--duck-muted)]"
-                          aria-hidden="true"
-                        />
-                        {section.termDesc}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 text-[var(--duck-muted)]">
-                        <Hash className="h-3.5 w-3.5" aria-hidden="true" />
-                        CRN {section.crn}
-                      </span>
-                      {sourceLabel ? (
-                        <span className="text-[var(--duck-muted)] opacity-80">· {sourceLabel}</span>
-                      ) : null}
-                    </div>
-
-                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                      <span className="inline-flex items-center gap-1 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-1.5 py-0.5 text-[9px] font-medium text-[var(--duck-muted)]">
-                        <Users className="h-2.5 w-2.5" aria-hidden="true" />
-                        {section.totalNonWReported} students
-                      </span>
-                      <span className="inline-flex items-center gap-1 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-1.5 py-0.5 text-[9px] font-medium text-[var(--duck-muted)]">
-                        <Eye className="h-2.5 w-2.5" aria-hidden="true" />
-                        {coverage.toFixed(1)}% visible
-                      </span>
-                      {hasHiddenBuckets ? (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-[var(--duck-danger-border)] bg-[var(--duck-danger-bg)] px-1.5 py-0.5 text-[9px] font-medium text-[var(--duck-danger-text)]">
-                          <ShieldAlert className="h-2.5 w-2.5" aria-hidden="true" />
-                          redacted
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-end gap-1.5 sm:pl-2">
-                    <GradeDistributionStrip
-                      aggregate={sectionAggregate}
-                      size="sm"
-                      showStudentCount={false}
+        return (
+          <article
+            key={`${identityPrefix}-${section.crn}`}
+            className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-3 py-3 shadow-sm"
+          >
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <div className="min-w-0 sm:flex-1">
+                <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[var(--duck-muted-strong)]">
+                  <span className="inline-flex items-center gap-1.5">
+                    <CalendarDays
+                      className="h-3.5 w-3.5 text-[var(--duck-muted)]"
+                      aria-hidden="true"
                     />
-                    <div className="flex flex-wrap justify-end gap-x-3 gap-y-1 text-[10px] font-normal text-[var(--duck-muted)] opacity-70">
-                      <span>
-                        <span className="tracking-[0.08em] text-[var(--duck-muted)] uppercase">
-                          Mean
-                        </span>{' '}
-                        {formatGradeStat(sectionAggregate.mean)}
-                      </span>
-                      <span>
-                        <span className="tracking-[0.08em] text-[var(--duck-muted)] uppercase">
-                          Median
-                        </span>{' '}
-                        {formatGradeStat(sectionAggregate.median)}
-                      </span>
-                      <span>
-                        <span className="tracking-[0.08em] text-[var(--duck-muted)] uppercase">
-                          Mode
-                        </span>{' '}
-                        {formatGradeCode(sectionAggregate.mode)}
-                      </span>
-                    </div>
-                  </div>
+                    {section.termDesc}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-[var(--duck-muted)]">
+                    <Hash className="h-3.5 w-3.5" aria-hidden="true" />
+                    CRN {section.crn}
+                  </span>
+                  {sourceLabel ? (
+                    <span className="text-[var(--duck-muted)] opacity-80">· {sourceLabel}</span>
+                  ) : null}
                 </div>
-              </article>
-            );
-          })}
-        </div>
-      ) : null}
-    </details>
+
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-1.5 py-0.5 text-[9px] font-medium text-[var(--duck-muted)]">
+                    <Users className="h-2.5 w-2.5" aria-hidden="true" />
+                    {section.totalNonWReported} students
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-1.5 py-0.5 text-[9px] font-medium text-[var(--duck-muted)]">
+                    <Eye className="h-2.5 w-2.5" aria-hidden="true" />
+                    {coverage.toFixed(1)}% visible
+                  </span>
+                  {hasHiddenBuckets ? (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-[var(--duck-danger-border)] bg-[var(--duck-danger-bg)] px-1.5 py-0.5 text-[9px] font-medium text-[var(--duck-danger-text)]">
+                      <ShieldAlert className="h-2.5 w-2.5" aria-hidden="true" />
+                      redacted
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="flex flex-col items-end gap-1.5 sm:pl-2">
+                <GradeDistributionStrip
+                  aggregate={sectionAggregate}
+                  size="sm"
+                  showStudentCount={false}
+                />
+                <div className="flex flex-wrap justify-end gap-x-3 gap-y-1 text-[10px] font-normal text-[var(--duck-muted)] opacity-70">
+                  <span>
+                    <span className="tracking-[0.08em] text-[var(--duck-muted)] uppercase">
+                      Mean
+                    </span>{' '}
+                    {formatGradeStat(sectionAggregate.mean)}
+                  </span>
+                  <span>
+                    <span className="tracking-[0.08em] text-[var(--duck-muted)] uppercase">
+                      Median
+                    </span>{' '}
+                    {formatGradeStat(sectionAggregate.median)}
+                  </span>
+                  <span>
+                    <span className="tracking-[0.08em] text-[var(--duck-muted)] uppercase">
+                      Mode
+                    </span>{' '}
+                    {formatGradeCode(sectionAggregate.mode)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </article>
+        );
+      })}
+    </div>
   );
 }
