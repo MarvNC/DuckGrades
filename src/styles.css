@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+@source "../index.html";
+@source "./**/*.{ts,tsx}";
 
 :root {
   --duck-bg: #f5f9ef;
@@ -7,17 +9,39 @@
   --duck-primary: #b9e48c;
   --duck-accent: #ffec8f;
   --duck-muted: #5f6f5d;
+  --duck-muted-strong: #485747;
   --duck-border: #d4e2ca;
+  --duck-border-strong: #bfd1b1;
   --duck-surface: #ffffff;
+  --duck-surface-soft: #f3f8ed;
+  --duck-surface-muted: #edf4e6;
+  --duck-accent-strong: #124734;
+  --duck-focus: #4d8152;
+  --duck-brand-duck: #1d2b16;
+  --duck-brand-grades: #4f6e3d;
+  --duck-danger-border: #fcd6a5;
+  --duck-danger-bg: #fff5e6;
+  --duck-danger-text: #9a5f05;
 }
 
 :root[data-theme="dark"] {
-  --duck-bg: #101712;
-  --duck-bg-accent: #16211a;
-  --duck-fg: #e6f0e5;
-  --duck-muted: #acc1ab;
-  --duck-border: #2f4336;
-  --duck-surface: #18231b;
+  --duck-bg: #121418;
+  --duck-bg-accent: #1a1d23;
+  --duck-fg: #e9edf2;
+  --duck-muted: #a8b0ba;
+  --duck-muted-strong: #c6ced8;
+  --duck-border: #373e49;
+  --duck-border-strong: #4c5563;
+  --duck-surface: #20262f;
+  --duck-surface-soft: #2a313b;
+  --duck-surface-muted: #303843;
+  --duck-accent-strong: #9fc4ff;
+  --duck-focus: #7aa2df;
+  --duck-brand-duck: #e9edf2;
+  --duck-brand-grades: #9fc4ff;
+  --duck-danger-border: #846130;
+  --duck-danger-bg: #3f321d;
+  --duck-danger-text: #f2cd96;
 }
 
 * {
@@ -37,7 +61,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 summary:focus-visible {
-  outline: 2px solid #86ac67;
+  outline: 2px solid var(--duck-focus);
   outline-offset: 2px;
 }
 
@@ -123,14 +147,14 @@ summary:focus-visible {
   font-size: clamp(1.7rem, 2.8vw, 2.2rem);
   font-weight: 900;
   letter-spacing: -0.035em;
-  color: var(--duck-fg);
+  color: var(--duck-brand-duck);
 }
 
 .brand-grades {
   font-size: clamp(1.7rem, 2.8vw, 2.2rem);
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: color-mix(in oklab, var(--duck-fg) 78%, #6c9962);
+  color: var(--duck-brand-grades);
 }
 
 .brand-home .brand-duck,
@@ -171,11 +195,11 @@ summary:focus-visible {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  border: 1px solid #9dc87b;
-  background: #c9eca8;
+  border: 1px solid var(--duck-border);
+  background: var(--duck-surface-soft);
   padding: 0.6rem 1rem;
   text-decoration: none;
-  color: #172113;
+  color: var(--duck-fg);
   font-size: 0.9rem;
   font-weight: 700;
   transition: transform 120ms ease, box-shadow 120ms ease;
@@ -183,10 +207,10 @@ summary:focus-visible {
 
 .pill-button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px -12px #6e994d;
+  box-shadow: 0 6px 20px -12px color-mix(in oklab, var(--duck-border-strong) 60%, transparent);
 }
 
 .pill-button-secondary {
-  border-color: #d7be58;
+  border-color: var(--duck-border-strong);
   background: var(--duck-accent);
 }

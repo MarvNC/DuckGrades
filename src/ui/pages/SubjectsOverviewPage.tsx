@@ -112,10 +112,10 @@ export function SubjectsOverviewPage() {
   const totalStudents = overview?.aggregate.totalNonWReported ?? 0;
 
   return (
-    <section className="space-y-4 rounded-3xl border border-slate-200/90 bg-white/85 p-5 shadow-sm backdrop-blur-sm sm:p-7">
+    <section className="space-y-4 rounded-3xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-5 shadow-sm backdrop-blur-sm sm:p-7">
       <div className="space-y-1.5">
         <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">Subject overview</h1>
-        <p className="text-sm text-slate-600">Browse all subjects and compare grade distributions and summary statistics across the university.</p>
+        <p className="text-sm text-[var(--duck-muted)]">Browse all subjects and compare grade distributions and summary statistics across the university.</p>
       </div>
 
       <AggregateSummaryCard
@@ -135,22 +135,22 @@ export function SubjectsOverviewPage() {
         }
       />
 
-      {loadState === "loading" ? <p className="text-sm text-slate-600">Loading subject overview...</p> : null}
-      {loadState === "error" ? <p className="text-sm text-amber-700">Unable to load subject overview data right now.</p> : null}
+      {loadState === "loading" ? <p className="text-sm text-[var(--duck-muted)]">Loading subject overview...</p> : null}
+      {loadState === "error" ? <p className="text-sm text-[var(--duck-danger-text)]">Unable to load subject overview data right now.</p> : null}
 
       {loadState === "ready" && topSubjects.length > 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white/90 p-3.5 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Most enrolled subjects</p>
+        <div className="rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3.5 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--duck-muted)]">Most enrolled subjects</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {topSubjects.map((subject) => (
               <Link
                 key={subject.code}
                 to={`/subject/${subject.code}`}
-                className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-white hover:text-[var(--duck-fg)]"
+                className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-3 py-1 text-xs font-semibold text-[var(--duck-muted-strong)] transition hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface)] hover:text-[var(--duck-fg)]"
               >
                 {subject.code}
-                <span className="ml-1.5 text-slate-500">{subject.title}</span>
-                <span className="ml-1.5 text-slate-500">{subject.aggregate.totalNonWReported.toLocaleString()}</span>
+                <span className="ml-1.5 text-[var(--duck-muted)]">{subject.title}</span>
+                <span className="ml-1.5 text-[var(--duck-muted)]">{subject.aggregate.totalNonWReported.toLocaleString()}</span>
               </Link>
             ))}
           </div>
@@ -158,9 +158,9 @@ export function SubjectsOverviewPage() {
       ) : null}
 
       {loadState === "ready" && overview ? (
-        <div className="sticky top-4 z-20 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur">
+        <div className="sticky top-4 z-20 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm backdrop-blur">
           <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500" htmlFor="subjects-overview-search">
+            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--duck-muted)]" htmlFor="subjects-overview-search">
               Search subjects
             </label>
             <input
@@ -169,17 +169,17 @@ export function SubjectsOverviewPage() {
               value={subjectQuery}
               onChange={(event) => setSubjectQuery(event.target.value)}
               placeholder="Type a subject code or title"
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-[var(--duck-fg)] shadow-sm outline-none transition focus:border-[#4d8152] focus:ring-2 focus:ring-[#4d8152]/20 lg:flex-1"
+              className="w-full rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-3 py-2 text-sm font-medium text-[var(--duck-fg)] shadow-sm outline-none transition focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20 lg:flex-1"
             />
             <div className="flex flex-wrap items-center gap-2">
-              <label className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500" htmlFor="subjects-overview-sort">
+              <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--duck-muted)]" htmlFor="subjects-overview-sort">
                 Sort
               </label>
               <select
                 id="subjects-overview-sort"
                 value={sortKey}
                 onChange={(event) => setSortKey(event.target.value as SubjectSortKey)}
-                className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-[#4d8152] focus:ring-2 focus:ring-[#4d8152]/20"
+                className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted-strong)] outline-none transition focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
               >
                 {SORT_OPTIONS.map((option) => (
                   <option key={option.key} value={option.key}>
@@ -191,11 +191,11 @@ export function SubjectsOverviewPage() {
                 type="button"
                 onClick={() => setSortDescending((value) => !value)}
                 disabled={sortKey === "code"}
-                className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted-strong)] transition hover:bg-[var(--duck-surface-soft)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {sortDescending ? "Desc" : "Asc"}
               </button>
-              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
+              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--duck-muted)]">
                 {visibleSubjects.length} of {overview.subjects.length}
               </p>
             </div>
@@ -203,7 +203,7 @@ export function SubjectsOverviewPage() {
         </div>
       ) : null}
 
-      {loadState === "ready" && overview && visibleSubjects.length === 0 ? <p className="text-sm text-slate-600">No subjects match your search.</p> : null}
+      {loadState === "ready" && overview && visibleSubjects.length === 0 ? <p className="text-sm text-[var(--duck-muted)]">No subjects match your search.</p> : null}
 
       {loadState === "ready" ? (
         <div className="space-y-2.5">

@@ -26,7 +26,7 @@ export function EntityAggregateCard({
   children,
 }: EntityAggregateCardProps) {
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
+    <article className="rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3.5 shadow-sm">
       <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="min-w-0 sm:flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -43,23 +43,23 @@ export function EntityAggregateCard({
               <p className="text-lg font-bold tracking-tight text-[var(--duck-fg)]">{title}</p>
             )}
             {(inlineMetaChips ?? []).map((chip) => (
-              <span key={chip} className="rounded-full border border-slate-300 bg-slate-100 px-2.5 py-0.5 text-[10px] font-semibold text-slate-700">
+              <span key={chip} className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2.5 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]">
                 {chip}
               </span>
             ))}
           </div>
 
-          {subtitle ? <p className="mt-1 truncate text-sm text-slate-600">{subtitle}</p> : null}
+          {subtitle ? <p className="mt-1 truncate text-sm text-[var(--duck-muted)]">{subtitle}</p> : null}
 
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-medium text-slate-500">
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-medium text-[var(--duck-muted)]">
             <span>
-              <span className="uppercase tracking-[0.08em] text-slate-400">Mean</span> {formatGradeStat(aggregate?.mean)}
+              <span className="uppercase tracking-[0.08em] text-[var(--duck-muted)]">Mean</span> {formatGradeStat(aggregate?.mean)}
             </span>
             <span>
-              <span className="uppercase tracking-[0.08em] text-slate-400">Median</span> {formatGradeStat(aggregate?.median)}
+              <span className="uppercase tracking-[0.08em] text-[var(--duck-muted)]">Median</span> {formatGradeStat(aggregate?.median)}
             </span>
             <span>
-              <span className="uppercase tracking-[0.08em] text-slate-400">Mode</span> {formatGradeCode(aggregate?.mode)}
+              <span className="uppercase tracking-[0.08em] text-[var(--duck-muted)]">Mode</span> {formatGradeCode(aggregate?.mode)}
             </span>
           </div>
         </div>

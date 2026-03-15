@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Monitor, Moon, Search, Sun } from "lucide-react";
+import { Search } from "lucide-react";
 import { Brand } from "./components/Brand";
 import { SiteFooter } from "./components/SiteFooter";
 import { SearchResultsPage } from "./components/SearchResultsPage";
+import { ThemeToggleButton, type ThemePreference } from "./components/ThemeToggleButton";
 import { buildSearchItems, type SearchItem, useRankedSearch } from "./components/searchModel";
 
-type ThemePreference = "system" | "light" | "dark";
 type ResolvedTheme = "light" | "dark";
 
 const THEME_CYCLE: ReadonlyArray<ThemePreference> = ["system", "light", "dark"];
@@ -16,6 +16,8 @@ export type SearchLayoutContext = {
   query: string;
   setQuery: (next: string) => void;
   onSearchInputKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+  themePreference: ThemePreference;
+  cycleTheme: () => void;
 };
 
 export function AppLayout() {
@@ -47,7 +49,6 @@ export function AppLayout() {
   const hasQuery = query.trim().length > 0;
   const showHeader = !isHome || hasQuery;
   const resolvedTheme: ResolvedTheme = themePreference === "system" ? systemTheme : themePreference;
-  const ThemeIcon = themePreference === "system" ? Monitor : themePreference === "light" ? Sun : Moon;
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -166,6 +167,8 @@ export function AppLayout() {
     query,
     setQuery,
     onSearchInputKeyDown,
+    themePreference,
+    cycleTheme,
   };
 
   return (
@@ -178,7 +181,7 @@ export function AppLayout() {
             <Brand onClick={onHeaderBrandClick} />
             <div className="group relative w-full flex-1 sm:min-w-0">
               <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
-                <Search className="h-4 w-4 text-[var(--duck-muted)] transition-colors group-focus-within:text-[#124734]" aria-hidden="true" />
+                <Search className="h-4 w-4 text-[var(--duck-muted)] transition-colors group-focus-within:text-[var(--duck-accent-strong)]" aria-hidden="true" />
               </div>
               <label htmlFor="global-search" className="sr-only">
                 Search subjects, courses, or professors
@@ -194,22 +197,14 @@ export function AppLayout() {
                 placeholder="Search by course, professor, or subject..."
                 autoComplete="off"
                 autoFocus={isHome && hasQuery}
-                className="w-full rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] py-2.5 pr-4 pl-10 text-sm font-semibold text-[var(--duck-fg)] shadow-sm outline-none transition-all placeholder:text-[var(--duck-muted)] focus:border-[#4d8152] focus:ring-2 focus:ring-[#4d8152]/20"
+                className="w-full rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] py-2.5 pr-4 pl-10 text-sm font-semibold text-[var(--duck-fg)] shadow-sm outline-none transition-all placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
               />
             </div>
             <div className="flex items-center justify-end gap-2 sm:flex-none">
-              <button
-                type="button"
-                onClick={cycleTheme}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] text-[var(--duck-muted)] transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-[#124734]"
-                aria-label={`Theme: ${themePreference}. Click to change.`}
-                title={`Theme: ${themePreference}`}
-              >
-                <ThemeIcon className="h-4 w-4" aria-hidden="true" />
-              </button>
+              <ThemeToggleButton themePreference={themePreference} cycleTheme={cycleTheme} />
               <Link
                 to="/subjects"
-                className="inline-flex items-center rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-4 py-2 text-sm font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-[#124734]"
+                className="inline-flex items-center rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-4 py-2 text-sm font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)]"
               >
                 Subjects
               </Link>

@@ -9,7 +9,7 @@ export function SiteFooter() {
           href="https://github.com/MarvNC/DuckGrades"
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-2 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-4 py-1.5 text-sm font-semibold text-[var(--duck-muted)] shadow-sm shadow-slate-200/50 transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:text-[#124734] hover:shadow-md"
+          className="inline-flex items-center gap-2 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-4 py-1.5 text-sm font-semibold text-[var(--duck-muted)] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[var(--duck-border-strong)] hover:text-[var(--duck-accent-strong)] hover:shadow-md"
         >
           <Github className="h-4 w-4" aria-hidden="true" />
           View on GitHub

@@ -53,15 +53,15 @@ export function SectionDrilldown({ sections, summaryLabel = "Section details", i
   const totalReported = reportedTotal ?? sections.reduce((sum, section) => sum + section.totalNonWReported, 0);
 
   return (
-    <details className="mt-3 rounded-xl border border-slate-200 bg-[#f7faf2] p-3 open:shadow-sm" onToggle={(event) => setIsOpen(event.currentTarget.open)}>
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-1 py-0.5 text-sm font-semibold text-slate-700 marker:content-none">
+    <details className="mt-3 rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] p-3 open:shadow-sm" onToggle={(event) => setIsOpen(event.currentTarget.open)}>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-1 py-0.5 text-sm font-semibold text-[var(--duck-muted-strong)] marker:content-none">
         <span className="inline-flex items-center gap-2">
-          <span className="text-slate-500">▼</span>
+          <span className="text-[var(--duck-muted)]">▼</span>
           {summaryLabel}
         </span>
-        <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-          <span className="rounded-full border border-slate-200 bg-white/70 px-2 py-0.5">{sectionCount} sections</span>
-          <span className="rounded-full border border-slate-200 bg-white/70 px-2 py-0.5">{totalReported} students</span>
+        <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--duck-muted)]">
+          <span className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2 py-0.5">{sectionCount} sections</span>
+          <span className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2 py-0.5">{totalReported} students</span>
         </span>
       </summary>
 
@@ -77,32 +77,32 @@ export function SectionDrilldown({ sections, summaryLabel = "Section details", i
               : section.csvTitle ?? "";
 
             return (
-              <article key={`${identityPrefix}-${section.crn}`} className="rounded-xl border border-slate-200 bg-white/95 px-3 py-2.5">
+              <article key={`${identityPrefix}-${section.crn}`} className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-3 py-2.5">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                   <div className="min-w-0 sm:flex-1">
-                    {sourceLabel ? <p className="mb-0.5 text-xs font-semibold text-slate-600">{sourceLabel}</p> : null}
+                    {sourceLabel ? <p className="mb-0.5 text-xs font-semibold text-[var(--duck-muted)]">{sourceLabel}</p> : null}
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <p className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <p className="text-sm font-semibold uppercase tracking-[0.08em] text-[var(--duck-muted)]">
                         {section.termDesc} · CRN {section.crn}
                       </p>
-                      <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+                      <span className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]">
                         {section.totalNonWReported} students
                       </span>
-                      <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+                      <span className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]">
                         {coverage.toFixed(1)}% visible
                       </span>
-                      {hasHiddenBuckets ? <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">redacted</span> : null}
+                      {hasHiddenBuckets ? <span className="rounded-full border border-[var(--duck-danger-border)] bg-[var(--duck-danger-bg)] px-2 py-0.5 text-[10px] font-semibold text-[var(--duck-danger-text)]">redacted</span> : null}
                     </div>
 
-                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-medium text-slate-500">
+                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-medium text-[var(--duck-muted)]">
                       <span>
-                        <span className="uppercase tracking-[0.08em] text-slate-400">Mean</span> {formatGradeStat(sectionAggregate.mean)}
+                        <span className="uppercase tracking-[0.08em] text-[var(--duck-muted)]">Mean</span> {formatGradeStat(sectionAggregate.mean)}
                       </span>
                       <span>
-                        <span className="uppercase tracking-[0.08em] text-slate-400">Median</span> {formatGradeStat(sectionAggregate.median)}
+                        <span className="uppercase tracking-[0.08em] text-[var(--duck-muted)]">Median</span> {formatGradeStat(sectionAggregate.median)}
                       </span>
                       <span>
-                        <span className="uppercase tracking-[0.08em] text-slate-400">Mode</span> {formatGradeCode(sectionAggregate.mode)}
+                        <span className="uppercase tracking-[0.08em] text-[var(--duck-muted)]">Mode</span> {formatGradeCode(sectionAggregate.mode)}
                       </span>
                     </div>
                   </div>

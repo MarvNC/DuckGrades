@@ -53,12 +53,12 @@ export function SearchResultsPage({
 
   return (
     <section className="mx-auto w-full max-w-4xl pb-8 text-left">
-      <p className="mb-3 px-1 text-sm font-medium text-slate-500">
+      <p className="mb-3 px-1 text-sm font-medium text-[var(--duck-muted)]">
         Search results for <span className="font-semibold text-[var(--duck-fg)]">"{query.trim()}"</span>
       </p>
       <div className="space-y-3">
         {flattened.length === 0 ? (
-          <p className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-600">No matches found.</p>
+          <p className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-3 py-3 text-sm text-[var(--duck-muted)]">No matches found.</p>
         ) : null}
         {(["Subjects", "Courses", "Professors"] as const).map((sectionName) => {
           const items = grouped[sectionName];
@@ -67,7 +67,7 @@ export function SearchResultsPage({
           }
           return (
             <div key={sectionName} className="space-y-2">
-              <p className="px-1 text-sm font-medium text-slate-500">{sectionName}</p>
+              <p className="px-1 text-sm font-medium text-[var(--duck-muted)]">{sectionName}</p>
               {items.map((item) => {
                 const indexValue = indexByKey.get(item.key) ?? 0;
                 return (
@@ -76,8 +76,10 @@ export function SearchResultsPage({
                     ref={(element) => {
                       resultRefs.current[indexValue] = element;
                     }}
-                    className={`block rounded-xl border px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#86ac67] ${
-                      activeIndex === indexValue ? "border-[#86ac67] bg-[#effadf]" : "border-slate-200 bg-white hover:bg-[#f9fbf5]"
+                    className={`block rounded-xl border px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--duck-focus)] ${
+                      activeIndex === indexValue
+                        ? "border-[var(--duck-focus)] bg-[var(--duck-surface-soft)]"
+                        : "border-[var(--duck-border)] bg-[var(--duck-surface)] hover:bg-[var(--duck-surface-soft)]"
                     }`}
                     to={item.to}
                     onMouseEnter={() => {
@@ -118,8 +120,8 @@ export function SearchResultsPage({
                   >
                     <p className="text-sm text-[var(--duck-fg)]">
                       <span className="font-semibold">{renderHighlightedText(item.label, item.labelMatchIndexes)}</span>
-                      <span className="px-2 text-slate-300">-</span>
-                      <span className="text-slate-500">{renderHighlightedText(item.subtitle, item.subtitleMatchIndexes)}</span>
+                      <span className="px-2 text-[var(--duck-muted)]">-</span>
+                      <span className="text-[var(--duck-muted)]">{renderHighlightedText(item.subtitle, item.subtitleMatchIndexes)}</span>
                     </p>
                   </Link>
                 );

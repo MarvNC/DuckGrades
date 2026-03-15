@@ -102,11 +102,13 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
     <div className="inline-flex w-fit max-w-full flex-col" onMouseLeave={() => setActiveDatum(null)}>
       <div className={`flex items-center gap-2 ${showStudentCount ? "justify-between" : "justify-end"}`}>
         {showStudentCount ? (
-          <p className={`rounded-md bg-white/95 px-2 py-0.5 font-semibold uppercase tracking-[0.09em] text-slate-700 ${size === "sm" ? "text-[9px]" : "text-[10px]"}`}>
+          <p
+            className={`rounded-md bg-[var(--duck-surface)] px-2 py-0.5 font-semibold uppercase tracking-[0.09em] text-[var(--duck-muted-strong)] ${size === "sm" ? "text-[9px]" : "text-[10px]"}`}
+          >
             {displayedTotal.toLocaleString()} students
           </p>
         ) : null}
-        <p className={`${size === "sm" ? "text-[9px]" : "text-[10px]"} max-w-[13rem] truncate text-right font-semibold text-slate-600 sm:max-w-[14rem]`}>{activeText}</p>
+        <p className={`${size === "sm" ? "text-[9px]" : "text-[10px]"} max-w-[13rem] truncate text-right font-semibold text-[var(--duck-muted)] sm:max-w-[14rem]`}>{activeText}</p>
       </div>
 
       <div className="mt-1 flex items-end gap-0">
@@ -147,7 +149,7 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
             })}
           </div>
           <div
-            className={`${size === "sm" ? "text-[7px]" : "text-[8px]"} mt-0.5 grid font-semibold uppercase tracking-[0.06em] text-slate-500`}
+            className={`${size === "sm" ? "text-[7px]" : "text-[8px]"} mt-0.5 grid font-semibold uppercase tracking-[0.06em] text-[var(--duck-muted)]`}
             style={{
               gridTemplateColumns: `repeat(${LEFT_BUCKET_ORDER.length}, ${barWidth}px)`,
               columnGap: `${barGap}px`,
@@ -200,7 +202,7 @@ export function GradeDistributionStrip({ aggregate, size = "md", showStudentCoun
             })}
           </div>
           <div
-            className={`${size === "sm" ? "text-[7px]" : "text-[8px]"} mt-0.5 grid font-semibold uppercase tracking-[0.06em] text-slate-500`}
+            className={`${size === "sm" ? "text-[7px]" : "text-[8px]"} mt-0.5 grid font-semibold uppercase tracking-[0.06em] text-[var(--duck-muted)]`}
             style={{
               gridTemplateColumns: `repeat(${NUMERICAL_GRADE_ORDER.length}, ${barWidth}px)`,
               columnGap: `${barGap}px`,
