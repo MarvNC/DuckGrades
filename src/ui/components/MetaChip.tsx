@@ -1,4 +1,4 @@
-import { BookOpen, GraduationCap, Layers, Library, Users } from 'lucide-react';
+import { BookOpen, Calendar, GraduationCap, Layers, Library, Users } from 'lucide-react';
 
 export function MetaChip({ chip }: { chip: string }) {
   const normalized = chip.trim().toLowerCase();
@@ -12,6 +12,8 @@ export function MetaChip({ chip }: { chip: string }) {
     <GraduationCap className="h-3 w-3" aria-hidden="true" />
   ) : normalized.endsWith(' subjects') ? (
     <Library className="h-3 w-3" aria-hidden="true" />
+  ) : normalized.includes('–') ? (
+    <Calendar className="h-3 w-3" aria-hidden="true" />
   ) : null;
 
   return (

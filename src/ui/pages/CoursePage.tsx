@@ -1,7 +1,42 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getCourseShard, isNotFoundDataError, type CourseShard } from '../../lib/dataClient';
+import {
+  getCourseShard,
+  isNotFoundDataError,
+  type CourseShard,
+  type SectionRow,
+} from '../../lib/dataClient';
 import fuzzysort from 'fuzzysort';
+
+function abbreviateTermDesc(termDesc: string): string {
+  return termDesc
+    .replace(/^Fall /, 'F ')
+    .replace(/^Winter /, 'W ')
+    .replace(/^Spring /, 'Sp ')
+    .replace(/^Summer /, 'Su ');
+}
+
+function getTermRangeChip(sections: SectionRow[]): string | null {
+  if (sections.length === 0) return null;
+  let minTerm = sections[0].term;
+  let maxTerm = sections[0].term;
+  let minDesc = sections[0].termDesc;
+  let maxDesc = sections[0].termDesc;
+  for (const s of sections) {
+    if (s.term < minTerm) {
+      minTerm = s.term;
+      minDesc = s.termDesc;
+    }
+    if (s.term > maxTerm) {
+      maxTerm = s.term;
+      maxDesc = s.termDesc;
+    }
+  }
+  const minAbbr = abbreviateTermDesc(minDesc);
+  const maxAbbr = abbreviateTermDesc(maxDesc);
+  if (minTerm === maxTerm) return minAbbr;
+  return `${minAbbr} – ${maxAbbr}`;
+}
 import { AggregateSummaryCard } from '../components/AggregateSummaryCard';
 import { EntityAggregateCard } from '../components/EntityAggregateCard';
 import { SectionDrilldown } from '../components/SectionDrilldown';
@@ -126,6 +161,11 @@ export function CoursePage() {
     );
   }, [course?.instructors]);
 
+  const termRangeChip = useMemo(() => {
+    const allSections = (course?.instructors ?? []).flatMap((i) => i.sections);
+    return getTermRangeChip(allSections);
+  }, [course?.instructors]);
+
   const backToName = course?.subjectTitle ?? course?.subject ?? 'subjects';
 
   if (loadState === 'not-found') {
@@ -160,6 +200,7 @@ export function CoursePage() {
               `${totalSections} sections`,
               `${course.instructors.length} instructors`,
               `${course.aggregate.totalNonWReported.toLocaleString()} students`,
+              termRangeChip,
             ]
               .filter((value): value is string => Boolean(value))
               .map((chip) => (

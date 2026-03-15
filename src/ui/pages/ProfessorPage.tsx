@@ -1,6 +1,41 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getProfessorShard, isNotFoundDataError, type ProfessorShard } from '../../lib/dataClient';
+import {
+  getProfessorShard,
+  isNotFoundDataError,
+  type ProfessorShard,
+  type SectionRow,
+} from '../../lib/dataClient';
+
+function abbreviateTermDesc(termDesc: string): string {
+  return termDesc
+    .replace(/^Fall /, 'F ')
+    .replace(/^Winter /, 'W ')
+    .replace(/^Spring /, 'Sp ')
+    .replace(/^Summer /, 'Su ');
+}
+
+function getTermRangeChip(sections: SectionRow[]): string | null {
+  if (sections.length === 0) return null;
+  let minTerm = sections[0].term;
+  let maxTerm = sections[0].term;
+  let minDesc = sections[0].termDesc;
+  let maxDesc = sections[0].termDesc;
+  for (const s of sections) {
+    if (s.term < minTerm) {
+      minTerm = s.term;
+      minDesc = s.termDesc;
+    }
+    if (s.term > maxTerm) {
+      maxTerm = s.term;
+      maxDesc = s.termDesc;
+    }
+  }
+  const minAbbr = abbreviateTermDesc(minDesc);
+  const maxAbbr = abbreviateTermDesc(maxDesc);
+  if (minTerm === maxTerm) return minAbbr;
+  return `${minAbbr} – ${maxAbbr}`;
+}
 import { AggregateSummaryCard } from '../components/AggregateSummaryCard';
 import { EntityAggregateCard } from '../components/EntityAggregateCard';
 import { SectionDrilldown } from '../components/SectionDrilldown';
@@ -107,6 +142,11 @@ export function ProfessorPage() {
 
   const totalStudents = professor?.aggregate.totalNonWReported ?? 0;
 
+  const termRangeChip = useMemo(() => {
+    const allSections = (professor?.courses ?? []).flatMap((c) => c.sections);
+    return getTermRangeChip(allSections);
+  }, [professor?.courses]);
+
   if (loadState === 'not-found') {
     return <NotFoundPage title={`${professorDisplayName} was not found`} />;
   }
@@ -123,7 +163,10 @@ export function ProfessorPage() {
               `${courses.length} courses`,
               `${sectionCount} sections`,
               `${totalStudents.toLocaleString()} students`,
-            ].map((chip) => (
+              termRangeChip,
+            ]
+              .filter((value): value is string => Boolean(value))
+              .map((chip) => (
               <MetaChip key={chip} chip={chip} />
             ))}
           </div>
