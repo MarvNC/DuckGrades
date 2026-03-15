@@ -64,6 +64,12 @@ type Aggregate = {
   withdrawals: number;
 };
 
+type TermAggregate = {
+  term: string;
+  termDesc: string;
+  aggregate: Aggregate;
+};
+
 type AnalyticsLevel = '100' | '200' | '300' | '400' | '500+';
 
 type AnalyticsTermAggregate = {
@@ -519,6 +525,26 @@ function buildAggregate(rows: SectionRecord[]): Aggregate {
     nonNumericalCounts,
     withdrawals,
   };
+}
+
+function buildTermAggregates(rows: SectionRecord[]): TermAggregate[] {
+  const byTerm = new Map<string, SectionRecord[]>();
+  const termDescByTerm = new Map<string, string>();
+
+  for (const row of rows) {
+    pushGrouped(byTerm, row.term, row);
+    if (!termDescByTerm.has(row.term)) {
+      termDescByTerm.set(row.term, row.termDesc);
+    }
+  }
+
+  return [...byTerm.keys()]
+    .sort((left, right) => left.localeCompare(right))
+    .map((term) => ({
+      term,
+      termDesc: termDescByTerm.get(term) ?? term,
+      aggregate: buildAggregate(byTerm.get(term) ?? []),
+    }));
 }
 
 async function writeJson(path: string, payload: unknown): Promise<FileMeta> {
@@ -1249,6 +1275,7 @@ async function main() {
       availableTerms: ['fall', 'winter', 'spring', 'summer'] as TermKey[],
       firstTerm: firstTermDesc,
       lastTerm: lastTermDesc,
+      termAggregates: buildTermAggregates(rows),
       courses: [...courseRows.entries()]
         .map(([courseCode, courseSections]) => {
           const catalogCourse = getCourseMetadata(courseCode);
@@ -1346,6 +1373,7 @@ async function main() {
       title: catalogCourse?.title ?? rows[0]?.title ?? '',
       description: catalogCourse?.description ?? null,
       aggregate: courseAggregateCache.get(courseCode) ?? buildAggregate(rows),
+      termAggregates: buildTermAggregates(rows),
       instructors: [...byInstructor.entries()]
         .map(([professorId, instructorRows]) => ({
           professorId,

@@ -78,6 +78,12 @@ export type SectionRow = {
   counts: Record<string, number | null>;
 };
 
+export type TermAggregate = {
+  term: string;
+  termDesc: string;
+  aggregate: Aggregate;
+};
+
 export type SubjectShard = {
   subjectCode: string;
   subjectTitle?: string;
@@ -87,6 +93,7 @@ export type SubjectShard = {
   availableTerms: Array<'fall' | 'winter' | 'spring' | 'summer'>;
   firstTerm?: string;
   lastTerm?: string;
+  termAggregates?: TermAggregate[];
   courses: Array<{
     courseCode: string;
     number: string;
@@ -199,6 +206,7 @@ export type CourseShard = {
   title: string;
   description?: string | null;
   aggregate: Aggregate;
+  termAggregates?: TermAggregate[];
   instructors: Array<{
     professorId: string;
     name: string;

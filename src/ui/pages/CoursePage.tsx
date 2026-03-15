@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import uPlot from 'uplot';
 import { getCourseShard, isNotFoundDataError, type CourseShard } from '../../lib/dataClient';
-import { getTermRangeChip } from '../../lib/termUtils';
+import { abbreviateTermDesc, getTermRangeChip } from '../../lib/termUtils';
 import fuzzysort from 'fuzzysort';
 import { AggregateSummaryCard } from '../components/AggregateSummaryCard';
 import { EntityAggregateCard } from '../components/EntityAggregateCard';
@@ -9,6 +10,7 @@ import { SectionDrilldown } from '../components/SectionDrilldown';
 import { NotFoundPage } from './NotFoundPage';
 import { usePageTitle } from '../usePageTitle';
 import { MetaChip } from '../components/MetaChip';
+import { UPlotChart } from '../components/charts/UPlotChart';
 
 type InstructorSortKey = 'name' | 'students' | 'sections' | 'mean';
 
@@ -132,6 +134,26 @@ export function CoursePage() {
     return getTermRangeChip(allSections);
   }, [course?.instructors]);
 
+  const termAggregates = useMemo(() => {
+    return course?.termAggregates ?? [];
+  }, [course?.termAggregates]);
+
+  const termLabels = useMemo(() => {
+    return termAggregates.map((row) => abbreviateTermDesc(row.termDesc));
+  }, [termAggregates]);
+
+  const termChartData = useMemo((): uPlot.AlignedData => {
+    const x = termAggregates.map((_, index) => index);
+    const gpa = termAggregates.map((row) => row.aggregate.mean);
+    const students = termAggregates.map((row) => row.aggregate.totalNonWReported);
+    return [x, gpa, students];
+  }, [termAggregates]);
+
+  const termChartTitle =
+    termAggregates[0]?.termDesc && termAggregates[termAggregates.length - 1]?.termDesc
+      ? `${termAggregates[0].termDesc} to ${termAggregates[termAggregates.length - 1].termDesc}`
+      : 'All available terms';
+
   const backToName = course?.subjectTitle ?? course?.subject ?? 'subjects';
 
   if (loadState === 'not-found') {
@@ -192,6 +214,125 @@ export function CoursePage() {
           </div>
         </div>
       </div>
+
+      {loadState === 'ready' && termAggregates.length > 1 ? (
+        <section className="rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm sm:p-5">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-base font-bold text-[var(--duck-fg)]">Average GPA over time</h2>
+            <p className="text-xs font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">
+              {termChartTitle}
+            </p>
+          </div>
+          <UPlotChart
+            ariaLabel="Course average GPA and enrollment over time"
+            className="w-full"
+            height={250}
+            data={termChartData}
+            buildOptions={({ width, height, theme }) => {
+              const compact = width < 640;
+              return {
+                width,
+                height,
+                padding: compact ? [8, 8, 10, 26] : [12, 14, 20, 42],
+                scales: {
+                  x: { time: false },
+                  y: { range: [0, 4.3] },
+                  students: { auto: true },
+                },
+                cursor: { drag: { x: false, y: false } },
+                legend: { show: false },
+                axes: [
+                  {
+                    stroke: theme.border,
+                    grid: { stroke: theme.border, width: 1 },
+                    values: (_self, splits) =>
+                      splits.map((split) => {
+                        const idx = Math.round(split);
+                        if (compact && idx % 6 !== 0) {
+                          return '';
+                        }
+                        return termLabels[idx] ?? '';
+                      }),
+                    size: compact ? 26 : 46,
+                    labelSize: compact ? 0 : 10,
+                    labelGap: compact ? 0 : 8,
+                    labelFont: '600 11px Sora',
+                    label: compact ? '' : 'TERM',
+                    font: compact ? '600 9px Sora' : '600 10px Sora',
+                  },
+                  {
+                    stroke: theme.border,
+                    grid: { stroke: theme.border, width: 1 },
+                    size: compact ? 28 : 46,
+                    label: compact ? '' : 'MEAN GPA',
+                    labelSize: compact ? 0 : 10,
+                    labelGap: compact ? 0 : 8,
+                    font: compact ? '600 9px Sora' : '600 10px Sora',
+                  },
+                  {
+                    side: 1,
+                    scale: 'students',
+                    stroke: theme.border,
+                    grid: { show: false },
+                    size: compact ? 0 : 54,
+                    values: (_self: uPlot, splits: number[]) =>
+                      splits.map((value: number) =>
+                        compact
+                          ? ''
+                          : Number(value).toLocaleString(undefined, {
+                              maximumFractionDigits: 0,
+                            })
+                      ),
+                    label: compact ? '' : 'STUDENTS',
+                    labelSize: compact ? 0 : 10,
+                    labelGap: compact ? 0 : 8,
+                    font: compact ? '600 9px Sora' : '600 10px Sora',
+                  },
+                ],
+                series: [
+                  {},
+                  {
+                    label: 'Mean GPA',
+                    scale: 'y',
+                    stroke: theme.chart1,
+                    width: compact ? 1.6 : 2,
+                    points: { size: compact ? 3 : 4, stroke: theme.chart1, fill: theme.surface },
+                  },
+                  {
+                    label: 'Students',
+                    scale: 'students',
+                    stroke: theme.chart3,
+                    width: compact ? 1.2 : 1.5,
+                    points: { show: false },
+                    dash: [6, 4],
+                  },
+                ],
+              };
+            }}
+            getTooltip={({ idx }) => {
+              const row = termAggregates[idx];
+              if (!row) {
+                return null;
+              }
+              return {
+                title: row.termDesc,
+                items: [
+                  {
+                    label: 'Mean GPA',
+                    value: row.aggregate.mean?.toFixed(3) ?? 'N/A',
+                    color: 'var(--duck-chart-1)',
+                  },
+                  {
+                    label: 'Students',
+                    value: row.aggregate.totalNonWReported.toLocaleString(),
+                    color: 'var(--duck-chart-3)',
+                  },
+                ],
+              };
+            }}
+          />
+        </section>
+      ) : null}
 
       {loadState === 'loading' ? (
         <p className="text-sm text-[var(--duck-muted)]">Loading course shard...</p>
