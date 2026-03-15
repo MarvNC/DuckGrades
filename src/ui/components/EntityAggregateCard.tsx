@@ -1,9 +1,9 @@
-import type { ReactNode } from "react";
-import { Layers, Users } from "lucide-react";
-import { Link } from "react-router-dom";
-import { prefetchRouteData, type Aggregate } from "../../lib/dataClient";
-import { formatGradeCode, formatGradeStat } from "../../lib/grades";
-import { GradeDistributionStrip } from "./GradeDistributionStrip";
+import type { ReactNode } from 'react';
+import { Layers, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { prefetchRouteData, type Aggregate } from '../../lib/dataClient';
+import { formatGradeCode, formatGradeStat } from '../../lib/grades';
+import { GradeDistributionStrip } from './GradeDistributionStrip';
 
 type EntityAggregateCardProps = {
   title: string;
@@ -11,17 +11,24 @@ type EntityAggregateCardProps = {
   subtitle?: string;
   inlineMetaChips?: string[];
   aggregate: Aggregate | null | undefined;
-  distributionSize?: "sm" | "md";
+  distributionSize?: 'sm' | 'md';
   showStudentCountInDistribution?: boolean;
   children?: ReactNode;
 };
 
 function renderMetaChip(chip: string) {
   const normalized = chip.trim().toLowerCase();
-  const icon = normalized.endsWith(" sections") ? <Layers className="h-3 w-3" aria-hidden="true" /> : normalized.endsWith(" students") ? <Users className="h-3 w-3" aria-hidden="true" /> : null;
+  const icon = normalized.endsWith(' sections') ? (
+    <Layers className="h-3 w-3" aria-hidden="true" />
+  ) : normalized.endsWith(' students') ? (
+    <Users className="h-3 w-3" aria-hidden="true" />
+  ) : null;
 
   return (
-    <span key={chip} className="inline-flex items-center gap-1 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2.5 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]">
+    <span
+      key={chip}
+      className="inline-flex items-center gap-1 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2.5 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]"
+    >
       {icon}
       <span>{chip}</span>
     </span>
@@ -34,7 +41,7 @@ export function EntityAggregateCard({
   subtitle,
   inlineMetaChips,
   aggregate,
-  distributionSize = "sm",
+  distributionSize = 'sm',
   showStudentCountInDistribution = false,
   children,
 }: EntityAggregateCardProps) {
@@ -64,21 +71,31 @@ export function EntityAggregateCard({
             ) : null}
           </div>
 
-          {(inlineMetaChips ?? []).length > 0 ? <div className="mt-2 flex flex-wrap gap-1.5">{(inlineMetaChips ?? []).map(renderMetaChip)}</div> : null}
-
+          {(inlineMetaChips ?? []).length > 0 ? (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {(inlineMetaChips ?? []).map(renderMetaChip)}
+            </div>
+          ) : null}
         </div>
 
         <div className="flex w-full flex-col items-end gap-1.5 sm:w-auto sm:pl-2">
-          <GradeDistributionStrip aggregate={aggregate} size={distributionSize} showStudentCount={showStudentCountInDistribution} />
+          <GradeDistributionStrip
+            aggregate={aggregate}
+            size={distributionSize}
+            showStudentCount={showStudentCountInDistribution}
+          />
           <div className="flex flex-wrap justify-end gap-x-3 gap-y-1 text-[10px] font-normal text-[var(--duck-muted)] opacity-70">
             <span>
-              <span className="uppercase tracking-[0.08em] text-[var(--duck-muted)]">Mean</span> {formatGradeStat(aggregate?.mean)}
+              <span className="tracking-[0.08em] text-[var(--duck-muted)] uppercase">Mean</span>{' '}
+              {formatGradeStat(aggregate?.mean)}
             </span>
             <span>
-              <span className="uppercase tracking-[0.08em] text-[var(--duck-muted)]">Median</span> {formatGradeStat(aggregate?.median)}
+              <span className="tracking-[0.08em] text-[var(--duck-muted)] uppercase">Median</span>{' '}
+              {formatGradeStat(aggregate?.median)}
             </span>
             <span>
-              <span className="uppercase tracking-[0.08em] text-[var(--duck-muted)]">Mode</span> {formatGradeCode(aggregate?.mode)}
+              <span className="tracking-[0.08em] text-[var(--duck-muted)] uppercase">Mode</span>{' '}
+              {formatGradeCode(aggregate?.mode)}
             </span>
           </div>
         </div>

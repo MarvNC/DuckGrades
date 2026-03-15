@@ -10,7 +10,7 @@ export class DataRequestError extends Error {
 
   constructor(path: string, status: number) {
     super(`Request failed for ${path}: ${status}`);
-    this.name = "DataRequestError";
+    this.name = 'DataRequestError';
     this.path = path;
     this.status = status;
   }
@@ -37,8 +37,22 @@ type CompactSubjectsOverview = {
   s: Array<number | null>;
 };
 
-const NUMERICAL_ORDER = ["F", "DM", "D", "DP", "CM", "C", "CP", "BM", "B", "BP", "AM", "A", "AP"] as const;
-const NON_NUMERICAL_ORDER = ["P", "N", "OTHER"] as const;
+const NUMERICAL_ORDER = [
+  'F',
+  'DM',
+  'D',
+  'DP',
+  'CM',
+  'C',
+  'CP',
+  'BM',
+  'B',
+  'BP',
+  'AM',
+  'A',
+  'AP',
+] as const;
+const NON_NUMERICAL_ORDER = ['P', 'N', 'OTHER'] as const;
 const AGGREGATE_COMPACT_LENGTH = 7 + NUMERICAL_ORDER.length + NON_NUMERICAL_ORDER.length;
 
 export type Aggregate = {
@@ -70,7 +84,7 @@ export type SubjectShard = {
   subjectDescription?: string | null;
   professorCount?: number;
   aggregate: Aggregate;
-  availableTerms: Array<"fall" | "winter" | "spring" | "summer">;
+  availableTerms: Array<'fall' | 'winter' | 'spring' | 'summer'>;
   courses: Array<{
     courseCode: string;
     number: string;
@@ -78,7 +92,7 @@ export type SubjectShard = {
     description?: string | null;
     sectionCount: number;
     yearBucket: 1 | 2 | 3 | 4 | 5;
-    terms: Array<"fall" | "winter" | "spring" | "summer">;
+    terms: Array<'fall' | 'winter' | 'spring' | 'summer'>;
     aggregate: Aggregate;
   }>;
 };
@@ -143,9 +157,12 @@ const subjectShardCache = new Map<string, Promise<SubjectShard>>();
 const courseShardCache = new Map<string, Promise<CourseShard>>();
 const professorShardCache = new Map<string, Promise<ProfessorShard>>();
 
-const configuredBase = (import.meta.env.VITE_DATA_BASE_URL as string | undefined)?.replace(/\/$/, "");
-const primaryBase = configuredBase ?? "/data";
-const fallbackBase = "/data";
+const configuredBase = (import.meta.env.VITE_DATA_BASE_URL as string | undefined)?.replace(
+  /\/$/,
+  ''
+);
+const primaryBase = configuredBase ?? '/data';
+const fallbackBase = '/data';
 
 async function fetchJson<T>(path: string): Promise<T> {
   const response = await fetch(path);
@@ -153,9 +170,9 @@ async function fetchJson<T>(path: string): Promise<T> {
     throw new DataRequestError(path, response.status);
   }
 
-  const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+  const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
   const inferredStatus = response.status === 200 ? 404 : response.status;
-  if (!contentType.includes("application/json")) {
+  if (!contentType.includes('application/json')) {
     throw new DataRequestError(path, inferredStatus);
   }
 
@@ -182,17 +199,17 @@ async function fetchDataJson<T>(relativePath: string): Promise<T> {
 }
 
 function decodeSearchIndex(raw: SearchIndex | CompactSearchIndex): SearchIndex {
-  if (!("v" in raw)) {
+  if (!('v' in raw)) {
     return raw;
   }
 
   const table = raw.t;
-  const decode = (index: number) => table[index] ?? "";
+  const decode = (index: number) => table[index] ?? '';
 
   if (raw.v === 3) {
-    const subjects: SearchIndex["subjects"] = [];
-    const courses: SearchIndex["courses"] = [];
-    const professors: SearchIndex["professors"] = [];
+    const subjects: SearchIndex['subjects'] = [];
+    const courses: SearchIndex['courses'] = [];
+    const professors: SearchIndex['professors'] = [];
     const subjectData = raw.s as number[];
     const courseData = raw.c as number[];
     const professorData = raw.p as number[];
@@ -226,9 +243,9 @@ function decodeSearchIndex(raw: SearchIndex | CompactSearchIndex): SearchIndex {
   }
 
   if (raw.v === 2) {
-    const subjects: SearchIndex["subjects"] = [];
-    const courses: SearchIndex["courses"] = [];
-    const professors: SearchIndex["professors"] = [];
+    const subjects: SearchIndex['subjects'] = [];
+    const courses: SearchIndex['courses'] = [];
+    const professors: SearchIndex['professors'] = [];
     const subjectData = raw.s as number[];
     const courseData = raw.c as number[];
     const professorData = raw.p as number[];
@@ -266,12 +283,14 @@ function decodeSearchIndex(raw: SearchIndex | CompactSearchIndex): SearchIndex {
       title: decode(code),
       popularity,
     })),
-    courses: (raw.c as Array<[number, number, number, number]>).map(([code, title, subject, popularity]) => ({
-      code: decode(code),
-      title: decode(title),
-      subject: decode(subject),
-      popularity,
-    })),
+    courses: (raw.c as Array<[number, number, number, number]>).map(
+      ([code, title, subject, popularity]) => ({
+        code: decode(code),
+        title: decode(title),
+        subject: decode(subject),
+        popularity,
+      })
+    ),
     professors: (raw.p as Array<[number, number, number]>).map(([id, name, popularity]) => ({
       id: decode(id),
       name: decode(name),
@@ -282,13 +301,19 @@ function decodeSearchIndex(raw: SearchIndex | CompactSearchIndex): SearchIndex {
 
 function decodeCompactAggregate(values: Array<number | null>): Aggregate {
   const modeIndexValue = Number(values[5] ?? -1);
-  const mode = modeIndexValue >= 0 && modeIndexValue < NUMERICAL_ORDER.length ? NUMERICAL_ORDER[modeIndexValue] : null;
+  const mode =
+    modeIndexValue >= 0 && modeIndexValue < NUMERICAL_ORDER.length
+      ? NUMERICAL_ORDER[modeIndexValue]
+      : null;
   const numericalCounts = Object.fromEntries(
-    NUMERICAL_ORDER.map((grade, index) => [grade, Number(values[7 + index] ?? 0)]),
+    NUMERICAL_ORDER.map((grade, index) => [grade, Number(values[7 + index] ?? 0)])
   ) as Record<string, number>;
   const nonNumericalOffset = 7 + NUMERICAL_ORDER.length;
   const nonNumericalCounts = Object.fromEntries(
-    NON_NUMERICAL_ORDER.map((grade, index) => [grade, Number(values[nonNumericalOffset + index] ?? 0)]),
+    NON_NUMERICAL_ORDER.map((grade, index) => [
+      grade,
+      Number(values[nonNumericalOffset + index] ?? 0),
+    ])
   ) as Record<string, number>;
 
   return {
@@ -304,13 +329,15 @@ function decodeCompactAggregate(values: Array<number | null>): Aggregate {
   };
 }
 
-function decodeSubjectsOverview(raw: SubjectsOverviewShard | CompactSubjectsOverview): SubjectsOverviewShard {
-  if (!("v" in raw)) {
+function decodeSubjectsOverview(
+  raw: SubjectsOverviewShard | CompactSubjectsOverview
+): SubjectsOverviewShard {
+  if (!('v' in raw)) {
     return raw;
   }
 
   const subjects: SubjectOverview[] = [];
-  const titles = raw.v === 2 ? raw.n ?? [] : [];
+  const titles = raw.v === 2 ? (raw.n ?? []) : [];
   const recordSize = 4 + AGGREGATE_COMPACT_LENGTH;
   for (let i = 0; i < raw.s.length; i += recordSize) {
     const codeIndex = Number(raw.s[i] ?? -1);
@@ -345,7 +372,7 @@ export async function getDatasetVersion(): Promise<string> {
   if (!cachedVersion) {
     cachedVersion = (async () => {
       try {
-        const currentVersion = await fetchDataJson<VersionFile>("current-version.json");
+        const currentVersion = await fetchDataJson<VersionFile>('current-version.json');
         return currentVersion.version;
       } catch (error) {
         cachedVersion = null;
@@ -361,7 +388,9 @@ export async function getSearchIndex(): Promise<SearchIndex> {
     cachedSearchIndex = (async () => {
       try {
         const version = await getDatasetVersion();
-        const raw = await fetchDataJson<SearchIndex | CompactSearchIndex>(`${version}/search-index.json`);
+        const raw = await fetchDataJson<SearchIndex | CompactSearchIndex>(
+          `${version}/search-index.json`
+        );
         return decodeSearchIndex(raw);
       } catch (error) {
         cachedSearchIndex = null;
@@ -377,7 +406,9 @@ export async function getSubjectsOverviewShard(): Promise<SubjectsOverviewShard>
     cachedSubjectsOverview = (async () => {
       try {
         const version = await getDatasetVersion();
-        const raw = await fetchDataJson<SubjectsOverviewShard | CompactSubjectsOverview>(`${version}/subjects-overview.json`);
+        const raw = await fetchDataJson<SubjectsOverviewShard | CompactSubjectsOverview>(
+          `${version}/subjects-overview.json`
+        );
         return decodeSubjectsOverview(raw);
       } catch (error) {
         cachedSubjectsOverview = null;
@@ -440,26 +471,26 @@ export async function getProfessorShard(id: string): Promise<ProfessorShard> {
 }
 
 export function prefetchRouteData(route: string): void {
-  if (route === "/subjects") {
+  if (route === '/subjects') {
     void getSubjectsOverviewShard();
     return;
   }
-  if (route.startsWith("/subject/")) {
-    const code = route.slice("/subject/".length);
+  if (route.startsWith('/subject/')) {
+    const code = route.slice('/subject/'.length);
     if (code) {
       void getSubjectShard(code);
     }
     return;
   }
-  if (route.startsWith("/course/")) {
-    const code = route.slice("/course/".length);
+  if (route.startsWith('/course/')) {
+    const code = route.slice('/course/'.length);
     if (code) {
       void getCourseShard(code);
     }
     return;
   }
-  if (route.startsWith("/professor/")) {
-    const id = route.slice("/professor/".length);
+  if (route.startsWith('/professor/')) {
+    const id = route.slice('/professor/'.length);
     if (id) {
       void getProfessorShard(id);
     }

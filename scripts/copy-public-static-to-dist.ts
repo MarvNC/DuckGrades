@@ -1,9 +1,9 @@
-import { cp, mkdir, readdir } from "node:fs/promises";
-import { join } from "node:path";
+import { cp, mkdir, readdir } from 'node:fs/promises';
+import { join } from 'node:path';
 
-const PUBLIC_ROOT = "public";
-const DIST_ROOT = "dist";
-const SKIP_ENTRIES = new Set(["data"]);
+const PUBLIC_ROOT = 'public';
+const DIST_ROOT = 'dist';
+const SKIP_ENTRIES = new Set(['data']);
 
 async function main() {
   await mkdir(DIST_ROOT, { recursive: true });

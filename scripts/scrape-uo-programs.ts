@@ -1,14 +1,14 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 
 type ProgramCategory =
-  | "ug-major"
-  | "ug-minor"
-  | "ug-certificate"
-  | "gr-degree"
-  | "gr-certificate"
-  | "gr-specialization"
-  | "gr-microcredential";
+  | 'ug-major'
+  | 'ug-minor'
+  | 'ug-certificate'
+  | 'gr-degree'
+  | 'gr-certificate'
+  | 'gr-specialization'
+  | 'gr-microcredential';
 
 type ProgramListing = {
   name: string;
@@ -33,47 +33,55 @@ type ProgramSnapshot = {
   >;
 };
 
-const BASE_URL = "https://catalog.uoregon.edu";
-const OUTPUT_PATH = "data/uo-catalog-program-metadata.json";
+const BASE_URL = 'https://catalog.uoregon.edu';
+const OUTPUT_PATH = 'data/uo-catalog-program-metadata.json';
 const REQUEST_RETRIES = 3;
 const REQUEST_RETRY_DELAY_MS = 600;
 const PAGE_REQUEST_CONCURRENCY = 8;
 
 const SOURCE_SECTIONS: Array<{ path: string; sectionId: string; category: ProgramCategory }> = [
-  { path: "/ug-programs/", sectionId: "majorstextcontainer", category: "ug-major" },
-  { path: "/ug-programs/", sectionId: "minorstextcontainer", category: "ug-minor" },
-  { path: "/ug-programs/", sectionId: "certificatestextcontainer", category: "ug-certificate" },
-  { path: "/gr-programs/", sectionId: "degreeprogramstextcontainer", category: "gr-degree" },
-  { path: "/gr-programs/", sectionId: "certificatestextcontainer", category: "gr-certificate" },
-  { path: "/gr-programs/", sectionId: "specializationstextcontainer", category: "gr-specialization" },
-  { path: "/gr-programs/", sectionId: "microcredentialtextcontainer", category: "gr-microcredential" },
+  { path: '/ug-programs/', sectionId: 'majorstextcontainer', category: 'ug-major' },
+  { path: '/ug-programs/', sectionId: 'minorstextcontainer', category: 'ug-minor' },
+  { path: '/ug-programs/', sectionId: 'certificatestextcontainer', category: 'ug-certificate' },
+  { path: '/gr-programs/', sectionId: 'degreeprogramstextcontainer', category: 'gr-degree' },
+  { path: '/gr-programs/', sectionId: 'certificatestextcontainer', category: 'gr-certificate' },
+  {
+    path: '/gr-programs/',
+    sectionId: 'specializationstextcontainer',
+    category: 'gr-specialization',
+  },
+  {
+    path: '/gr-programs/',
+    sectionId: 'microcredentialtextcontainer',
+    category: 'gr-microcredential',
+  },
 ];
 
 const NAMED_ENTITIES: Record<string, string> = {
-  amp: "&",
+  amp: '&',
   apos: "'",
-  copy: "\u00A9",
-  gt: ">",
-  hellip: "...",
+  copy: '\u00A9',
+  gt: '>',
+  hellip: '...',
   ldquo: '"',
-  lt: "<",
-  mdash: "-",
-  nbsp: " ",
-  ndash: "-",
+  lt: '<',
+  mdash: '-',
+  nbsp: ' ',
+  ndash: '-',
   quot: '"',
   rdquo: '"',
-  reg: "\u00AE",
+  reg: '\u00AE',
   rsquo: "'",
   lsquo: "'",
 };
 
 function decodeHtmlEntities(input: string): string {
   return input.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (fullMatch, entity) => {
-    if (entity.startsWith("#x") || entity.startsWith("#X")) {
+    if (entity.startsWith('#x') || entity.startsWith('#X')) {
       const value = Number.parseInt(entity.slice(2), 16);
       return Number.isFinite(value) ? String.fromCodePoint(value) : fullMatch;
     }
-    if (entity.startsWith("#")) {
+    if (entity.startsWith('#')) {
       const value = Number.parseInt(entity.slice(1), 10);
       return Number.isFinite(value) ? String.fromCodePoint(value) : fullMatch;
     }
@@ -82,20 +90,20 @@ function decodeHtmlEntities(input: string): string {
 }
 
 function stripTags(input: string): string {
-  return input.replace(/<[^>]*>/g, " ");
+  return input.replace(/<[^>]*>/g, ' ');
 }
 
 function normalizeText(input: string): string {
   return decodeHtmlEntities(stripTags(input))
-    .replace(/[\u200B-\u200D\uFEFF]/g, "")
-    .replace(/\u00a0/g, " ")
-    .replace(/\s+/g, " ")
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
 function normalizePath(path: string): string {
-  const withLeadingSlash = path.startsWith("/") ? path : `/${path}`;
-  return withLeadingSlash.endsWith("/") ? withLeadingSlash : `${withLeadingSlash}/`;
+  const withLeadingSlash = path.startsWith('/') ? path : `/${path}`;
+  return withLeadingSlash.endsWith('/') ? withLeadingSlash : `${withLeadingSlash}/`;
 }
 
 async function fetchText(path: string): Promise<string> {
@@ -106,7 +114,7 @@ async function fetchText(path: string): Promise<string> {
     try {
       const response = await fetch(url, {
         headers: {
-          "User-Agent": "DuckGradesProgramCatalogBot/1.0 (+https://github.com/MarvNC/DuckGrades)",
+          'User-Agent': 'DuckGradesProgramCatalogBot/1.0 (+https://github.com/MarvNC/DuckGrades)',
         },
       });
       if (!response.ok) {
@@ -121,35 +129,42 @@ async function fetchText(path: string): Promise<string> {
     }
   }
 
-  throw new Error(`Unable to fetch ${url}: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
+  throw new Error(
+    `Unable to fetch ${url}: ${lastError instanceof Error ? lastError.message : String(lastError)}`
+  );
 }
 
 function extractContainer(html: string, sectionId: string): string {
-  const pattern = new RegExp(`<div id="${sectionId}"[^>]*>([\\s\\S]*?)<\\/div>`, "i");
+  const pattern = new RegExp(`<div id="${sectionId}"[^>]*>([\\s\\S]*?)<\\/div>`, 'i');
   const match = html.match(pattern);
-  return match?.[1] ?? "";
+  return match?.[1] ?? '';
 }
 
-function parseListings(containerHtml: string, sourcePath: string, sectionId: string, category: ProgramCategory): ProgramListing[] {
+function parseListings(
+  containerHtml: string,
+  sourcePath: string,
+  sectionId: string,
+  category: ProgramCategory
+): ProgramListing[] {
   const listings: ProgramListing[] = [];
   const liPattern = /<li[^>]*>([\s\S]*?)<\/li>/gi;
 
   let liMatch = liPattern.exec(containerHtml);
   while (liMatch) {
-    const itemHtml = liMatch[1] ?? "";
+    const itemHtml = liMatch[1] ?? '';
     const anchorMatch = itemHtml.match(/<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i);
 
     if (anchorMatch) {
       const href = anchorMatch[1].trim();
       const name = normalizeText(anchorMatch[2]);
 
-      if (name && href && !href.startsWith("#")) {
+      if (name && href && !href.startsWith('#')) {
         const resolved = new URL(href, new URL(normalizePath(sourcePath), BASE_URL));
         const path = normalizePath(resolved.pathname);
         const hash = resolved.hash ? resolved.hash.slice(1) : null;
 
-        const withoutAnchor = itemHtml.replace(anchorMatch[0], " ");
-        const tailText = normalizeText(withoutAnchor).replace(/^:/, "").trim();
+        const withoutAnchor = itemHtml.replace(anchorMatch[0], ' ');
+        const tailText = normalizeText(withoutAnchor).replace(/^:/, '').trim();
         const credentials = tailText.length > 0 ? tailText : null;
 
         listings.push({
@@ -190,14 +205,14 @@ function parseOverviewParagraphs(html: string): string[] {
 
 function parsePageTitle(html: string): string | null {
   const titleMatch = html.match(/<h1 class="page-title">([\s\S]*?)<\/h1>/i);
-  const title = titleMatch ? normalizeText(titleMatch[1]) : "";
+  const title = titleMatch ? normalizeText(titleMatch[1]) : '';
   return title || null;
 }
 
 async function mapWithConcurrency<T>(
   items: T[],
   concurrency: number,
-  mapper: (item: T, index: number) => Promise<void>,
+  mapper: (item: T, index: number) => Promise<void>
 ): Promise<void> {
   let cursor = 0;
   const workerCount = Math.min(Math.max(1, concurrency), items.length || 1);
@@ -221,17 +236,19 @@ async function main() {
 
   const listings: ProgramListing[] = [];
   for (const section of SOURCE_SECTIONS) {
-    const html = sourceHtml.get(section.path) ?? "";
+    const html = sourceHtml.get(section.path) ?? '';
     const containerHtml = extractContainer(html, section.sectionId);
     if (!containerHtml) {
       continue;
     }
-    listings.push(...parseListings(containerHtml, section.path, section.sectionId, section.category));
+    listings.push(
+      ...parseListings(containerHtml, section.path, section.sectionId, section.category)
+    );
   }
 
   const dedupedListings = new Map<string, ProgramListing>();
   for (const listing of listings) {
-    const dedupeKey = `${listing.category}:${listing.name.toLowerCase()}:${listing.path}:${listing.hash ?? ""}`;
+    const dedupeKey = `${listing.category}:${listing.name.toLowerCase()}:${listing.path}:${listing.hash ?? ''}`;
     if (!dedupedListings.has(dedupeKey)) {
       dedupedListings.set(dedupeKey, listing);
     }
@@ -268,14 +285,21 @@ async function main() {
           overview,
         };
       })
-      .sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name) || a.path.localeCompare(b.path)),
+      .sort(
+        (a, b) =>
+          a.category.localeCompare(b.category) ||
+          a.name.localeCompare(b.name) ||
+          a.path.localeCompare(b.path)
+      ),
   };
 
   const outputPath = join(process.cwd(), OUTPUT_PATH);
   await mkdir(dirname(outputPath), { recursive: true });
-  await writeFile(outputPath, `${JSON.stringify(snapshot)}\n`, "utf8");
+  await writeFile(outputPath, `${JSON.stringify(snapshot)}\n`, 'utf8');
 
-  console.log(`Wrote ${snapshot.programs.length} program entries (${uniquePaths.length} pages) to ${OUTPUT_PATH}`);
+  console.log(
+    `Wrote ${snapshot.programs.length} program entries (${uniquePaths.length} pages) to ${OUTPUT_PATH}`
+  );
 }
 
 void main();

@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import { rankSearchQuery, warmSearchWorker } from "../../lib/searchWorkerClient";
-import { EMPTY_RANKED_RESULTS, type RankedSearchResult } from "../../lib/search";
+import { useEffect, useRef, useState } from 'react';
+import { rankSearchQuery, warmSearchWorker } from '../../lib/searchWorkerClient';
+import { EMPTY_RANKED_RESULTS, type RankedSearchResult } from '../../lib/search';
 
 export type SearchItem = {
   key: string;
@@ -10,7 +10,7 @@ export type SearchItem = {
   labelMatchIndexes?: number[];
   subtitleMatchIndexes?: number[];
   to: string;
-  section: "Subject" | "Course" | "Professor";
+  section: 'Subject' | 'Course' | 'Professor';
 };
 
 export function useRankedSearch(query: string) {
@@ -48,7 +48,7 @@ export function useRankedSearch(query: string) {
 
 export function buildSearchItems(
   ranked: RankedSearchResult,
-  limits: { subjects?: number; courses?: number; professors?: number; total?: number } = {},
+  limits: { subjects?: number; courses?: number; professors?: number; total?: number } = {}
 ) {
   const subjects = ranked.subjects.slice(0, limits.subjects ?? 6).map((subject) => ({
     key: `subject:${subject.code}`,
@@ -58,7 +58,7 @@ export function buildSearchItems(
     labelMatchIndexes: subject.labelMatchIndexes,
     subtitleMatchIndexes: subject.subtitleMatchIndexes,
     to: `/subject/${subject.code}`,
-    section: "Subject" as const,
+    section: 'Subject' as const,
   }));
   const courses = ranked.courses.slice(0, limits.courses ?? 6).map((course) => ({
     key: `course:${course.code}`,
@@ -68,7 +68,7 @@ export function buildSearchItems(
     labelMatchIndexes: course.labelMatchIndexes,
     subtitleMatchIndexes: course.subtitleMatchIndexes,
     to: `/course/${course.code}`,
-    section: "Course" as const,
+    section: 'Course' as const,
   }));
   const professors = ranked.professors.slice(0, limits.professors ?? 6).map((professor) => ({
     key: `professor:${professor.id}`,
@@ -77,7 +77,7 @@ export function buildSearchItems(
     score: professor.score,
     labelMatchIndexes: professor.labelMatchIndexes,
     to: `/professor/${professor.id}`,
-    section: "Professor" as const,
+    section: 'Professor' as const,
   }));
 
   const flattened = [...subjects, ...courses, ...professors]
@@ -85,9 +85,9 @@ export function buildSearchItems(
     .slice(0, limits.total ?? 18) as SearchItem[];
 
   const grouped = {
-    Subjects: flattened.filter((item) => item.section === "Subject"),
-    Courses: flattened.filter((item) => item.section === "Course"),
-    Professors: flattened.filter((item) => item.section === "Professor"),
+    Subjects: flattened.filter((item) => item.section === 'Subject'),
+    Courses: flattened.filter((item) => item.section === 'Course'),
+    Professors: flattened.filter((item) => item.section === 'Professor'),
   };
 
   return {

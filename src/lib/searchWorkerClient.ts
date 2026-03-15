@@ -1,6 +1,6 @@
-import { getSearchIndex } from "./dataClient";
-import { EMPTY_RANKED_RESULTS, searchIndex, type RankedSearchResult } from "./search";
-import type { SearchWorkerRequest, SearchWorkerResponse } from "./searchWorkerTypes";
+import { getSearchIndex } from './dataClient';
+import { EMPTY_RANKED_RESULTS, searchIndex, type RankedSearchResult } from './search';
+import type { SearchWorkerRequest, SearchWorkerResponse } from './searchWorkerTypes';
 
 type PendingRequest = {
   resolve: (ranked: RankedSearchResult) => void;
@@ -26,11 +26,11 @@ function handleWorkerMessage(event: MessageEvent<SearchWorkerResponse>) {
     return;
   }
 
-  if (message.type === "ready") {
+  if (message.type === 'ready') {
     return;
   }
 
-  if (message.type === "result") {
+  if (message.type === 'result') {
     const pending = pendingRequests.get(message.requestId);
     if (!pending) {
       return;
@@ -40,7 +40,7 @@ function handleWorkerMessage(event: MessageEvent<SearchWorkerResponse>) {
     return;
   }
 
-  const error = new Error(message.message || "Search worker failed");
+  const error = new Error(message.message || 'Search worker failed');
   if (message.requestId !== undefined) {
     const pending = pendingRequests.get(message.requestId);
     if (!pending) {
@@ -62,17 +62,19 @@ function getWorker(): Worker | null {
   if (workerInstance) {
     return workerInstance;
   }
-  if (typeof Worker === "undefined") {
+  if (typeof Worker === 'undefined') {
     workerUnavailable = true;
     return null;
   }
 
   try {
-    const worker = new Worker(new URL("../workers/searchWorker.ts", import.meta.url), { type: "module" });
-    worker.addEventListener("message", handleWorkerMessage);
-    worker.addEventListener("error", () => {
+    const worker = new Worker(new URL('../workers/searchWorker.ts', import.meta.url), {
+      type: 'module',
+    });
+    worker.addEventListener('message', handleWorkerMessage);
+    worker.addEventListener('error', () => {
       workerUnavailable = true;
-      rejectPendingRequests(new Error("Search worker crashed"));
+      rejectPendingRequests(new Error('Search worker crashed'));
     });
     workerInstance = worker;
     return worker;
@@ -100,7 +102,7 @@ export function warmSearchWorker(): void {
     return;
   }
   warmupPosted = true;
-  const message: SearchWorkerRequest = { type: "warmup" };
+  const message: SearchWorkerRequest = { type: 'warmup' };
   worker.postMessage(message);
 }
 
@@ -117,7 +119,7 @@ export async function rankSearchQuery(query: string): Promise<RankedSearchResult
 
   const requestId = nextRequestId++;
   const requestMessage: SearchWorkerRequest = {
-    type: "search",
+    type: 'search',
     requestId,
     query: normalized,
   };

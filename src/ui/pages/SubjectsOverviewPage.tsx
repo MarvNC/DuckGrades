@@ -1,29 +1,37 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import fuzzysort from "fuzzysort";
-import { getSubjectsOverviewShard, type SubjectOverview, type SubjectsOverviewShard } from "../../lib/dataClient";
-import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
-import { EntityAggregateCard } from "../components/EntityAggregateCard";
-import { usePageTitle } from "../usePageTitle";
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import fuzzysort from 'fuzzysort';
+import {
+  getSubjectsOverviewShard,
+  type SubjectOverview,
+  type SubjectsOverviewShard,
+} from '../../lib/dataClient';
+import { AggregateSummaryCard } from '../components/AggregateSummaryCard';
+import { EntityAggregateCard } from '../components/EntityAggregateCard';
+import { usePageTitle } from '../usePageTitle';
 
-type SubjectSortKey = "code" | "students" | "courses" | "mean";
+type SubjectSortKey = 'code' | 'students' | 'courses' | 'mean';
 
 const SORT_OPTIONS: Array<{ key: SubjectSortKey; label: string }> = [
-  { key: "code", label: "Code" },
-  { key: "students", label: "Students" },
-  { key: "courses", label: "Courses" },
-  { key: "mean", label: "Mean" },
+  { key: 'code', label: 'Code' },
+  { key: 'students', label: 'Students' },
+  { key: 'courses', label: 'Courses' },
+  { key: 'mean', label: 'Mean' },
 ];
 
-function sortSubjects(subjects: SubjectOverview[], sortKey: SubjectSortKey, descending: boolean): SubjectOverview[] {
+function sortSubjects(
+  subjects: SubjectOverview[],
+  sortKey: SubjectSortKey,
+  descending: boolean
+): SubjectOverview[] {
   const direction = descending ? -1 : 1;
 
   return [...subjects].sort((a, b) => {
-    if (sortKey === "code") {
+    if (sortKey === 'code') {
       return direction * a.code.localeCompare(b.code);
     }
 
-    if (sortKey === "students") {
+    if (sortKey === 'students') {
       const delta = a.aggregate.totalNonWReported - b.aggregate.totalNonWReported;
       if (delta !== 0) {
         return direction * delta;
@@ -31,7 +39,7 @@ function sortSubjects(subjects: SubjectOverview[], sortKey: SubjectSortKey, desc
       return a.code.localeCompare(b.code);
     }
 
-    if (sortKey === "courses") {
+    if (sortKey === 'courses') {
       const delta = a.courseCount - b.courseCount;
       if (delta !== 0) {
         return direction * delta;
@@ -51,28 +59,28 @@ function sortSubjects(subjects: SubjectOverview[], sortKey: SubjectSortKey, desc
 
 export function SubjectsOverviewPage() {
   const [overview, setOverview] = useState<SubjectsOverviewShard | null>(null);
-  const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
-  const [subjectQuery, setSubjectQuery] = useState("");
-  const [sortKey, setSortKey] = useState<SubjectSortKey>("students");
+  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [subjectQuery, setSubjectQuery] = useState('');
+  const [sortKey, setSortKey] = useState<SubjectSortKey>('students');
   const [sortDescending, setSortDescending] = useState(true);
 
-  usePageTitle("All UO Subjects Grade Distributions and Statistics");
+  usePageTitle('All UO Subjects Grade Distributions and Statistics');
 
   useEffect(() => {
-    setLoadState("loading");
+    setLoadState('loading');
     void getSubjectsOverviewShard()
       .then((value) => {
         setOverview(value);
-        setLoadState("ready");
+        setLoadState('ready');
       })
       .catch(() => {
         setOverview(null);
-        setLoadState("error");
+        setLoadState('error');
       });
   }, []);
 
   useEffect(() => {
-    if (sortKey === "code") {
+    if (sortKey === 'code') {
       setSortDescending(false);
       return;
     }
@@ -90,8 +98,8 @@ export function SubjectsOverviewPage() {
         keys: [
           (subject) => subject.code,
           (subject) => subject.title,
-          (subject) => subject.code.toLowerCase().replace(/[^a-z0-9]+/g, ""),
-          (subject) => subject.title.toLowerCase().replace(/[^a-z0-9]+/g, ""),
+          (subject) => subject.code.toLowerCase().replace(/[^a-z0-9]+/g, ''),
+          (subject) => subject.title.toLowerCase().replace(/[^a-z0-9]+/g, ''),
         ],
         threshold: query.length <= 4 ? 0.3 : 0.2,
         limit: subjects.length,
@@ -108,11 +116,22 @@ export function SubjectsOverviewPage() {
   return (
     <section className="space-y-4 rounded-3xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-5 shadow-sm backdrop-blur-sm sm:p-7">
       <div className="space-y-2">
-        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">Subject overview</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">
+          Subject overview
+        </h1>
         {overview ? (
           <div className="flex flex-wrap gap-1.5">
-            {[`${overview.totals.subjectCount} subjects`, `${overview.totals.courseCount.toLocaleString()} courses`, `${overview.totals.sectionCount.toLocaleString()} sections`, `${overview.totals.professorCount.toLocaleString()} professors`, `${totalStudents.toLocaleString()} students`].map((chip) => (
-              <span key={chip} className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]">
+            {[
+              `${overview.totals.subjectCount} subjects`,
+              `${overview.totals.courseCount.toLocaleString()} courses`,
+              `${overview.totals.sectionCount.toLocaleString()} sections`,
+              `${overview.totals.professorCount.toLocaleString()} professors`,
+              `${totalStudents.toLocaleString()} students`,
+            ].map((chip) => (
+              <span
+                key={chip}
+                className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]"
+              >
                 {chip}
               </span>
             ))}
@@ -120,20 +139,36 @@ export function SubjectsOverviewPage() {
         ) : null}
 
         <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between lg:gap-5">
-          <p className="min-w-0 text-sm text-[var(--duck-muted)] lg:max-w-4xl">Browse all subjects and compare grade distributions and summary statistics across the university.</p>
+          <p className="min-w-0 text-sm text-[var(--duck-muted)] lg:max-w-4xl">
+            Browse all subjects and compare grade distributions and summary statistics across the
+            university.
+          </p>
           <div className="lg:self-stretch lg:border-l lg:border-[var(--duck-border)] lg:pl-4">
-            <AggregateSummaryCard aggregate={overview?.aggregate} showDistributionStudentCount={false} embedded />
+            <AggregateSummaryCard
+              aggregate={overview?.aggregate}
+              showDistributionStudentCount={false}
+              embedded
+            />
           </div>
         </div>
       </div>
 
-      {loadState === "loading" ? <p className="text-sm text-[var(--duck-muted)]">Loading subject overview...</p> : null}
-      {loadState === "error" ? <p className="text-sm text-[var(--duck-danger-text)]">Unable to load subject overview data right now.</p> : null}
+      {loadState === 'loading' ? (
+        <p className="text-sm text-[var(--duck-muted)]">Loading subject overview...</p>
+      ) : null}
+      {loadState === 'error' ? (
+        <p className="text-sm text-[var(--duck-danger-text)]">
+          Unable to load subject overview data right now.
+        </p>
+      ) : null}
 
-      {loadState === "ready" && overview ? (
+      {loadState === 'ready' && overview ? (
         <div className="z-20 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm backdrop-blur">
           <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--duck-muted)]" htmlFor="subjects-overview-search">
+            <label
+              className="text-xs font-semibold tracking-[0.1em] text-[var(--duck-muted)] uppercase"
+              htmlFor="subjects-overview-search"
+            >
               Search subjects
             </label>
             <input
@@ -142,17 +177,20 @@ export function SubjectsOverviewPage() {
               value={subjectQuery}
               onChange={(event) => setSubjectQuery(event.target.value)}
               placeholder="Type a subject code or title"
-              className="w-full rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-3 py-2 text-sm font-medium text-[var(--duck-fg)] shadow-sm outline-none transition focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20 lg:flex-1"
+              className="w-full rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-3 py-2 text-sm font-medium text-[var(--duck-fg)] shadow-sm transition outline-none focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20 lg:flex-1"
             />
             <div className="flex flex-wrap items-center gap-2">
-              <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--duck-muted)]" htmlFor="subjects-overview-sort">
+              <label
+                className="text-xs font-semibold tracking-[0.1em] text-[var(--duck-muted)] uppercase"
+                htmlFor="subjects-overview-sort"
+              >
                 Sort
               </label>
               <select
                 id="subjects-overview-sort"
                 value={sortKey}
                 onChange={(event) => setSortKey(event.target.value as SubjectSortKey)}
-                className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted-strong)] outline-none transition focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
+                className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted-strong)] transition outline-none focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
               >
                 {SORT_OPTIONS.map((option) => (
                   <option key={option.key} value={option.key}>
@@ -163,12 +201,12 @@ export function SubjectsOverviewPage() {
               <button
                 type="button"
                 onClick={() => setSortDescending((value) => !value)}
-                disabled={sortKey === "code"}
+                disabled={sortKey === 'code'}
                 className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted-strong)] transition hover:bg-[var(--duck-surface-soft)] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {sortDescending ? "Desc" : "Asc"}
+                {sortDescending ? 'Desc' : 'Asc'}
               </button>
-              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--duck-muted)]">
+              <p className="text-xs font-semibold tracking-[0.1em] text-[var(--duck-muted)] uppercase">
                 {visibleSubjects.length} of {overview.subjects.length}
               </p>
             </div>
@@ -176,12 +214,18 @@ export function SubjectsOverviewPage() {
         </div>
       ) : null}
 
-      {loadState === "ready" && overview && visibleSubjects.length === 0 ? <p className="text-sm text-[var(--duck-muted)]">No subjects match your search.</p> : null}
+      {loadState === 'ready' && overview && visibleSubjects.length === 0 ? (
+        <p className="text-sm text-[var(--duck-muted)]">No subjects match your search.</p>
+      ) : null}
 
-      {loadState === "ready" ? (
+      {loadState === 'ready' ? (
         <div className="space-y-2.5">
           {visibleSubjects.map((subject) => (
-            <Link key={subject.code} to={`/subject/${subject.code}`} className="block transition hover:-translate-y-0.5">
+            <Link
+              key={subject.code}
+              to={`/subject/${subject.code}`}
+              className="block transition hover:-translate-y-0.5"
+            >
               <EntityAggregateCard
                 title={subject.code}
                 subtitle={subject.title}

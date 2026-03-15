@@ -1,13 +1,21 @@
-import { Github } from "lucide-react";
+import { Github } from 'lucide-react';
 
 export function SiteFooter() {
   return (
-    <footer className="relative z-10 mx-auto w-full max-w-6xl px-5 pb-6 pt-8 sm:px-8">
+    <footer className="relative z-10 mx-auto w-full max-w-6xl px-5 pt-8 pb-6 sm:px-8">
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center justify-center gap-4 border-t border-[var(--duck-border)] pt-8 text-center sm:flex-row sm:gap-5 sm:text-left">
         <div className="space-y-1">
-          <p className="text-[11px] text-[var(--duck-muted)]">Data obtained via FOIA request. Some data is not available due to anonymization by the University.</p>
-          <p className="text-[11px] text-[var(--duck-muted)]">DuckGrades is an independent project built to give students insights into course grade distributions and statistics.</p>
-          <p className="text-[11px] text-[var(--duck-muted)]">DuckGrades is not affiliated with the University of Oregon.</p>
+          <p className="text-[11px] text-[var(--duck-muted)]">
+            Data obtained via FOIA request. Some data is not available due to anonymization by the
+            University.
+          </p>
+          <p className="text-[11px] text-[var(--duck-muted)]">
+            DuckGrades is an independent project built to give students insights into course grade
+            distributions and statistics.
+          </p>
+          <p className="text-[11px] text-[var(--duck-muted)]">
+            DuckGrades is not affiliated with the University of Oregon.
+          </p>
         </div>
         <a
           href="https://github.com/MarvNC/DuckGrades"

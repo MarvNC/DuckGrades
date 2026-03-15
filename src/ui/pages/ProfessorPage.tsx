@@ -1,30 +1,34 @@
-import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
-import { getProfessorShard, isNotFoundDataError, type ProfessorShard } from "../../lib/dataClient";
-import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
-import { EntityAggregateCard } from "../components/EntityAggregateCard";
-import { SectionDrilldown } from "../components/SectionDrilldown";
-import { NotFoundPage } from "./NotFoundPage";
-import { usePageTitle } from "../usePageTitle";
+import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { getProfessorShard, isNotFoundDataError, type ProfessorShard } from '../../lib/dataClient';
+import { AggregateSummaryCard } from '../components/AggregateSummaryCard';
+import { EntityAggregateCard } from '../components/EntityAggregateCard';
+import { SectionDrilldown } from '../components/SectionDrilldown';
+import { NotFoundPage } from './NotFoundPage';
+import { usePageTitle } from '../usePageTitle';
 
-type ProfessorCourseSortKey = "code" | "students" | "sections" | "mean";
+type ProfessorCourseSortKey = 'code' | 'students' | 'sections' | 'mean';
 
 const SORT_OPTIONS: Array<{ key: ProfessorCourseSortKey; label: string }> = [
-  { key: "code", label: "Code" },
-  { key: "students", label: "Students" },
-  { key: "sections", label: "Sections" },
-  { key: "mean", label: "Mean" },
+  { key: 'code', label: 'Code' },
+  { key: 'students', label: 'Students' },
+  { key: 'sections', label: 'Sections' },
+  { key: 'mean', label: 'Mean' },
 ];
 
-function sortCourses(courses: ProfessorShard["courses"], sortKey: ProfessorCourseSortKey, descending: boolean): ProfessorShard["courses"] {
+function sortCourses(
+  courses: ProfessorShard['courses'],
+  sortKey: ProfessorCourseSortKey,
+  descending: boolean
+): ProfessorShard['courses'] {
   const direction = descending ? -1 : 1;
 
   return [...courses].sort((a, b) => {
-    if (sortKey === "code") {
+    if (sortKey === 'code') {
       return direction * a.courseCode.localeCompare(b.courseCode);
     }
 
-    if (sortKey === "students") {
+    if (sortKey === 'students') {
       const delta = a.aggregate.totalNonWReported - b.aggregate.totalNonWReported;
       if (delta !== 0) {
         return direction * delta;
@@ -32,7 +36,7 @@ function sortCourses(courses: ProfessorShard["courses"], sortKey: ProfessorCours
       return a.courseCode.localeCompare(b.courseCode);
     }
 
-    if (sortKey === "sections") {
+    if (sortKey === 'sections') {
       const delta = a.sectionCount - b.sectionCount;
       if (delta !== 0) {
         return direction * delta;
@@ -53,8 +57,10 @@ function sortCourses(courses: ProfessorShard["courses"], sortKey: ProfessorCours
 export function ProfessorPage() {
   const { id } = useParams();
   const [professor, setProfessor] = useState<ProfessorShard | null>(null);
-  const [loadState, setLoadState] = useState<"loading" | "ready" | "error" | "not-found">("loading");
-  const [sortKey, setSortKey] = useState<ProfessorCourseSortKey>("code");
+  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error' | 'not-found'>(
+    'loading'
+  );
+  const [sortKey, setSortKey] = useState<ProfessorCourseSortKey>('code');
   const [sortDescending, setSortDescending] = useState(false);
 
   const professorDisplayName = professor?.name ?? `Professor ${id}`;
@@ -66,20 +72,20 @@ export function ProfessorPage() {
     if (!id) {
       return;
     }
-    setLoadState("loading");
+    setLoadState('loading');
     void getProfessorShard(id)
       .then((value) => {
         setProfessor(value);
-        setLoadState("ready");
+        setLoadState('ready');
       })
       .catch((error: unknown) => {
         setProfessor(null);
-        setLoadState(isNotFoundDataError(error) ? "not-found" : "error");
+        setLoadState(isNotFoundDataError(error) ? 'not-found' : 'error');
       });
   }, [id]);
 
   useEffect(() => {
-    if (sortKey === "code") {
+    if (sortKey === 'code') {
       setSortDescending(false);
       return;
     }
@@ -100,18 +106,27 @@ export function ProfessorPage() {
 
   const totalStudents = professor?.aggregate.totalNonWReported ?? 0;
 
-  if (loadState === "not-found") {
+  if (loadState === 'not-found') {
     return <NotFoundPage title={`${professorDisplayName} was not found`} />;
   }
 
   return (
     <section className="space-y-4 rounded-3xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-5 shadow-sm backdrop-blur-sm sm:p-7">
       <div className="space-y-2">
-        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">{professorDisplayName}</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">
+          {professorDisplayName}
+        </h1>
         {professor ? (
           <div className="flex flex-wrap gap-1.5">
-            {[`${courses.length} courses`, `${sectionCount} sections`, `${totalStudents.toLocaleString()} students`].map((chip) => (
-              <span key={chip} className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]">
+            {[
+              `${courses.length} courses`,
+              `${sectionCount} sections`,
+              `${totalStudents.toLocaleString()} students`,
+            ].map((chip) => (
+              <span
+                key={chip}
+                className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]"
+              >
                 {chip}
               </span>
             ))}
@@ -119,29 +134,50 @@ export function ProfessorPage() {
         ) : null}
 
         <div className="flex justify-start lg:justify-end">
-          <AggregateSummaryCard aggregate={professor?.aggregate} showDistributionStudentCount={false} embedded />
+          <AggregateSummaryCard
+            aggregate={professor?.aggregate}
+            showDistributionStudentCount={false}
+            embedded
+          />
         </div>
       </div>
-      {loadState === "loading" ? <p className="text-sm text-[var(--duck-muted)]">Loading professor shard...</p> : null}
-      {loadState === "error" ? <p className="text-sm text-[var(--duck-danger-text)]">Unable to load this professor shard right now.</p> : null}
-      {loadState === "ready" && courses.length === 0 ? <p className="text-sm text-[var(--duck-muted)]">No visible course data for this professor.</p> : null}
-      {loadState === "ready" && professor && professor.aggregate.coverage !== null && professor.aggregate.coverage < 0.99 ? (
+      {loadState === 'loading' ? (
+        <p className="text-sm text-[var(--duck-muted)]">Loading professor shard...</p>
+      ) : null}
+      {loadState === 'error' ? (
+        <p className="text-sm text-[var(--duck-danger-text)]">
+          Unable to load this professor shard right now.
+        </p>
+      ) : null}
+      {loadState === 'ready' && courses.length === 0 ? (
         <p className="text-sm text-[var(--duck-muted)]">
-          Visible grade coverage is {(professor.aggregate.coverage * 100).toFixed(1)}%; source redaction may hide some section-level buckets.
+          No visible course data for this professor.
+        </p>
+      ) : null}
+      {loadState === 'ready' &&
+      professor &&
+      professor.aggregate.coverage !== null &&
+      professor.aggregate.coverage < 0.99 ? (
+        <p className="text-sm text-[var(--duck-muted)]">
+          Visible grade coverage is {(professor.aggregate.coverage * 100).toFixed(1)}%; source
+          redaction may hide some section-level buckets.
         </p>
       ) : null}
 
-      {loadState === "ready" && courses.length > 0 ? (
+      {loadState === 'ready' && courses.length > 0 ? (
         <div className="z-20 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm backdrop-blur">
           <div className="flex flex-wrap items-center gap-2">
-            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--duck-muted)]" htmlFor="professor-course-sort">
+            <label
+              className="text-xs font-semibold tracking-[0.1em] text-[var(--duck-muted)] uppercase"
+              htmlFor="professor-course-sort"
+            >
               Sort
             </label>
             <select
               id="professor-course-sort"
               value={sortKey}
               onChange={(event) => setSortKey(event.target.value as ProfessorCourseSortKey)}
-              className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted-strong)] outline-none transition focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
+              className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted-strong)] transition outline-none focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
             >
               {SORT_OPTIONS.map((option) => (
                 <option key={option.key} value={option.key}>
@@ -152,12 +188,12 @@ export function ProfessorPage() {
             <button
               type="button"
               onClick={() => setSortDescending((value) => !value)}
-              disabled={sortKey === "code"}
+              disabled={sortKey === 'code'}
               className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted-strong)] transition hover:bg-[var(--duck-surface-soft)] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {sortDescending ? "Desc" : "Asc"}
+              {sortDescending ? 'Desc' : 'Asc'}
             </button>
-            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--duck-muted)]">
+            <p className="text-xs font-semibold tracking-[0.1em] text-[var(--duck-muted)] uppercase">
               {visibleCourses.length} of {courses.length}
             </p>
           </div>
@@ -172,7 +208,10 @@ export function ProfessorPage() {
             titleHref={`/course/${course.courseCode}`}
             subtitle={course.title}
             aggregate={course.aggregate}
-            inlineMetaChips={[`${course.sectionCount} sections`, `${course.aggregate.totalNonWReported.toLocaleString()} students`]}
+            inlineMetaChips={[
+              `${course.sectionCount} sections`,
+              `${course.aggregate.totalNonWReported.toLocaleString()} students`,
+            ]}
             distributionSize="sm"
             showStudentCountInDistribution={false}
           >

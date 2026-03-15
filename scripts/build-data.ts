@@ -1,7 +1,7 @@
-import { createHash } from "node:crypto";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { parse } from "csv-parse/sync";
+import { createHash } from 'node:crypto';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { parse } from 'csv-parse/sync';
 
 type CsvRow = {
   TERM: string;
@@ -31,7 +31,7 @@ type CsvRow = {
   TOT_NON_W: string;
 };
 
-type GradeCode = (typeof NUMERICAL_ORDER)[number] | (typeof NON_NUMERICAL_ORDER)[number] | "W";
+type GradeCode = (typeof NUMERICAL_ORDER)[number] | (typeof NON_NUMERICAL_ORDER)[number] | 'W';
 
 type SectionRecord = {
   term: string;
@@ -50,7 +50,7 @@ type SectionRecord = {
   totalNonWReported: number;
 };
 
-type TermKey = "fall" | "winter" | "spring" | "summer";
+type TermKey = 'fall' | 'winter' | 'spring' | 'summer';
 
 type Aggregate = {
   totalNonWReported: number;
@@ -136,13 +136,13 @@ type ProgramMetadataSnapshot = {
   programs: Array<{
     name: string;
     category:
-      | "ug-major"
-      | "ug-minor"
-      | "ug-certificate"
-      | "gr-degree"
-      | "gr-certificate"
-      | "gr-specialization"
-      | "gr-microcredential";
+      | 'ug-major'
+      | 'ug-minor'
+      | 'ug-certificate'
+      | 'gr-degree'
+      | 'gr-certificate'
+      | 'gr-specialization'
+      | 'gr-microcredential';
     sourcePath: string;
     sectionId: string;
     path: string;
@@ -171,13 +171,27 @@ type SubjectCodeMappingsLookup = {
   descriptionProgramNames: Map<string, string[]>;
 };
 
-const INPUT_CSV = "data/pub_rec_master_w2016-f2025.csv";
-const CATALOG_METADATA_JSON = "data/uo-catalog-course-metadata.json";
-const PROGRAM_METADATA_JSON = "data/uo-catalog-program-metadata.json";
-const SUBJECT_CODE_MAPPINGS_JSON = "data/subject-code-mappings.json";
-const OUTPUT_ROOT = "public/data";
-const NUMERICAL_ORDER = ["F", "DM", "D", "DP", "CM", "C", "CP", "BM", "B", "BP", "AM", "A", "AP"] as const;
-const NON_NUMERICAL_ORDER = ["P", "N", "OTHER"] as const;
+const INPUT_CSV = 'data/pub_rec_master_w2016-f2025.csv';
+const CATALOG_METADATA_JSON = 'data/uo-catalog-course-metadata.json';
+const PROGRAM_METADATA_JSON = 'data/uo-catalog-program-metadata.json';
+const SUBJECT_CODE_MAPPINGS_JSON = 'data/subject-code-mappings.json';
+const OUTPUT_ROOT = 'public/data';
+const NUMERICAL_ORDER = [
+  'F',
+  'DM',
+  'D',
+  'DP',
+  'CM',
+  'C',
+  'CP',
+  'BM',
+  'B',
+  'BP',
+  'AM',
+  'A',
+  'AP',
+] as const;
+const NON_NUMERICAL_ORDER = ['P', 'N', 'OTHER'] as const;
 const AGGREGATE_COMPACT_LENGTH = 7 + NUMERICAL_ORDER.length + NON_NUMERICAL_ORDER.length;
 const TEXT_ENCODER = new TextEncoder();
 const CREATED_DIRECTORIES = new Set<string>();
@@ -198,12 +212,12 @@ const GRADE_POINTS: Record<(typeof NUMERICAL_ORDER)[number], number> = {
 };
 
 function canonicalInstructor(value: string): string {
-  const cleaned = value.trim().replace(/\s+/g, " ");
+  const cleaned = value.trim().replace(/\s+/g, ' ');
   if (!cleaned) {
-    return "unknown";
+    return 'unknown';
   }
-  if (cleaned.toLowerCase() === "unknown") {
-    return "unknown";
+  if (cleaned.toLowerCase() === 'unknown') {
+    return 'unknown';
   }
   return cleaned;
 }
@@ -229,7 +243,7 @@ function pushGrouped<K, V>(map: Map<K, V[]>, key: K, value: V): void {
 }
 
 function parseCount(raw: string): number | null {
-  if (raw === "*") {
+  if (raw === '*') {
     return null;
   }
   const value = Number.parseInt(raw, 10);
@@ -246,16 +260,16 @@ function getYearBucket(courseNumber: string): 1 | 2 | 3 | 4 | 5 {
 
 function getTermKey(termDesc: string): TermKey {
   const normalized = termDesc.trim().toLowerCase();
-  if (normalized.startsWith("fall")) {
-    return "fall";
+  if (normalized.startsWith('fall')) {
+    return 'fall';
   }
-  if (normalized.startsWith("winter")) {
-    return "winter";
+  if (normalized.startsWith('winter')) {
+    return 'winter';
   }
-  if (normalized.startsWith("spring")) {
-    return "spring";
+  if (normalized.startsWith('spring')) {
+    return 'spring';
   }
-  return "summer";
+  return 'summer';
 }
 
 function buildAggregate(rows: SectionRecord[]): Aggregate {
@@ -263,8 +277,12 @@ function buildAggregate(rows: SectionRecord[]): Aggregate {
   let totalVisibleNonW = 0;
   let numericalTotal = 0;
   let numericalWeight = 0;
-  const numericalCounts = Object.fromEntries(NUMERICAL_ORDER.map((grade) => [grade, 0])) as Aggregate["numericalCounts"];
-  const nonNumericalCounts = Object.fromEntries(NON_NUMERICAL_ORDER.map((grade) => [grade, 0])) as Aggregate["nonNumericalCounts"];
+  const numericalCounts = Object.fromEntries(
+    NUMERICAL_ORDER.map((grade) => [grade, 0])
+  ) as Aggregate['numericalCounts'];
+  const nonNumericalCounts = Object.fromEntries(
+    NON_NUMERICAL_ORDER.map((grade) => [grade, 0])
+  ) as Aggregate['nonNumericalCounts'];
   let withdrawals = 0;
 
   for (const row of rows) {
@@ -294,7 +312,8 @@ function buildAggregate(rows: SectionRecord[]): Aggregate {
   }
 
   const mean = numericalTotal > 0 ? Number((numericalWeight / numericalTotal).toFixed(3)) : null;
-  const coverage = totalNonWReported > 0 ? Number((totalVisibleNonW / totalNonWReported).toFixed(4)) : null;
+  const coverage =
+    totalNonWReported > 0 ? Number((totalVisibleNonW / totalNonWReported).toFixed(4)) : null;
 
   let mode: string | null = null;
   let modeCount = -1;
@@ -342,9 +361,9 @@ async function writeJson(path: string, payload: unknown): Promise<FileMeta> {
     await mkdir(directory, { recursive: true });
     CREATED_DIRECTORIES.add(directory);
   }
-  await writeFile(path, text, "utf8");
-  const bytes = Buffer.byteLength(text, "utf8");
-  const sha256 = createHash("sha256").update(text).digest("hex");
+  await writeFile(path, text, 'utf8');
+  const bytes = Buffer.byteLength(text, 'utf8');
+  const sha256 = createHash('sha256').update(text).digest('hex');
   return { bytes, sha256 };
 }
 
@@ -355,17 +374,17 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 async function verifyFileHashes(fileIndex: Record<string, FileMeta>) {
-  if (process.env.BUILD_DATA_VERIFY_HASHES !== "1") {
-    console.log("Skipped file hash verification (set BUILD_DATA_VERIFY_HASHES=1 to enable)");
+  if (process.env.BUILD_DATA_VERIFY_HASHES !== '1') {
+    console.log('Skipped file hash verification (set BUILD_DATA_VERIFY_HASHES=1 to enable)');
     return;
   }
 
   const entries = Object.entries(fileIndex);
   for (const [relativePath, meta] of entries) {
     const absolutePath = join(OUTPUT_ROOT, relativePath);
-    const text = await readFile(absolutePath, "utf8");
-    const bytes = Buffer.byteLength(text, "utf8");
-    const sha256 = createHash("sha256").update(text).digest("hex");
+    const text = await readFile(absolutePath, 'utf8');
+    const bytes = Buffer.byteLength(text, 'utf8');
+    const sha256 = createHash('sha256').update(text).digest('hex');
     assert(bytes === meta.bytes, `Byte-size mismatch for ${relativePath}`);
     assert(sha256 === meta.sha256, `SHA mismatch for ${relativePath}`);
   }
@@ -381,23 +400,35 @@ function verifyCrossReferences(params: {
 }) {
   const { version, searchIndex, bySubject, byCourse, byProfessor, fileIndex } = params;
 
-  assert(searchIndex.subjects.length === bySubject.size, "Subject count mismatch in search index");
-  assert(searchIndex.courses.length === byCourse.size, "Course count mismatch in search index");
-  assert(searchIndex.professors.length === byProfessor.size, "Professor count mismatch in search index");
+  assert(searchIndex.subjects.length === bySubject.size, 'Subject count mismatch in search index');
+  assert(searchIndex.courses.length === byCourse.size, 'Course count mismatch in search index');
+  assert(
+    searchIndex.professors.length === byProfessor.size,
+    'Professor count mismatch in search index'
+  );
 
   for (const subject of searchIndex.subjects) {
     assert(bySubject.has(subject.code), `Missing subject shard source for ${subject.code}`);
-    assert(fileIndex[`${version}/subjects/${subject.code}.json`], `Missing subject shard file for ${subject.code}`);
+    assert(
+      fileIndex[`${version}/subjects/${subject.code}.json`],
+      `Missing subject shard file for ${subject.code}`
+    );
   }
   for (const course of searchIndex.courses) {
     assert(byCourse.has(course.code), `Missing course shard source for ${course.code}`);
-    assert(fileIndex[`${version}/courses/${course.code}.json`], `Missing course shard file for ${course.code}`);
+    assert(
+      fileIndex[`${version}/courses/${course.code}.json`],
+      `Missing course shard file for ${course.code}`
+    );
   }
   for (const professor of searchIndex.professors) {
     assert(byProfessor.has(professor.id), `Missing professor shard source for ${professor.id}`);
-    assert(fileIndex[`${version}/professors/${professor.id}.json`], `Missing professor shard file for ${professor.id}`);
+    assert(
+      fileIndex[`${version}/professors/${professor.id}.json`],
+      `Missing professor shard file for ${professor.id}`
+    );
   }
-  assert(fileIndex[`${version}/subjects-overview.json`], "Missing subjects overview file");
+  assert(fileIndex[`${version}/subjects-overview.json`], 'Missing subjects overview file');
 }
 
 function compactSearchIndex(index: SearchIndexPayload): CompactSearchIndexPayload {
@@ -423,7 +454,12 @@ function compactSearchIndex(index: SearchIndexPayload): CompactSearchIndexPayloa
     subjects.push(encode(subject.code), encode(subject.title), subject.popularity);
   }
   for (const course of index.courses) {
-    courses.push(encode(course.code), encode(course.title), encode(course.subject), course.popularity);
+    courses.push(
+      encode(course.code),
+      encode(course.title),
+      encode(course.subject),
+      course.popularity
+    );
   }
   for (const professor of index.professors) {
     professors.push(encode(professor.id), encode(professor.name), professor.popularity);
@@ -439,7 +475,9 @@ function compactSearchIndex(index: SearchIndexPayload): CompactSearchIndexPayloa
 }
 
 function compactAggregate(aggregate: Aggregate): Array<number | null> {
-  const modeIndex = aggregate.mode ? NUMERICAL_ORDER.indexOf(aggregate.mode as (typeof NUMERICAL_ORDER)[number]) : -1;
+  const modeIndex = aggregate.mode
+    ? NUMERICAL_ORDER.indexOf(aggregate.mode as (typeof NUMERICAL_ORDER)[number])
+    : -1;
   return [
     aggregate.totalNonWReported,
     aggregate.totalVisibleNonW,
@@ -455,7 +493,7 @@ function compactAggregate(aggregate: Aggregate): Array<number | null> {
 
 async function loadCatalogLookup(): Promise<CatalogLookup> {
   try {
-    const jsonText = await readFile(CATALOG_METADATA_JSON, "utf8");
+    const jsonText = await readFile(CATALOG_METADATA_JSON, 'utf8');
     const snapshot = JSON.parse(jsonText) as CatalogMetadataSnapshot;
     const subjectsByCode = new Map<string, CatalogSubjectMetadata>();
     for (const subject of snapshot.subjects) {
@@ -484,11 +522,15 @@ async function loadCatalogLookup(): Promise<CatalogLookup> {
       });
     }
 
-    console.log(`Loaded catalog metadata (${subjectsByCode.size} subjects, ${coursesByCode.size} courses)`);
+    console.log(
+      `Loaded catalog metadata (${subjectsByCode.size} subjects, ${coursesByCode.size} courses)`
+    );
     return { subjectsByCode, coursesByCode };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.warn(`Catalog metadata unavailable at ${CATALOG_METADATA_JSON} (${message}); falling back to CSV titles only.`);
+    console.warn(
+      `Catalog metadata unavailable at ${CATALOG_METADATA_JSON} (${message}); falling back to CSV titles only.`
+    );
     return {
       subjectsByCode: new Map<string, CatalogSubjectMetadata>(),
       coursesByCode: new Map<string, CatalogCourseMetadata>(),
@@ -499,26 +541,27 @@ async function loadCatalogLookup(): Promise<CatalogLookup> {
 function normalizeLookupKey(value: string): string {
   return value
     .toLowerCase()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, ' ')
     .trim()
-    .replace(/\s+/g, " ");
+    .replace(/\s+/g, ' ');
 }
 
 function buildProgramDescriptionLookup(snapshot: ProgramMetadataSnapshot): Map<string, string> {
   const byName = new Map<string, { description: string; priority: number }>();
-  const categoryPriority: Record<ProgramMetadataSnapshot["programs"][number]["category"], number> = {
-    "ug-major": 4,
-    "gr-degree": 3,
-    "ug-minor": 2,
-    "ug-certificate": 2,
-    "gr-certificate": 2,
-    "gr-specialization": 1,
-    "gr-microcredential": 1,
-  };
+  const categoryPriority: Record<ProgramMetadataSnapshot['programs'][number]['category'], number> =
+    {
+      'ug-major': 4,
+      'gr-degree': 3,
+      'ug-minor': 2,
+      'ug-certificate': 2,
+      'gr-certificate': 2,
+      'gr-specialization': 1,
+      'gr-microcredential': 1,
+    };
 
   for (const program of snapshot.programs) {
-    const description = program.description?.trim() ?? "";
+    const description = program.description?.trim() ?? '';
     if (!description) {
       continue;
     }
@@ -529,7 +572,11 @@ function buildProgramDescriptionLookup(snapshot: ProgramMetadataSnapshot): Map<s
 
     const priority = categoryPriority[program.category] ?? 0;
     const existing = byName.get(key);
-    if (!existing || priority > existing.priority || (priority === existing.priority && description.length > existing.description.length)) {
+    if (
+      !existing ||
+      priority > existing.priority ||
+      (priority === existing.priority && description.length > existing.description.length)
+    ) {
       byName.set(key, { description, priority });
     }
   }
@@ -539,21 +586,23 @@ function buildProgramDescriptionLookup(snapshot: ProgramMetadataSnapshot): Map<s
 
 async function loadProgramDescriptionLookup(): Promise<Map<string, string>> {
   try {
-    const jsonText = await readFile(PROGRAM_METADATA_JSON, "utf8");
+    const jsonText = await readFile(PROGRAM_METADATA_JSON, 'utf8');
     const snapshot = JSON.parse(jsonText) as ProgramMetadataSnapshot;
     const lookup = buildProgramDescriptionLookup(snapshot);
     console.log(`Loaded program metadata descriptions (${lookup.size} unique program names)`);
     return lookup;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.warn(`Program metadata unavailable at ${PROGRAM_METADATA_JSON} (${message}); subject descriptions will be sparse.`);
+    console.warn(
+      `Program metadata unavailable at ${PROGRAM_METADATA_JSON} (${message}); subject descriptions will be sparse.`
+    );
     return new Map<string, string>();
   }
 }
 
 async function loadSubjectCodeMappings(): Promise<SubjectCodeMappingsLookup> {
   try {
-    const jsonText = await readFile(SUBJECT_CODE_MAPPINGS_JSON, "utf8");
+    const jsonText = await readFile(SUBJECT_CODE_MAPPINGS_JSON, 'utf8');
     const snapshot = JSON.parse(jsonText) as SubjectCodeMappingsSnapshot;
 
     const aliases = new Map<string, string>();
@@ -584,12 +633,14 @@ async function loadSubjectCodeMappings(): Promise<SubjectCodeMappingsLookup> {
     }
 
     console.log(
-      `Loaded subject mappings (${aliases.size} aliases, ${titleOverrides.size} title overrides, ${descriptionProgramNames.size} description overrides)`,
+      `Loaded subject mappings (${aliases.size} aliases, ${titleOverrides.size} title overrides, ${descriptionProgramNames.size} description overrides)`
     );
     return { aliases, titleOverrides, descriptionProgramNames };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.warn(`Subject mappings unavailable at ${SUBJECT_CODE_MAPPINGS_JSON} (${message}); no code merges will be applied.`);
+    console.warn(
+      `Subject mappings unavailable at ${SUBJECT_CODE_MAPPINGS_JSON} (${message}); no code merges will be applied.`
+    );
     return {
       aliases: new Map<string, string>(),
       titleOverrides: new Map<string, string>(),
@@ -599,13 +650,13 @@ async function loadSubjectCodeMappings(): Promise<SubjectCodeMappingsLookup> {
 }
 
 async function main() {
-  const version = `v${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`;
+  const version = `v${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`;
   const versionRoot = join(OUTPUT_ROOT, version);
   CREATED_DIRECTORIES.clear();
   await rm(versionRoot, { recursive: true, force: true });
   await mkdir(versionRoot, { recursive: true });
 
-  const csvText = await readFile(INPUT_CSV, "utf8");
+  const csvText = await readFile(INPUT_CSV, 'utf8');
   const rawRows = parse(csvText, {
     columns: true,
     skip_empty_lines: true,
@@ -629,8 +680,8 @@ async function main() {
   const sections: SectionRecord[] = rawRows.map((row) => {
     const instructorCanonical = canonicalInstructor(row.INSTRUCTOR);
     const baseId =
-      instructorCanonical === "unknown"
-        ? "unknown"
+      instructorCanonical === 'unknown'
+        ? 'unknown'
         : (instructorBaseIdCache.get(instructorCanonical) ??
           (() => {
             const computed = fnv1a64Base36(instructorCanonical);
@@ -652,7 +703,7 @@ async function main() {
       }
     }
 
-    const counts: SectionRecord["counts"] = {
+    const counts: SectionRecord['counts'] = {
       AP: parseCount(row.AP),
       A: parseCount(row.A),
       AM: parseCount(row.AM),
@@ -690,7 +741,7 @@ async function main() {
       title: row.TITLE.trim(),
       courseCode: `${mappedSubject}-${mappedNumber}`,
       crn: row.CRN,
-      instructor: row.INSTRUCTOR.trim() || "Unknown",
+      instructor: row.INSTRUCTOR.trim() || 'Unknown',
       instructorCanonical,
       professorId,
       counts,
@@ -738,7 +789,8 @@ async function main() {
     return catalog.coursesByCode.get(courseCode.toUpperCase()) ?? null;
   };
   const rawSubjectDescription = (subjectCode: string, subjectTitle: string) => {
-    const overrideNames = subjectMappings.descriptionProgramNames.get(subjectCode.toUpperCase()) ?? [];
+    const overrideNames =
+      subjectMappings.descriptionProgramNames.get(subjectCode.toUpperCase()) ?? [];
     for (const overrideName of overrideNames) {
       const description = programDescriptions.get(normalizeLookupKey(overrideName));
       if (description) {
@@ -748,11 +800,11 @@ async function main() {
 
     const titleCandidates = new Set<string>();
     titleCandidates.add(subjectTitle);
-    if (subjectTitle.includes(":")) {
-      titleCandidates.add(subjectTitle.split(":")[0]?.trim() ?? "");
+    if (subjectTitle.includes(':')) {
+      titleCandidates.add(subjectTitle.split(':')[0]?.trim() ?? '');
     }
-    if (subjectTitle.includes(" and ")) {
-      titleCandidates.add(subjectTitle.replace(/\sand\s/gi, " & "));
+    if (subjectTitle.includes(' and ')) {
+      titleCandidates.add(subjectTitle.replace(/\sand\s/gi, ' & '));
     }
 
     for (const candidate of titleCandidates) {
@@ -764,7 +816,7 @@ async function main() {
     }
 
     if (/^O[A-Z0-9]{2,}$/.test(subjectCode.toUpperCase())) {
-      return "Legacy study-abroad transfer bucket. Course titles often encode host-course subjects and may span multiple departments.";
+      return 'Legacy study-abroad transfer bucket. Course titles often encode host-course subjects and may span multiple departments.';
     }
 
     return null;
@@ -803,7 +855,7 @@ async function main() {
       subjectDescription,
       professorCount,
       aggregate: subjectAggregate,
-      availableTerms: ["fall", "winter", "spring", "summer"] as TermKey[],
+      availableTerms: ['fall', 'winter', 'spring', 'summer'] as TermKey[],
       courses: [...courseRows.entries()]
         .map(([courseCode, courseSections]) => {
           const catalogCourse = getCourseMetadata(courseCode);
@@ -811,11 +863,11 @@ async function main() {
           for (const section of courseSections) {
             termSet.add(getTermKey(section.termDesc));
           }
-          const number = courseSections[0]?.number ?? "";
+          const number = courseSections[0]?.number ?? '';
           return {
             courseCode,
             number,
-            title: catalogCourse?.title ?? courseSections[0]?.title ?? "",
+            title: catalogCourse?.title ?? courseSections[0]?.title ?? '',
             description: catalogCourse?.description ?? null,
             sectionCount: courseSections.length,
             yearBucket: getYearBucket(number),
@@ -848,7 +900,7 @@ async function main() {
       subject.courseCount,
       subject.sectionCount,
       subject.professorCount,
-      ...compactAggregate(subject.aggregate),
+      ...compactAggregate(subject.aggregate)
     );
   }
   const universityAggregate = buildAggregate(sections);
@@ -860,8 +912,14 @@ async function main() {
     o: compactAggregate(universityAggregate),
     s: compactSubjectRows,
   };
-  assert(subjectsOverview.o.length === AGGREGATE_COMPACT_LENGTH, "Unexpected compact aggregate length");
-  fileIndex[`${version}/subjects-overview.json`] = await writeJson(join(OUTPUT_ROOT, `${version}/subjects-overview.json`), subjectsOverview);
+  assert(
+    subjectsOverview.o.length === AGGREGATE_COMPACT_LENGTH,
+    'Unexpected compact aggregate length'
+  );
+  fileIndex[`${version}/subjects-overview.json`] = await writeJson(
+    join(OUTPUT_ROOT, `${version}/subjects-overview.json`),
+    subjectsOverview
+  );
 
   for (const [courseCode, rows] of byCourse) {
     const catalogCourse = getCourseMetadata(courseCode);
@@ -869,20 +927,20 @@ async function main() {
     for (const row of rows) {
       pushGrouped(byInstructor, row.professorId, row);
     }
-    const subjectCode = rows[0]?.subject ?? "";
+    const subjectCode = rows[0]?.subject ?? '';
     const payload = {
       courseCode,
       subject: subjectCode,
       subjectTitle: getSubjectTitle(subjectCode),
       subjectDescription: getSubjectDescription(subjectCode),
-      number: rows[0]?.number ?? "",
-      title: catalogCourse?.title ?? rows[0]?.title ?? "",
+      number: rows[0]?.number ?? '',
+      title: catalogCourse?.title ?? rows[0]?.title ?? '',
       description: catalogCourse?.description ?? null,
       aggregate: courseAggregateCache.get(courseCode) ?? buildAggregate(rows),
       instructors: [...byInstructor.entries()]
         .map(([professorId, instructorRows]) => ({
           professorId,
-          name: instructorRows[0]?.instructor ?? "Unknown",
+          name: instructorRows[0]?.instructor ?? 'Unknown',
           sectionCount: instructorRows.length,
           aggregate: buildAggregate(instructorRows),
           sections: instructorRows.map((section) => ({
@@ -909,14 +967,14 @@ async function main() {
     }
     const payload = {
       professorId,
-      name: rows[0]?.instructor ?? "Unknown",
+      name: rows[0]?.instructor ?? 'Unknown',
       aggregate: buildAggregate(rows),
       courses: [...byCourseRows.entries()]
         .map(([courseCode, courseSections]) => {
           const catalogCourse = getCourseMetadata(courseCode);
           return {
             courseCode,
-            title: catalogCourse?.title ?? courseSections[0]?.title ?? "",
+            title: catalogCourse?.title ?? courseSections[0]?.title ?? '',
             sectionCount: courseSections.length,
             aggregate: buildAggregate(courseSections),
             sections: courseSections.map((section) => ({
@@ -944,15 +1002,15 @@ async function main() {
     courses: [...byCourse.entries()]
       .map(([code, rows]) => ({
         code,
-        title: getCourseMetadata(code)?.title ?? rows[0]?.title ?? "",
-        subject: rows[0]?.subject ?? "",
+        title: getCourseMetadata(code)?.title ?? rows[0]?.title ?? '',
+        subject: rows[0]?.subject ?? '',
         popularity: rows.reduce((sum, row) => sum + row.totalNonWReported, 0),
       }))
       .sort((a, b) => b.popularity - a.popularity),
     professors: [...byProfessor.entries()]
       .map(([id, rows]) => ({
         id,
-        name: rows[0]?.instructor ?? "Unknown",
+        name: rows[0]?.instructor ?? 'Unknown',
         popularity: rows.reduce((sum, row) => sum + row.totalNonWReported, 0),
       }))
       .sort((a, b) => b.popularity - a.popularity),
@@ -977,11 +1035,18 @@ async function main() {
     }
   }
 
-  console.log(`Subject title coverage from catalog: ${catalogSubjectCoverageCount}/${bySubject.size}`);
-  console.log(`Subject description coverage from programs: ${descriptionCoverageCount}/${bySubject.size}`);
+  console.log(
+    `Subject title coverage from catalog: ${catalogSubjectCoverageCount}/${bySubject.size}`
+  );
+  console.log(
+    `Subject description coverage from programs: ${descriptionCoverageCount}/${bySubject.size}`
+  );
 
   const compactSearch = compactSearchIndex(expandedSearchIndex);
-  fileIndex[`${version}/search-index.json`] = await writeJson(join(OUTPUT_ROOT, `${version}/search-index.json`), compactSearch);
+  fileIndex[`${version}/search-index.json`] = await writeJson(
+    join(OUTPUT_ROOT, `${version}/search-index.json`),
+    compactSearch
+  );
 
   const manifest = {
     schemaVersion: 1,
@@ -998,9 +1063,12 @@ async function main() {
       deterministicProfessorIds: true,
     },
   };
-  fileIndex[`${version}/manifest.json`] = await writeJson(join(OUTPUT_ROOT, `${version}/manifest.json`), manifest);
+  fileIndex[`${version}/manifest.json`] = await writeJson(
+    join(OUTPUT_ROOT, `${version}/manifest.json`),
+    manifest
+  );
 
-  await writeJson(join(OUTPUT_ROOT, "current-version.json"), { version });
+  await writeJson(join(OUTPUT_ROOT, 'current-version.json'), { version });
 
   verifyCrossReferences({
     version,

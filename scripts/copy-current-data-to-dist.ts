@@ -1,12 +1,12 @@
-import { cp, mkdir, readFile, rm } from "node:fs/promises";
-import { join } from "node:path";
+import { cp, mkdir, readFile, rm } from 'node:fs/promises';
+import { join } from 'node:path';
 
 type VersionFile = {
   version: string;
 };
 
-const SOURCE_ROOT = "public/data";
-const DIST_ROOT = "dist/data";
+const SOURCE_ROOT = 'public/data';
+const DIST_ROOT = 'dist/data';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
@@ -15,11 +15,14 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 async function main() {
-  const versionFilePath = join(SOURCE_ROOT, "current-version.json");
-  const versionFileText = await readFile(versionFilePath, "utf8");
+  const versionFilePath = join(SOURCE_ROOT, 'current-version.json');
+  const versionFileText = await readFile(versionFilePath, 'utf8');
   const versionFile = JSON.parse(versionFileText) as VersionFile;
 
-  assert(typeof versionFile.version === "string" && versionFile.version.length > 0, "Invalid public/data/current-version.json");
+  assert(
+    typeof versionFile.version === 'string' && versionFile.version.length > 0,
+    'Invalid public/data/current-version.json'
+  );
 
   const version = versionFile.version;
   const sourceVersionDir = join(SOURCE_ROOT, version);
@@ -33,7 +36,7 @@ async function main() {
   });
   await mkdir(DIST_ROOT, { recursive: true });
 
-  await cp(versionFilePath, join(DIST_ROOT, "current-version.json"));
+  await cp(versionFilePath, join(DIST_ROOT, 'current-version.json'));
   await cp(sourceVersionDir, distVersionDir, { recursive: true });
 
   console.log(`Copied ${version} data shards to ${DIST_ROOT}`);

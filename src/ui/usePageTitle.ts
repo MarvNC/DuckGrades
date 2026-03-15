@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
-const SITE_NAME = "DuckGrades";
-const UNIVERSITY_KEYWORD = "University of Oregon";
+const SITE_NAME = 'DuckGrades';
+const UNIVERSITY_KEYWORD = 'University of Oregon';
 
 function withUniversityKeyword(pageTitle: string): string {
   if (/\buniversity of oregon\b/i.test(pageTitle)) {

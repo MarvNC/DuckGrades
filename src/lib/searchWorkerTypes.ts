@@ -1,26 +1,26 @@
-import type { RankedSearchResult } from "./search";
+import type { RankedSearchResult } from './search';
 
 export type SearchWorkerRequest =
   | {
-      type: "warmup";
+      type: 'warmup';
     }
   | {
-      type: "search";
+      type: 'search';
       requestId: number;
       query: string;
     };
 
 export type SearchWorkerResponse =
   | {
-      type: "ready";
+      type: 'ready';
     }
   | {
-      type: "result";
+      type: 'result';
       requestId: number;
       ranked: RankedSearchResult;
     }
   | {
-      type: "error";
+      type: 'error';
       requestId?: number;
       message: string;
     };

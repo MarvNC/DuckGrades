@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Search } from "lucide-react";
-import { Brand } from "./components/Brand";
-import { SiteFooter } from "./components/SiteFooter";
-import { SearchResultsPage } from "./components/SearchResultsPage";
-import { ThemeToggleButton, type ThemePreference } from "./components/ThemeToggleButton";
-import { buildSearchItems, type SearchItem, useRankedSearch } from "./components/searchModel";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Search } from 'lucide-react';
+import { Brand } from './components/Brand';
+import { SiteFooter } from './components/SiteFooter';
+import { SearchResultsPage } from './components/SearchResultsPage';
+import { ThemeToggleButton, type ThemePreference } from './components/ThemeToggleButton';
+import { buildSearchItems, type SearchItem, useRankedSearch } from './components/searchModel';
 
-type ResolvedTheme = "light" | "dark";
+type ResolvedTheme = 'light' | 'dark';
 
-const THEME_CYCLE: ReadonlyArray<ThemePreference> = ["system", "light", "dark"];
+const THEME_CYCLE: ReadonlyArray<ThemePreference> = ['system', 'light', 'dark'];
 
 export type SearchLayoutContext = {
   hasActiveSearch: boolean;
@@ -23,23 +23,23 @@ export type SearchLayoutContext = {
 export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const isHome = location.pathname === "/";
-  const [query, setQuery] = useState("");
+  const isHome = location.pathname === '/';
+  const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const [themePreference, setThemePreference] = useState<ThemePreference>(() => {
-    const stored = window.localStorage.getItem("duckgrades-theme");
-    if (stored === "light" || stored === "dark" || stored === "system") {
+    const stored = window.localStorage.getItem('duckgrades-theme');
+    if (stored === 'light' || stored === 'dark' || stored === 'system') {
       return stored;
     }
 
-    return "system";
+    return 'system';
   });
   const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() => {
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      return "dark";
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
     }
 
-    return "light";
+    return 'light';
   });
   const desktopSearchInputRef = useRef<HTMLInputElement | null>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement | null>(null);
@@ -48,25 +48,28 @@ export function AppLayout() {
   const [headerHeight, setHeaderHeight] = useState(0);
   const ranked = useRankedSearch(query);
   const { grouped, flattened } = useMemo(() => buildSearchItems(ranked), [ranked]);
-  const indexByKey = useMemo(() => new Map(flattened.map((item, index) => [item.key, index])), [flattened]);
+  const indexByKey = useMemo(
+    () => new Map(flattened.map((item, index) => [item.key, index])),
+    [flattened]
+  );
   const hasQuery = query.trim().length > 0;
   const showHeader = !isHome || hasQuery;
-  const resolvedTheme: ResolvedTheme = themePreference === "system" ? systemTheme : themePreference;
+  const resolvedTheme: ResolvedTheme = themePreference === 'system' ? systemTheme : themePreference;
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const onChange = (event: MediaQueryListEvent) => {
-      setSystemTheme(event.matches ? "dark" : "light");
+      setSystemTheme(event.matches ? 'dark' : 'light');
     };
 
-    mediaQuery.addEventListener("change", onChange);
+    mediaQuery.addEventListener('change', onChange);
     return () => {
-      mediaQuery.removeEventListener("change", onChange);
+      mediaQuery.removeEventListener('change', onChange);
     };
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem("duckgrades-theme", themePreference);
+    window.localStorage.setItem('duckgrades-theme', themePreference);
   }, [themePreference]);
 
   useEffect(() => {
@@ -113,7 +116,7 @@ export function AppLayout() {
         return;
       }
 
-      if (event.key === "Backspace") {
+      if (event.key === 'Backspace') {
         event.preventDefault();
         setQuery((current) => current.slice(0, -1));
         window.requestAnimationFrame(() => {
@@ -133,9 +136,9 @@ export function AppLayout() {
       });
     };
 
-    window.addEventListener("keydown", onWindowKeyDown);
+    window.addEventListener('keydown', onWindowKeyDown);
     return () => {
-      window.removeEventListener("keydown", onWindowKeyDown);
+      window.removeEventListener('keydown', onWindowKeyDown);
     };
   }, []);
 
@@ -157,16 +160,16 @@ export function AppLayout() {
     });
 
     observer.observe(header);
-    window.addEventListener("resize", syncHeaderHeight);
+    window.addEventListener('resize', syncHeaderHeight);
 
     return () => {
       observer.disconnect();
-      window.removeEventListener("resize", syncHeaderHeight);
+      window.removeEventListener('resize', syncHeaderHeight);
     };
   }, [showHeader]);
 
   function clearQuery() {
-    setQuery("");
+    setQuery('');
     setActiveIndex(0);
   }
 
@@ -177,19 +180,19 @@ export function AppLayout() {
 
     event.preventDefault();
     clearQuery();
-    navigate("/");
+    navigate('/');
   }
 
   function cycleTheme() {
     setThemePreference((current) => {
       const currentIndex = THEME_CYCLE.indexOf(current);
       const nextIndex = (currentIndex + 1) % THEME_CYCLE.length;
-      return THEME_CYCLE[nextIndex] ?? "system";
+      return THEME_CYCLE[nextIndex] ?? 'system';
     });
   }
 
   function focusInput() {
-    const isNarrowViewport = window.matchMedia("(max-width: 639px)").matches;
+    const isNarrowViewport = window.matchMedia('(max-width: 639px)').matches;
     const target = isNarrowViewport
       ? (mobileSearchInputRef.current ?? desktopSearchInputRef.current)
       : (desktopSearchInputRef.current ?? mobileSearchInputRef.current);
@@ -209,7 +212,7 @@ export function AppLayout() {
   }
 
   function onSearchInputKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
-    if (event.key === "ArrowDown") {
+    if (event.key === 'ArrowDown') {
       event.preventDefault();
       if (flattened.length > 0) {
         const next = (activeIndex + 1) % flattened.length;
@@ -217,7 +220,7 @@ export function AppLayout() {
         focusResult(next);
       }
     }
-    if (event.key === "ArrowUp") {
+    if (event.key === 'ArrowUp') {
       event.preventDefault();
       if (flattened.length > 0) {
         const prev = (activeIndex - 1 + flattened.length) % flattened.length;
@@ -225,19 +228,19 @@ export function AppLayout() {
         focusResult(prev);
       }
     }
-    if (event.key === "Enter") {
+    if (event.key === 'Enter') {
       event.preventDefault();
       const chosen = flattened[activeIndex];
       if (chosen) {
         pickResult(chosen);
       }
     }
-    if (event.key === "Tab" && !event.shiftKey && flattened.length > 0 && hasQuery) {
+    if (event.key === 'Tab' && !event.shiftKey && flattened.length > 0 && hasQuery) {
       event.preventDefault();
       setActiveIndex(0);
       focusResult(0);
     }
-    if (event.key === "Escape") {
+    if (event.key === 'Escape') {
       clearQuery();
     }
   }
@@ -252,7 +255,7 @@ export function AppLayout() {
   };
 
   const shellStyle = {
-    "--duck-header-height": `${headerHeight}px`,
+    '--duck-header-height': `${headerHeight}px`,
   } as CSSProperties;
 
   return (
@@ -262,12 +265,15 @@ export function AppLayout() {
       {showHeader ? (
         <header ref={headerRef} className="sticky top-0 z-30 w-full px-2 pt-3 sm:px-8 sm:pt-4">
           <div
-            className={`mx-auto mb-2 flex w-full max-w-6xl items-center gap-2 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/55 px-3 py-2.5 shadow-[0_6px_18px_-14px_rgba(0,0,0,0.45)] backdrop-blur-lg backdrop-saturate-125 sm:mb-3 sm:gap-4 sm:px-8 sm:py-5 ${isHome ? "home-search-header-enter" : ""}`}
+            className={`mx-auto mb-2 flex w-full max-w-6xl items-center gap-2 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/55 px-3 py-2.5 shadow-[0_6px_18px_-14px_rgba(0,0,0,0.45)] backdrop-blur-lg backdrop-saturate-125 sm:mb-3 sm:gap-4 sm:px-8 sm:py-5 ${isHome ? 'home-search-header-enter' : ''}`}
           >
             <Brand onClick={onHeaderBrandClick} className="shrink-0" hideWordmarkOnTiny />
             <div className="group relative hidden flex-1 sm:block sm:min-w-0">
               <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
-                <Search className="h-4 w-4 text-[var(--duck-muted)] transition-colors group-focus-within:text-[var(--duck-accent-strong)]" aria-hidden="true" />
+                <Search
+                  className="h-4 w-4 text-[var(--duck-muted)] transition-colors group-focus-within:text-[var(--duck-accent-strong)]"
+                  aria-hidden="true"
+                />
               </div>
               <label htmlFor="global-search-desktop" className="sr-only">
                 Search subjects, courses, or professors
@@ -282,7 +288,7 @@ export function AppLayout() {
                 onKeyDown={onSearchInputKeyDown}
                 placeholder="Search by course, professor, or subject..."
                 autoComplete="off"
-                className="w-full rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] py-2.5 pr-4 pl-10 text-sm font-semibold text-[var(--duck-fg)] shadow-sm outline-none transition-all placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
+                className="w-full rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] py-2.5 pr-4 pl-10 text-sm font-semibold text-[var(--duck-fg)] shadow-sm transition-all outline-none placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
               />
             </div>
             <div className="ml-auto flex shrink-0 items-center justify-end gap-2 sm:flex-none">
@@ -301,7 +307,10 @@ export function AppLayout() {
         <div className="fixed inset-x-1 bottom-2 z-40 sm:hidden">
           <div className="group relative mx-auto w-full max-w-6xl">
             <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
-              <Search className="h-4 w-4 text-[var(--duck-muted)] transition-colors group-focus-within:text-[var(--duck-accent-strong)]" aria-hidden="true" />
+              <Search
+                className="h-4 w-4 text-[var(--duck-muted)] transition-colors group-focus-within:text-[var(--duck-accent-strong)]"
+                aria-hidden="true"
+              />
             </div>
             <label htmlFor="global-search-mobile" className="sr-only">
               Search subjects, courses, or professors
@@ -316,12 +325,14 @@ export function AppLayout() {
               onKeyDown={onSearchInputKeyDown}
               placeholder="Search by course, professor, or subject..."
               autoComplete="off"
-              className="w-full rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/95 py-3 pr-4 pl-10 text-sm font-semibold text-[var(--duck-fg)] shadow-sm outline-none backdrop-blur placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
+              className="w-full rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/95 py-3 pr-4 pl-10 text-sm font-semibold text-[var(--duck-fg)] shadow-sm backdrop-blur outline-none placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
             />
           </div>
         </div>
       ) : null}
-      <main className={`relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 sm:px-8 ${showHeader ? "pb-24 sm:pb-16" : ""}`}>
+      <main
+        className={`relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 sm:px-8 ${showHeader ? 'pb-24 sm:pb-16' : ''}`}
+      >
         {isHome || !hasQuery ? <Outlet context={outletContext} /> : null}
         {hasQuery ? (
           <SearchResultsPage

@@ -1,24 +1,24 @@
-import type { SearchIndex } from "./dataClient";
-import fuzzysort from "fuzzysort";
+import type { SearchIndex } from './dataClient';
+import fuzzysort from 'fuzzysort';
 
 type MatchIndexes = number[];
 
 const RESULT_LIMIT_PER_TYPE = 8;
 const CANDIDATE_LIMIT_PER_VARIANT = 24;
 
-export type RankedSubject = SearchIndex["subjects"][number] & {
+export type RankedSubject = SearchIndex['subjects'][number] & {
   score: number;
   labelMatchIndexes: MatchIndexes;
   subtitleMatchIndexes: MatchIndexes;
 };
 
-export type RankedCourse = SearchIndex["courses"][number] & {
+export type RankedCourse = SearchIndex['courses'][number] & {
   score: number;
   labelMatchIndexes: MatchIndexes;
   subtitleMatchIndexes: MatchIndexes;
 };
 
-export type RankedProfessor = SearchIndex["professors"][number] & {
+export type RankedProfessor = SearchIndex['professors'][number] & {
   score: number;
   labelMatchIndexes: MatchIndexes;
 };
@@ -35,7 +35,7 @@ export const EMPTY_RANKED_RESULTS: RankedSearchResult = {
   professors: [],
 };
 
-type SearchKind = "subject" | "course" | "professor";
+type SearchKind = 'subject' | 'course' | 'professor';
 
 type QueryProfile = {
   query: string;
@@ -67,11 +67,14 @@ type Candidate<T> = {
 };
 
 function normalizeForComparison(value: string): string {
-  return value.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+  return value
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '');
 }
 
 function normalizeLoose(value: string): string {
-  return normalizeForComparison(value).replace(/[^a-z0-9]+/g, "");
+  return normalizeForComparison(value).replace(/[^a-z0-9]+/g, '');
 }
 
 function tokenize(value: string): string[] {
@@ -84,13 +87,13 @@ function singularizeToken(token: string): string {
   if (token.length <= 3) {
     return token;
   }
-  if (token.endsWith("ies") && token.length > 4) {
+  if (token.endsWith('ies') && token.length > 4) {
     return `${token.slice(0, -3)}y`;
   }
-  if (token.endsWith("es") && token.length > 4) {
+  if (token.endsWith('es') && token.length > 4) {
     return token.slice(0, -2);
   }
-  if (token.endsWith("s")) {
+  if (token.endsWith('s')) {
     return token.slice(0, -1);
   }
   return token;
@@ -102,8 +105,8 @@ function createQueryProfile(query: string): QueryProfile {
   const loose = normalizeLoose(trimmed);
   const tokens = tokenize(trimmed);
   const singularTokens = [...new Set(tokens.map((token) => singularizeToken(token)))];
-  const compact = lower.replace(/\s+/g, "");
-  const singularVariant = singularTokens.join(" ");
+  const compact = lower.replace(/\s+/g, '');
+  const singularVariant = singularTokens.join(' ');
   const variants = [trimmed];
 
   if (singularVariant && singularVariant !== lower) {
@@ -113,8 +116,10 @@ function createQueryProfile(query: string): QueryProfile {
     variants.push(loose);
   }
 
-  const looksLikeCourseCode = /^[a-z]{2,5}\s*-?\s*\d{2,4}[a-z]?$/i.test(trimmed) || /^[a-z]{2,5}\d{2,4}[a-z]?$/i.test(loose);
-  const looksLikeSubjectCode = !looksLikeCourseCode && tokens.length === 1 && /^[a-z]{2,6}$/i.test(compact);
+  const looksLikeCourseCode =
+    /^[a-z]{2,5}\s*-?\s*\d{2,4}[a-z]?$/i.test(trimmed) || /^[a-z]{2,5}\d{2,4}[a-z]?$/i.test(loose);
+  const looksLikeSubjectCode =
+    !looksLikeCourseCode && tokens.length === 1 && /^[a-z]{2,6}$/i.test(compact);
   const looksLikeName = !/\d/.test(trimmed) && !looksLikeSubjectCode && tokens.length >= 1;
 
   return {
@@ -226,23 +231,23 @@ function scoreSecondaryText(profile: QueryProfile, value: string): number {
 
 function getIntentBoost(profile: QueryProfile, kind: SearchKind): number {
   if (profile.looksLikeCourseCode) {
-    if (kind === "course") {
+    if (kind === 'course') {
       return 1.8;
     }
     return -0.3;
   }
 
   if (profile.looksLikeSubjectCode) {
-    if (kind === "subject") {
+    if (kind === 'subject') {
       return 1.5;
     }
-    if (kind === "course") {
+    if (kind === 'course') {
       return 0.4;
     }
     return -0.2;
   }
 
-  if (profile.looksLikeName && kind === "professor") {
+  if (profile.looksLikeName && kind === 'professor') {
     return 0.8;
   }
 
@@ -310,7 +315,12 @@ export function searchIndex(index: SearchIndex, query: string) {
     items: index.subjects,
     queryVariants: profile.variants,
     threshold,
-    keys: [(subject) => subject.code, (subject) => subject.title, (subject) => normalizeLoose(subject.code), (subject) => normalizeLoose(subject.title)],
+    keys: [
+      (subject) => subject.code,
+      (subject) => subject.title,
+      (subject) => normalizeLoose(subject.code),
+      (subject) => normalizeLoose(subject.title),
+    ],
     keyForMap: (subject) => subject.code,
   });
 
@@ -341,8 +351,11 @@ export function searchIndex(index: SearchIndex, query: string) {
     .map((candidate) => ({
       ...candidate.obj,
       score: applyPopularityBoost(
-        candidate.fuzzyScore + scorePrimaryText(profile, candidate.obj.code) + scoreSecondaryText(profile, candidate.obj.title) + getIntentBoost(profile, "subject"),
-        candidate.obj.popularity,
+        candidate.fuzzyScore +
+          scorePrimaryText(profile, candidate.obj.code) +
+          scoreSecondaryText(profile, candidate.obj.title) +
+          getIntentBoost(profile, 'subject'),
+        candidate.obj.popularity
       ),
       labelMatchIndexes: candidate.labelMatchIndexes,
       subtitleMatchIndexes: candidate.subtitleMatchIndexes,
@@ -355,8 +368,8 @@ export function searchIndex(index: SearchIndex, query: string) {
         candidate.fuzzyScore +
           scorePrimaryText(profile, candidate.obj.code) +
           scoreSecondaryText(profile, `${candidate.obj.title} ${candidate.obj.subject}`) +
-          getIntentBoost(profile, "course"),
-        candidate.obj.popularity,
+          getIntentBoost(profile, 'course'),
+        candidate.obj.popularity
       ),
       labelMatchIndexes: candidate.labelMatchIndexes,
       subtitleMatchIndexes: candidate.subtitleMatchIndexes,
@@ -367,8 +380,10 @@ export function searchIndex(index: SearchIndex, query: string) {
     .map((candidate) => ({
       ...candidate.obj,
       score: applyPopularityBoost(
-        candidate.fuzzyScore + scorePrimaryText(profile, candidate.obj.name) + getIntentBoost(profile, "professor"),
-        candidate.obj.popularity,
+        candidate.fuzzyScore +
+          scorePrimaryText(profile, candidate.obj.name) +
+          getIntentBoost(profile, 'professor'),
+        candidate.obj.popularity
       ),
       labelMatchIndexes: candidate.labelMatchIndexes,
     }))

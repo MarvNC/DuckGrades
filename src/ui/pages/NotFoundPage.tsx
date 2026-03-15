@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
-import { Compass, Search } from "lucide-react";
-import { usePageTitle } from "../usePageTitle";
+import { Link } from 'react-router-dom';
+import { Compass, Search } from 'lucide-react';
+import { usePageTitle } from '../usePageTitle';
 
 type NotFoundPageProps = {
   title?: string;
@@ -9,19 +9,23 @@ type NotFoundPageProps = {
 
 export function NotFoundPage({
   title = "We couldn't find that page",
-  description = "The link may be outdated, the URL may be mistyped, or the course/subject/professor may not exist in this dataset.",
+  description = 'The link may be outdated, the URL may be mistyped, or the course/subject/professor may not exist in this dataset.',
 }: NotFoundPageProps) {
-  usePageTitle("404 Page Not Found");
+  usePageTitle('404 Page Not Found');
 
   return (
     <section className="mx-auto flex w-full max-w-4xl flex-1 items-center py-6 sm:py-10">
       <div className="w-full rounded-3xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-6 shadow-sm backdrop-blur-sm sm:p-8">
-        <div className="inline-flex items-center gap-2 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--duck-muted)]">
+        <div className="inline-flex items-center gap-2 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-3 py-1 text-[11px] font-semibold tracking-[0.12em] text-[var(--duck-muted)] uppercase">
           <Compass className="h-3.5 w-3.5" aria-hidden="true" />
           Error 404
         </div>
-        <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-[var(--duck-fg)] sm:text-4xl">{title}</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--duck-muted)] sm:text-base">{description}</p>
+        <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-[var(--duck-fg)] sm:text-4xl">
+          {title}
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--duck-muted)] sm:text-base">
+          {description}
+        </p>
         <div className="mt-5 flex flex-wrap gap-2.5">
           <Link
             to="/"

@@ -1,5 +1,5 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 
 type CatalogSubjectRecord = {
   code: string;
@@ -24,39 +24,39 @@ type CatalogSnapshot = {
   courses: CatalogCourseRecord[];
 };
 
-const BASE_URL = "https://catalog.uoregon.edu";
-const COURSES_INDEX_PATH = "/courses/";
-const EXTRA_SUBJECT_INDEX_PATHS = ["/courses/crs-pe/"] as const;
-const OUTPUT_PATH = "data/uo-catalog-course-metadata.json";
+const BASE_URL = 'https://catalog.uoregon.edu';
+const COURSES_INDEX_PATH = '/courses/';
+const EXTRA_SUBJECT_INDEX_PATHS = ['/courses/crs-pe/'] as const;
+const OUTPUT_PATH = 'data/uo-catalog-course-metadata.json';
 const SUBJECT_REQUEST_CONCURRENCY = 6;
 const REQUEST_RETRIES = 3;
 const REQUEST_RETRY_DELAY_MS = 600;
 
 const NAMED_ENTITIES: Record<string, string> = {
-  amp: "&",
+  amp: '&',
   apos: "'",
-  copy: "\u00A9",
-  gt: ">",
-  hellip: "...",
+  copy: '\u00A9',
+  gt: '>',
+  hellip: '...',
   ldquo: '"',
-  lt: "<",
-  mdash: "-",
-  nbsp: " ",
-  ndash: "-",
+  lt: '<',
+  mdash: '-',
+  nbsp: ' ',
+  ndash: '-',
   quot: '"',
   rdquo: '"',
-  reg: "\u00AE",
+  reg: '\u00AE',
   rsquo: "'",
   lsquo: "'",
 };
 
 function decodeHtmlEntities(input: string): string {
   return input.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (fullMatch, entity) => {
-    if (entity.startsWith("#x") || entity.startsWith("#X")) {
+    if (entity.startsWith('#x') || entity.startsWith('#X')) {
       const value = Number.parseInt(entity.slice(2), 16);
       return Number.isFinite(value) ? String.fromCodePoint(value) : fullMatch;
     }
-    if (entity.startsWith("#")) {
+    if (entity.startsWith('#')) {
       const value = Number.parseInt(entity.slice(1), 10);
       return Number.isFinite(value) ? String.fromCodePoint(value) : fullMatch;
     }
@@ -65,26 +65,31 @@ function decodeHtmlEntities(input: string): string {
 }
 
 function stripTags(input: string): string {
-  return input.replace(/<[^>]*>/g, " ");
+  return input.replace(/<[^>]*>/g, ' ');
 }
 
 function normalizeText(input: string): string {
   return decodeHtmlEntities(stripTags(input))
-    .replace(/[\u200B-\u200D\uFEFF]/g, "")
-    .replace(/\u00a0/g, " ")
-    .replace(/\s+/g, " ")
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
 function normalizePath(path: string): string {
-  const withLeadingSlash = path.startsWith("/") ? path : `/${path}`;
-  return withLeadingSlash.endsWith("/") ? withLeadingSlash : `${withLeadingSlash}/`;
+  const withLeadingSlash = path.startsWith('/') ? path : `/${path}`;
+  return withLeadingSlash.endsWith('/') ? withLeadingSlash : `${withLeadingSlash}/`;
 }
 
 function resolveCatalogPath(rawHref: string, basePath: string): string {
   const trimmed = rawHref.trim();
-  if (!trimmed || trimmed.startsWith("#") || /^https?:/i.test(trimmed) || /\.pdf(?:$|[?#])/i.test(trimmed)) {
-    return "";
+  if (
+    !trimmed ||
+    trimmed.startsWith('#') ||
+    /^https?:/i.test(trimmed) ||
+    /\.pdf(?:$|[?#])/i.test(trimmed)
+  ) {
+    return '';
   }
   const resolved = new URL(trimmed, new URL(normalizePath(basePath), BASE_URL)).pathname;
   return normalizePath(resolved);
@@ -99,7 +104,7 @@ async function fetchText(path: string): Promise<string> {
     try {
       const response = await fetch(url, {
         headers: {
-          "User-Agent": "DuckGradesCatalogBot/1.0 (+https://github.com/MarvNC/DuckGrades)",
+          'User-Agent': 'DuckGradesCatalogBot/1.0 (+https://github.com/MarvNC/DuckGrades)',
         },
       });
       if (!response.ok) {
@@ -114,7 +119,9 @@ async function fetchText(path: string): Promise<string> {
     }
   }
 
-  throw new Error(`Unable to fetch ${url}: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
+  throw new Error(
+    `Unable to fetch ${url}: ${lastError instanceof Error ? lastError.message : String(lastError)}`
+  );
 }
 
 function parseSubjectList(html: string, sourcePath: string): CatalogSubjectRecord[] {
@@ -124,7 +131,7 @@ function parseSubjectList(html: string, sourcePath: string): CatalogSubjectRecor
   let match = anchorPattern.exec(html);
   while (match) {
     const path = resolveCatalogPath(match[1], sourcePath);
-    if (!path.startsWith("/courses/") || !path.includes("/crs-")) {
+    if (!path.startsWith('/courses/') || !path.includes('/crs-')) {
       match = anchorPattern.exec(html);
       continue;
     }
@@ -152,7 +159,9 @@ function parseCourseBlocks(html: string, sourcePath: string): CatalogCourseRecor
   let blockMatch = courseBlockPattern.exec(html);
   while (blockMatch) {
     const blockHtml = blockMatch[1];
-    const titleMatch = blockHtml.match(/<p class="courseblocktitle[^\"]*">\s*<strong>([\s\S]*?)<\/strong>\s*<\/p>/i);
+    const titleMatch = blockHtml.match(
+      /<p class="courseblocktitle[^\"]*">\s*<strong>([\s\S]*?)<\/strong>\s*<\/p>/i
+    );
     if (!titleMatch) {
       blockMatch = courseBlockPattern.exec(html);
       continue;
@@ -168,12 +177,15 @@ function parseCourseBlocks(html: string, sourcePath: string): CatalogCourseRecor
     const subjectCode = headerMatch[1].toUpperCase();
     const number = headerMatch[2].toUpperCase();
     const rawCourseTitle = headerMatch[3].trim();
-    const withoutCredits = rawCourseTitle.replace(/\.\s+\d+(?:-\d+)?\s+Credits?\.?$/i, "").trim();
-    const title = withoutCredits.endsWith(".") ? withoutCredits.slice(0, -1).trim() : withoutCredits;
+    const withoutCredits = rawCourseTitle.replace(/\.\s+\d+(?:-\d+)?\s+Credits?\.?$/i, '').trim();
+    const title = withoutCredits.endsWith('.')
+      ? withoutCredits.slice(0, -1).trim()
+      : withoutCredits;
 
     const descMatch = blockHtml.match(/<p class="courseblockdesc">\s*([\s\S]*?)\s*<\/p>/i);
-    const descriptionHtml = descMatch?.[1] ?? "";
-    const primaryDescriptionHtml = descriptionHtml.split(/<br\s*\/?\s*>\s*<b>/i)[0] ?? descriptionHtml;
+    const descriptionHtml = descMatch?.[1] ?? '';
+    const primaryDescriptionHtml =
+      descriptionHtml.split(/<br\s*\/?\s*>\s*<b>/i)[0] ?? descriptionHtml;
     const description = normalizeText(primaryDescriptionHtml);
 
     courses.push({
@@ -194,7 +206,7 @@ function parseCourseBlocks(html: string, sourcePath: string): CatalogCourseRecor
 async function mapWithConcurrency<T>(
   items: T[],
   concurrency: number,
-  mapper: (item: T, index: number) => Promise<void>,
+  mapper: (item: T, index: number) => Promise<void>
 ): Promise<void> {
   let cursor = 0;
   const workerCount = Math.min(Math.max(1, concurrency), items.length || 1);
@@ -225,7 +237,7 @@ async function main() {
 
   const subjects = [...subjectByCode.values()].sort((a, b) => a.code.localeCompare(b.code));
   if (subjects.length === 0) {
-    throw new Error("No subjects were discovered from the catalog courses index.");
+    throw new Error('No subjects were discovered from the catalog courses index.');
   }
 
   const coursesByCode = new Map<string, CatalogCourseRecord>();
@@ -257,9 +269,11 @@ async function main() {
   const output = `${JSON.stringify(snapshot)}\n`;
   const outputPath = join(process.cwd(), OUTPUT_PATH);
   await mkdir(dirname(outputPath), { recursive: true });
-  await writeFile(outputPath, output, "utf8");
+  await writeFile(outputPath, output, 'utf8');
 
-  console.log(`Wrote ${snapshot.subjects.length} subjects and ${snapshot.courses.length} courses to ${OUTPUT_PATH}`);
+  console.log(
+    `Wrote ${snapshot.subjects.length} subjects and ${snapshot.courses.length} courses to ${OUTPUT_PATH}`
+  );
 }
 
 void main();
