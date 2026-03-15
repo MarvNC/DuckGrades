@@ -17,6 +17,14 @@ import { UPlotChart, type DuckChartTheme } from '../components/charts/UPlotChart
 
 type SubjectSortKey = 'code' | 'mean' | 'students' | 'sections';
 
+type ClassSizeBucket = {
+  key: string;
+  label: string;
+  min: number;
+  max: number | null;
+  courseCount: number;
+};
+
 const LEVEL_ORDER: AnalyticsLevel[] = ['100', '200', '300', '400', '500+'];
 const LEVEL_LABELS: Record<AnalyticsLevel, string> = {
   '100': '100-level',
@@ -97,10 +105,39 @@ function sortSubjects(
   });
 }
 
+function buildClassSizeBuckets(points: AnalyticsShard['courseSizeVsGpa']): ClassSizeBucket[] {
+  const buckets: ClassSizeBucket[] = [
+    { key: '1-9', label: '1-9', min: 1, max: 9, courseCount: 0 },
+    { key: '10-19', label: '10-19', min: 10, max: 19, courseCount: 0 },
+    { key: '20-29', label: '20-29', min: 20, max: 29, courseCount: 0 },
+    { key: '30-39', label: '30-39', min: 30, max: 39, courseCount: 0 },
+    { key: '40-49', label: '40-49', min: 40, max: 49, courseCount: 0 },
+    { key: '50-64', label: '50-64', min: 50, max: 64, courseCount: 0 },
+    { key: '65-79', label: '65-79', min: 65, max: 79, courseCount: 0 },
+    { key: '80-99', label: '80-99', min: 80, max: 99, courseCount: 0 },
+    { key: '100-149', label: '100-149', min: 100, max: 149, courseCount: 0 },
+    { key: '150+', label: '150+', min: 150, max: null, courseCount: 0 },
+  ];
+
+  for (const point of points) {
+    const bucket = buckets.find((candidate) => {
+      if (candidate.max === null) {
+        return point.avgClassSize >= candidate.min;
+      }
+      return point.avgClassSize >= candidate.min && point.avgClassSize <= candidate.max;
+    });
+
+    if (bucket) {
+      bucket.courseCount += 1;
+    }
+  }
+
+  return buckets;
+}
+
 export function AnalyticsPage() {
   const [analytics, setAnalytics] = useState<AnalyticsShard | null>(null);
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [subjectQuery, setSubjectQuery] = useState('');
   const [subjectSortKey, setSubjectSortKey] = useState<SubjectSortKey>('mean');
   const [subjectSortDescending, setSubjectSortDescending] = useState(true);
 
@@ -150,46 +187,57 @@ export function AnalyticsPage() {
     return [x, ...series];
   }, [analytics?.termByLevel, trendTerms]);
 
-  const scatterData = useMemo<uPlot.AlignedData>(() => {
-    const points = [...(analytics?.courseSizeVsGpa ?? [])].sort(
+  const scatterPoints = useMemo(() => {
+    return [...(analytics?.courseSizeVsGpa ?? [])].sort(
       (left, right) => left.avgClassSize - right.avgClassSize
     );
+  }, [analytics?.courseSizeVsGpa]);
+
+  const scatterData = useMemo<uPlot.AlignedData>(() => {
+    const points = scatterPoints;
     const x = points.map((point) => point.avgClassSize);
     const byLevel = LEVEL_ORDER.map((level) =>
       points.map((point) => (point.level === level ? point.meanGpa : null))
     );
     return [x, ...byLevel];
+  }, [scatterPoints]);
+
+  const classSizeBuckets = useMemo(() => {
+    return buildClassSizeBuckets(analytics?.courseSizeVsGpa ?? []);
   }, [analytics?.courseSizeVsGpa]);
 
   const classSizeDistributionData = useMemo<uPlot.AlignedData>(() => {
-    const rows = analytics?.classSizeDistribution ?? [];
+    const rows = classSizeBuckets;
     const x = rows.map((_, index) => index + 1);
     const courses = rows.map((row) => row.courseCount);
-    const students = rows.map((row) => row.studentCount);
-    return [x, courses, students];
-  }, [analytics?.classSizeDistribution]);
-
-  const filteredSubjects = useMemo(() => {
-    const subjects = analytics?.subjectSummaries ?? [];
-    const query = subjectQuery.trim().toLowerCase();
-    if (!query) {
-      return subjects;
-    }
-    return subjects.filter(
-      (subject) =>
-        subject.code.toLowerCase().includes(query) || subject.title.toLowerCase().includes(query)
-    );
-  }, [analytics?.subjectSummaries, subjectQuery]);
+    return [x, courses];
+  }, [classSizeBuckets]);
 
   const visibleSubjects = useMemo(
-    () => sortSubjects(filteredSubjects, subjectSortKey, subjectSortDescending),
-    [filteredSubjects, subjectSortDescending, subjectSortKey]
+    () => sortSubjects(analytics?.subjectSummaries ?? [], subjectSortKey, subjectSortDescending),
+    [analytics?.subjectSummaries, subjectSortDescending, subjectSortKey]
   );
 
   const overallChartTitle =
     trendTerms[0]?.termDesc && trendTerms[trendTerms.length - 1]?.termDesc
       ? `${trendTerms[0].termDesc} to ${trendTerms[trendTerms.length - 1].termDesc}`
       : 'All available terms';
+
+  function onSortByColumn(key: SubjectSortKey) {
+    if (subjectSortKey === key) {
+      setSubjectSortDescending((value) => !value);
+      return;
+    }
+    setSubjectSortKey(key);
+    setSubjectSortDescending(key !== 'code');
+  }
+
+  function sortIndicator(key: SubjectSortKey): string {
+    if (subjectSortKey !== key) {
+      return '';
+    }
+    return subjectSortDescending ? ' ↓' : ' ↑';
+  }
 
   return (
     <section className="space-y-4 rounded-3xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-5 shadow-sm backdrop-blur-sm sm:p-7">
@@ -307,6 +355,27 @@ export function AnalyticsPage() {
                   },
                 ],
               })}
+              getTooltip={({ idx }) => {
+                const row = trendTerms[idx];
+                if (!row) {
+                  return null;
+                }
+                return {
+                  title: row.termDesc,
+                  items: [
+                    {
+                      label: 'Mean GPA',
+                      value: row.aggregate.mean?.toFixed(3) ?? 'N/A',
+                      color: 'var(--duck-chart-1)',
+                    },
+                    {
+                      label: 'Students',
+                      value: row.aggregate.totalNonWReported.toLocaleString(),
+                      color: 'var(--duck-chart-3)',
+                    },
+                  ],
+                };
+              }}
             />
           </section>
 
@@ -380,6 +449,26 @@ export function AnalyticsPage() {
                   })),
                 ],
               })}
+              getTooltip={({ idx }) => {
+                const row = trendTerms[idx];
+                if (!row) {
+                  return null;
+                }
+
+                return {
+                  title: row.termDesc,
+                  items: LEVEL_ORDER.map((level) => {
+                    const value = analytics.termByLevel[level]?.find(
+                      (termValue) => termValue.term === row.term
+                    )?.aggregate.mean;
+                    return {
+                      label: LEVEL_LABELS[level],
+                      value: value === null || value === undefined ? 'N/A' : value.toFixed(3),
+                      color: levelToken(level),
+                    };
+                  }),
+                };
+              }}
             />
           </section>
 
@@ -408,6 +497,7 @@ export function AnalyticsPage() {
                   <div className="relative mb-2 h-8 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)]">
                     <div
                       className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full bg-[var(--duck-surface-muted)]"
+                      title={`Interquartile range: ${level.q1 === null ? 'N/A' : level.q1.toFixed(2)} to ${level.q3 === null ? 'N/A' : level.q3.toFixed(2)}`}
                       style={{
                         left: `${gpaToPercent(level.q1)}%`,
                         width: `${Math.max(2, gpaToPercent(level.q3) - gpaToPercent(level.q1))}%`,
@@ -415,14 +505,16 @@ export function AnalyticsPage() {
                     />
                     <div
                       className="absolute top-1/2 h-5 w-0.5 -translate-y-1/2 bg-[var(--duck-accent-strong)]"
+                      title={`Median GPA: ${level.aggregate.median === null ? 'N/A' : level.aggregate.median.toFixed(3)}`}
                       style={{ left: `${gpaToPercent(level.aggregate.median)}%` }}
                     />
                     <div
                       className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[var(--duck-focus)] bg-[var(--duck-surface)]"
+                      title={`Mean GPA: ${level.aggregate.mean === null ? 'N/A' : level.aggregate.mean.toFixed(3)}`}
                       style={{ left: `${gpaToPercent(level.aggregate.mean)}%` }}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs font-semibold text-[var(--duck-muted-strong)] sm:grid-cols-4 lg:grid-cols-8">
+                  <div className="grid grid-cols-1 gap-1.5 text-xs font-semibold text-[var(--duck-muted-strong)] sm:grid-cols-2 sm:gap-2 lg:grid-cols-8">
                     <p>
                       <span className="tracking-[0.08em] text-[var(--duck-muted)] uppercase">
                         Mean
@@ -539,6 +631,34 @@ export function AnalyticsPage() {
                   })),
                 ],
               })}
+              getTooltip={({ idx }) => {
+                const point = scatterPoints[idx];
+                if (!point) {
+                  return null;
+                }
+                return {
+                  title: `${point.courseCode} (${LEVEL_LABELS[point.level]})`,
+                  items: [
+                    {
+                      label: 'Mean GPA',
+                      value: point.meanGpa.toFixed(3),
+                      color: levelToken(point.level),
+                    },
+                    {
+                      label: 'Avg class size',
+                      value: point.avgClassSize.toFixed(2),
+                    },
+                    {
+                      label: 'Students',
+                      value: point.totalStudents.toLocaleString(),
+                    },
+                    {
+                      label: 'Sections',
+                      value: point.sectionCount.toLocaleString(),
+                    },
+                  ],
+                };
+              }}
             />
           </section>
 
@@ -561,7 +681,6 @@ export function AnalyticsPage() {
                 scales: {
                   x: { time: false },
                   y: { auto: true },
-                  students: { auto: true },
                 },
                 cursor: { drag: { x: false, y: false } },
                 legend: { show: false },
@@ -572,7 +691,7 @@ export function AnalyticsPage() {
                     splits: () => classSizeDistributionData[0] as number[],
                     values: (_self, splits) =>
                       splits.map((split) => {
-                        const item = analytics.classSizeDistribution[Math.round(split) - 1];
+                        const item = classSizeBuckets[Math.round(split) - 1];
                         return item?.label ?? '';
                       }),
                     size: 42,
@@ -592,22 +711,6 @@ export function AnalyticsPage() {
                     labelGap: 8,
                     font: '600 10px Sora',
                   },
-                  {
-                    side: 1,
-                    scale: 'students',
-                    stroke: theme.border,
-                    grid: { show: false },
-                    values: (_self, splits) =>
-                      splits.map((value) =>
-                        Number(value).toLocaleString(undefined, { maximumFractionDigits: 0 })
-                      ),
-                    size: 56,
-                    label: 'STUDENTS',
-                    labelColor: theme.muted,
-                    labelSize: 10,
-                    labelGap: 8,
-                    font: '600 10px Sora',
-                  },
                 ],
                 series: [
                   {},
@@ -616,86 +719,161 @@ export function AnalyticsPage() {
                     stroke: theme.chart2,
                     fill: `${theme.chart2}66`,
                     width: 1,
-                    paths: uPlot.paths!.bars!({ size: [0.7, 88], align: 1 }),
+                    paths: uPlot.paths!.bars!({ size: [0.72, 96], align: 1 }),
                     points: { show: false },
-                  },
-                  {
-                    label: 'Student count',
-                    scale: 'students',
-                    stroke: theme.chart4,
-                    width: 1.5,
-                    points: { size: 4, stroke: theme.chart4, fill: theme.surface },
                   },
                 ],
               })}
+              getTooltip={({ idx }) => {
+                const bucket = classSizeBuckets[idx];
+                if (!bucket) {
+                  return null;
+                }
+                return {
+                  title: `Avg class size ${bucket.label}`,
+                  items: [
+                    {
+                      label: 'Courses',
+                      value: bucket.courseCount.toLocaleString(),
+                      color: 'var(--duck-chart-2)',
+                    },
+                  ],
+                };
+              }}
             />
           </section>
 
           <section className="space-y-3 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-4 shadow-sm sm:p-5">
-            <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
-              <h2 className="text-base font-bold text-[var(--duck-fg)]">
-                Subject GPA distribution table
-              </h2>
-              <div className="flex flex-wrap items-center gap-2">
-                <label
-                  className="text-xs font-semibold tracking-[0.1em] text-[var(--duck-muted)] uppercase"
-                  htmlFor="analytics-subject-search"
-                >
-                  Search
-                </label>
-                <input
-                  id="analytics-subject-search"
-                  type="search"
-                  value={subjectQuery}
-                  onChange={(event) => setSubjectQuery(event.target.value)}
-                  placeholder="Code or title"
-                  className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-3 py-2 text-sm font-medium text-[var(--duck-fg)] shadow-sm transition outline-none focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
-                />
-                <label
-                  className="text-xs font-semibold tracking-[0.1em] text-[var(--duck-muted)] uppercase"
-                  htmlFor="analytics-subject-sort"
-                >
-                  Sort
-                </label>
-                <select
-                  id="analytics-subject-sort"
-                  value={subjectSortKey}
-                  onChange={(event) => {
-                    const next = event.target.value as SubjectSortKey;
-                    setSubjectSortKey(next);
-                    setSubjectSortDescending(next !== 'code');
-                  }}
-                  className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted-strong)] transition outline-none focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
-                >
-                  <option value="mean">Mean GPA</option>
-                  <option value="students">Students</option>
-                  <option value="sections">Sections</option>
-                  <option value="code">Code</option>
-                </select>
-                <button
-                  type="button"
-                  disabled={subjectSortKey === 'code'}
-                  onClick={() => setSubjectSortDescending((value) => !value)}
-                  className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted-strong)] transition hover:bg-[var(--duck-surface-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {subjectSortDescending ? 'Desc' : 'Asc'}
-                </button>
-                <p className="text-xs font-semibold tracking-[0.1em] text-[var(--duck-muted)] uppercase">
-                  {visibleSubjects.length} subjects
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="text-base font-bold text-[var(--duck-fg)]">
+                  Subject GPA distribution
+                </h2>
+                <p className="text-sm text-[var(--duck-muted)]">
+                  Sort by clicking a column header.
                 </p>
               </div>
+              <p className="text-xs font-semibold tracking-[0.1em] text-[var(--duck-muted)] uppercase">
+                {visibleSubjects.length} subjects
+              </p>
             </div>
 
-            <div className="overflow-x-auto rounded-xl border border-[var(--duck-border)]">
-              <table className="w-full min-w-[980px] border-collapse">
+            <div className="flex flex-wrap gap-2">
+              {(
+                [
+                  ['code', 'Subject'],
+                  ['mean', 'Mean GPA'],
+                  ['students', 'Students'],
+                  ['sections', 'Sections'],
+                ] as Array<[SubjectSortKey, string]>
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => onSortByColumn(key)}
+                  className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--duck-muted-strong)] transition hover:bg-[var(--duck-surface-muted)]"
+                >
+                  {label}
+                  <span className="text-[var(--duck-accent-strong)]">{sortIndicator(key)}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="space-y-2 lg:hidden">
+              {visibleSubjects.map((subject) => (
+                <article
+                  key={subject.code}
+                  className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] p-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <Link
+                        to={`/subject/${subject.code}`}
+                        className="font-bold text-[var(--duck-accent-strong)] transition hover:underline"
+                      >
+                        {subject.code}
+                      </Link>
+                      <p className="text-xs text-[var(--duck-muted)]">{subject.title}</p>
+                    </div>
+                    <p className="text-sm font-semibold text-[var(--duck-fg)]">
+                      {subject.aggregate.mean?.toFixed(3) ?? 'N/A'}
+                    </p>
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-[var(--duck-muted-strong)]">
+                    <p>
+                      <span className="tracking-[0.08em] text-[var(--duck-muted)] uppercase">
+                        Median
+                      </span>{' '}
+                      {formatGradeStat(subject.aggregate.median)}
+                    </p>
+                    <p>
+                      <span className="tracking-[0.08em] text-[var(--duck-muted)] uppercase">
+                        Mode
+                      </span>{' '}
+                      {formatGradeCode(subject.aggregate.mode)}
+                    </p>
+                    <p>
+                      <span className="tracking-[0.08em] text-[var(--duck-muted)] uppercase">
+                        Students
+                      </span>{' '}
+                      {subject.aggregate.totalNonWReported.toLocaleString()}
+                    </p>
+                    <p>
+                      <span className="tracking-[0.08em] text-[var(--duck-muted)] uppercase">
+                        Sections
+                      </span>{' '}
+                      {subject.sectionCount.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="mt-2">
+                    <GradeDistributionStrip
+                      aggregate={subject.aggregate}
+                      size="sm"
+                      showStudentCount={false}
+                    />
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="hidden overflow-x-auto rounded-xl border border-[var(--duck-border)] lg:block">
+              <table className="w-full min-w-[860px] border-collapse">
                 <thead className="bg-[var(--duck-surface-soft)]">
                   <tr className="text-left text-xs font-semibold tracking-[0.1em] text-[var(--duck-muted)] uppercase">
-                    <th className="px-3 py-2">Subject</th>
-                    <th className="px-3 py-2">Mean</th>
+                    <th className="px-3 py-2">
+                      <button type="button" onClick={() => onSortByColumn('code')}>
+                        Subject
+                        <span className="text-[var(--duck-accent-strong)]">
+                          {sortIndicator('code')}
+                        </span>
+                      </button>
+                    </th>
+                    <th className="px-3 py-2">
+                      <button type="button" onClick={() => onSortByColumn('mean')}>
+                        Mean
+                        <span className="text-[var(--duck-accent-strong)]">
+                          {sortIndicator('mean')}
+                        </span>
+                      </button>
+                    </th>
                     <th className="px-3 py-2">Median</th>
                     <th className="px-3 py-2">Mode</th>
-                    <th className="px-3 py-2">Students</th>
-                    <th className="px-3 py-2">Sections</th>
+                    <th className="px-3 py-2">
+                      <button type="button" onClick={() => onSortByColumn('students')}>
+                        Students
+                        <span className="text-[var(--duck-accent-strong)]">
+                          {sortIndicator('students')}
+                        </span>
+                      </button>
+                    </th>
+                    <th className="px-3 py-2">
+                      <button type="button" onClick={() => onSortByColumn('sections')}>
+                        Sections
+                        <span className="text-[var(--duck-accent-strong)]">
+                          {sortIndicator('sections')}
+                        </span>
+                      </button>
+                    </th>
                     <th className="px-3 py-2">Distribution</th>
                   </tr>
                 </thead>

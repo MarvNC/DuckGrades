@@ -119,48 +119,42 @@ export function UPlotChart({
     }
 
     const options = buildOptions({ width, height, theme });
-    const baseHooks = options.hooks ?? {};
-    const hookList = baseHooks.setCursor ?? [];
+    const plot = new uPlot(options, data, mount);
 
-    options.hooks = {
-      ...baseHooks,
-      setCursor: [
-        ...hookList,
-        (plot) => {
-          if (!getTooltip) {
-            return;
-          }
-
-          const idx = plot.cursor.idx;
-          if (idx === null || idx === undefined) {
-            setTooltip(null);
-            return;
-          }
-
-          const content = getTooltip({ idx, data });
-          if (!content) {
-            setTooltip(null);
-            return;
-          }
-
-          setTooltip({
-            x: plot.bbox.left + Math.max(0, plot.cursor.left ?? 0) + 16,
-            y: plot.bbox.top + Math.max(0, plot.cursor.top ?? 0) + 12,
-            title: content.title,
-            items: content.items,
-          });
-        },
-      ],
-    };
-
+    const over = plot.over;
     const clearTooltip = () => {
       setTooltip(null);
     };
-    mount.addEventListener('mouseleave', clearTooltip);
 
-    const plot = new uPlot(options, data, mount);
+    const syncTooltip = (event: MouseEvent) => {
+      if (!getTooltip) {
+        return;
+      }
+
+      const bounds = over.getBoundingClientRect();
+      const left = Math.max(0, Math.min(bounds.width, event.clientX - bounds.left));
+      const top = Math.max(0, Math.min(bounds.height, event.clientY - bounds.top));
+      const idx = plot.posToIdx(left);
+      const content = getTooltip({ idx, data });
+      if (!content) {
+        setTooltip(null);
+        return;
+      }
+
+      setTooltip({
+        x: plot.bbox.left + left + 16,
+        y: plot.bbox.top + top + 12,
+        title: content.title,
+        items: content.items,
+      });
+    };
+
+    over.addEventListener('mousemove', syncTooltip);
+    over.addEventListener('mouseleave', clearTooltip);
+
     return () => {
-      mount.removeEventListener('mouseleave', clearTooltip);
+      over.removeEventListener('mousemove', syncTooltip);
+      over.removeEventListener('mouseleave', clearTooltip);
       plot.destroy();
     };
   }, [buildOptions, data, getTooltip, hasData, height, theme, width]);
@@ -178,6 +172,7 @@ export function UPlotChart({
           <div ref={mountRef} />
           {tooltip ? (
             <div
+              data-uplot-tooltip="true"
               className="pointer-events-none absolute z-20 rounded-xl border border-[var(--duck-border-strong)] bg-[var(--duck-surface)]/95 px-3 py-2 text-xs text-[var(--duck-fg)] shadow-md backdrop-blur"
               style={{ left: tooltipLeft, top: tooltipTop, maxWidth: tooltipWidth }}
             >
