@@ -6,6 +6,7 @@ type MatchIndexes = number[];
 type RankedSubject = SearchIndex["subjects"][number] & {
   score: number;
   labelMatchIndexes: MatchIndexes;
+  subtitleMatchIndexes: MatchIndexes;
 };
 
 type RankedCourse = SearchIndex["courses"][number] & {
@@ -59,7 +60,7 @@ export function searchIndex(index: SearchIndex, query: string) {
 
   const subjects = fuzzysort
     .go(normalized, index.subjects, {
-      keys: [(subject) => subject.code, (subject) => normalizeLoose(subject.code)],
+      keys: [(subject) => subject.code, (subject) => subject.title, (subject) => normalizeLoose(subject.code), (subject) => normalizeLoose(subject.title)],
       threshold,
       limit: 6,
       scoreFn: (result) => applyPopularityBoost(result.score, result.obj.popularity),
@@ -68,6 +69,7 @@ export function searchIndex(index: SearchIndex, query: string) {
       ...result.obj,
       score: result.score,
       labelMatchIndexes: getIndexes(result[0]),
+      subtitleMatchIndexes: getIndexes(result[1]),
     }))
     .sort((a, b) => b.score - a.score || b.popularity - a.popularity);
 

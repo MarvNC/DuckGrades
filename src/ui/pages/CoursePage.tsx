@@ -59,6 +59,7 @@ export function CoursePage() {
       <div className="space-y-1.5">
         <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">{course?.courseCode ?? (code ?? "COURSE").toUpperCase()}</h1>
         <p className="text-sm text-slate-600">{course?.title ?? "Loading course details..."}</p>
+        {course?.description ? <p className="max-w-4xl text-sm leading-relaxed text-slate-700">{course.description}</p> : null}
       </div>
 
       <AggregateSummaryCard
@@ -69,10 +70,11 @@ export function CoursePage() {
           course
             ? [
                 `Subject ${course.subject}`,
+                course.subjectTitle ? course.subjectTitle : null,
                 `${totalSections} sections`,
                 `${course.instructors.length} instructors`,
                 `${course.aggregate.totalNonWReported.toLocaleString()} students`,
-              ]
+              ].filter((value): value is string => Boolean(value))
             : undefined
         }
       />

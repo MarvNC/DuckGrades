@@ -98,7 +98,8 @@ export function SubjectPage() {
       </Link>
 
       <div className="space-y-1.5">
-        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">{(subject?.subjectCode ?? code ?? "SUBJ").toUpperCase()} Subject</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">{(subject?.subjectCode ?? code ?? "SUBJ").toUpperCase()}</h1>
+        <p className="text-sm text-slate-600">{subject?.subjectTitle ?? "Loading subject title..."}</p>
       </div>
 
       <AggregateSummaryCard

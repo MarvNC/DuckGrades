@@ -84,7 +84,12 @@ export function SubjectsOverviewPage() {
     }
     return fuzzysort
       .go(query, subjects, {
-        keys: [(subject) => subject.code, (subject) => subject.code.toLowerCase().replace(/[^a-z0-9]+/g, "")],
+        keys: [
+          (subject) => subject.code,
+          (subject) => subject.title,
+          (subject) => subject.code.toLowerCase().replace(/[^a-z0-9]+/g, ""),
+          (subject) => subject.title.toLowerCase().replace(/[^a-z0-9]+/g, ""),
+        ],
         threshold: query.length <= 4 ? 0.3 : 0.2,
         limit: subjects.length,
       })
@@ -147,6 +152,7 @@ export function SubjectsOverviewPage() {
                 className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-white hover:text-[var(--duck-fg)]"
               >
                 {subject.code}
+                <span className="ml-1.5 text-slate-500">{subject.title}</span>
                 <span className="ml-1.5 text-slate-500">{subject.aggregate.totalNonWReported.toLocaleString()}</span>
               </Link>
             ))}
@@ -165,7 +171,7 @@ export function SubjectsOverviewPage() {
               type="search"
               value={subjectQuery}
               onChange={(event) => setSubjectQuery(event.target.value)}
-              placeholder="Type a subject code"
+              placeholder="Type a subject code or title"
               className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-[var(--duck-fg)] shadow-sm outline-none transition focus:border-[#4d8152] focus:ring-2 focus:ring-[#4d8152]/20 lg:flex-1"
             />
             <div className="flex flex-wrap items-center gap-2">
@@ -208,7 +214,7 @@ export function SubjectsOverviewPage() {
             <Link key={subject.code} to={`/subject/${subject.code}`} className="block transition hover:-translate-y-0.5">
               <EntityAggregateCard
                 title={subject.code}
-                subtitle={`Browse ${subject.code} subject stats`}
+                subtitle={subject.title}
                 aggregate={subject.aggregate}
                 inlineMetaChips={[
                   `${subject.courseCount} courses`,

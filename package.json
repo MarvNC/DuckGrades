@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "build:catalog": "bun scripts/scrape-uo-catalog.ts",
     "build:data": "bun scripts/build-data.ts",
     "copy:data:dist": "bun scripts/copy-current-data-to-dist.ts",
     "analyze:budgets": "bun scripts/analyze-budgets.ts",

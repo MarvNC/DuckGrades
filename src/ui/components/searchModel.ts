@@ -39,8 +39,9 @@ export function buildSearchItems(
   const subjects = ranked.subjects.slice(0, limits.subjects ?? 6).map((subject) => ({
     key: `subject:${subject.code}`,
     label: subject.code,
-    subtitle: `${subject.popularity} sections`,
+    subtitle: subject.title,
     labelMatchIndexes: subject.labelMatchIndexes,
+    subtitleMatchIndexes: subject.subtitleMatchIndexes,
     to: `/subject/${subject.code}`,
     section: "Subjects" as const,
   }));

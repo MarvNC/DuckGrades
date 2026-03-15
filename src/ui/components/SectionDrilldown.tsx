@@ -96,6 +96,8 @@ export function SectionDrilldown({ sections, summaryLabel = "Section details", i
                       <span className="uppercase tracking-[0.08em] text-slate-400">Mode</span> {formatGradeCode(sectionAggregate.mode)}
                     </span>
                   </div>
+
+                  {section.csvTitle ? <p className="mt-1 text-xs text-slate-600">CSV title: {section.csvTitle}</p> : null}
                 </div>
 
                 <div className="flex justify-end sm:pl-2">

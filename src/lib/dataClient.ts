@@ -1,20 +1,21 @@
 export type SearchIndex = {
-  subjects: Array<{ code: string; popularity: number }>;
+  subjects: Array<{ code: string; title: string; popularity: number }>;
   courses: Array<{ code: string; title: string; subject: string; popularity: number }>;
   professors: Array<{ id: string; name: string; popularity: number }>;
 };
 
 type CompactSearchIndex = {
-  v: 1 | 2;
+  v: 1 | 2 | 3;
   t: string[];
-  s: Array<[number, number]> | number[];
+  s: Array<[number, number]> | Array<[number, number, number]> | number[];
   c: Array<[number, number, number, number]> | number[];
   p: Array<[number, number, number]> | number[];
 };
 
 type CompactSubjectsOverview = {
-  v: 1;
+  v: 1 | 2;
   k: string[];
+  n?: string[];
   t: [number, number, number, number];
   o: Array<number | null>;
   s: Array<number | null>;
@@ -40,18 +41,21 @@ export type SectionRow = {
   term: string;
   termDesc: string;
   crn: string;
+  csvTitle?: string;
   totalNonWReported: number;
   counts: Record<string, number | null>;
 };
 
 export type SubjectShard = {
   subjectCode: string;
+  subjectTitle?: string;
   aggregate: Aggregate;
   availableTerms: Array<"fall" | "winter" | "spring" | "summer">;
   courses: Array<{
     courseCode: string;
     number: string;
     title: string;
+    description?: string | null;
     sectionCount: number;
     yearBucket: 1 | 2 | 3 | 4 | 5;
     terms: Array<"fall" | "winter" | "spring" | "summer">;
@@ -61,6 +65,7 @@ export type SubjectShard = {
 
 export type SubjectOverview = {
   code: string;
+  title: string;
   courseCount: number;
   sectionCount: number;
   professorCount: number;
@@ -81,8 +86,10 @@ export type SubjectsOverviewShard = {
 export type CourseShard = {
   courseCode: string;
   subject: string;
+  subjectTitle?: string;
   number: string;
   title: string;
+  description?: string | null;
   aggregate: Aggregate;
   instructors: Array<{
     professorId: string;
@@ -147,6 +154,42 @@ function decodeSearchIndex(raw: SearchIndex | CompactSearchIndex): SearchIndex {
   const table = raw.t;
   const decode = (index: number) => table[index] ?? "";
 
+  if (raw.v === 3) {
+    const subjects: SearchIndex["subjects"] = [];
+    const courses: SearchIndex["courses"] = [];
+    const professors: SearchIndex["professors"] = [];
+    const subjectData = raw.s as number[];
+    const courseData = raw.c as number[];
+    const professorData = raw.p as number[];
+
+    for (let i = 0; i < subjectData.length; i += 3) {
+      const code = decode(subjectData[i] ?? 0);
+      const title = decode(subjectData[i + 1] ?? 0);
+      subjects.push({
+        code,
+        title: title || code,
+        popularity: subjectData[i + 2] ?? 0,
+      });
+    }
+    for (let i = 0; i < courseData.length; i += 4) {
+      courses.push({
+        code: decode(courseData[i] ?? 0),
+        title: decode(courseData[i + 1] ?? 0),
+        subject: decode(courseData[i + 2] ?? 0),
+        popularity: courseData[i + 3] ?? 0,
+      });
+    }
+    for (let i = 0; i < professorData.length; i += 3) {
+      professors.push({
+        id: decode(professorData[i] ?? 0),
+        name: decode(professorData[i + 1] ?? 0),
+        popularity: professorData[i + 2] ?? 0,
+      });
+    }
+
+    return { subjects, courses, professors };
+  }
+
   if (raw.v === 2) {
     const subjects: SearchIndex["subjects"] = [];
     const courses: SearchIndex["courses"] = [];
@@ -156,8 +199,10 @@ function decodeSearchIndex(raw: SearchIndex | CompactSearchIndex): SearchIndex {
     const professorData = raw.p as number[];
 
     for (let i = 0; i < subjectData.length; i += 2) {
+      const code = decode(subjectData[i] ?? 0);
       subjects.push({
-        code: decode(subjectData[i] ?? 0),
+        code,
+        title: code,
         popularity: subjectData[i + 1] ?? 0,
       });
     }
@@ -183,6 +228,7 @@ function decodeSearchIndex(raw: SearchIndex | CompactSearchIndex): SearchIndex {
   return {
     subjects: (raw.s as Array<[number, number]>).map(([code, popularity]) => ({
       code: decode(code),
+      title: decode(code),
       popularity,
     })),
     courses: (raw.c as Array<[number, number, number, number]>).map(([code, title, subject, popularity]) => ({
@@ -229,6 +275,7 @@ function decodeSubjectsOverview(raw: SubjectsOverviewShard | CompactSubjectsOver
   }
 
   const subjects: SubjectOverview[] = [];
+  const titles = raw.v === 2 ? raw.n ?? [] : [];
   const recordSize = 4 + AGGREGATE_COMPACT_LENGTH;
   for (let i = 0; i < raw.s.length; i += recordSize) {
     const codeIndex = Number(raw.s[i] ?? -1);
@@ -239,6 +286,7 @@ function decodeSubjectsOverview(raw: SubjectsOverviewShard | CompactSubjectsOver
     const aggregate = decodeCompactAggregate(raw.s.slice(i + 4, i + 4 + AGGREGATE_COMPACT_LENGTH));
     subjects.push({
       code,
+      title: titles[codeIndex] ?? code,
       courseCount: Number(raw.s[i + 1] ?? 0),
       sectionCount: Number(raw.s[i + 2] ?? 0),
       professorCount: Number(raw.s[i + 3] ?? 0),

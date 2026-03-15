@@ -68,13 +68,13 @@ type FileMeta = {
 };
 
 type SearchIndexPayload = {
-  subjects: Array<{ code: string; popularity: number }>;
+  subjects: Array<{ code: string; title: string; popularity: number }>;
   courses: Array<{ code: string; title: string; subject: string; popularity: number }>;
   professors: Array<{ id: string; name: string; popularity: number }>;
 };
 
 type CompactSearchIndexPayload = {
-  v: 2;
+  v: 3;
   t: string[];
   s: number[];
   c: number[];
@@ -83,6 +83,7 @@ type CompactSearchIndexPayload = {
 
 type SubjectOverview = {
   code: string;
+  title: string;
   courseCount: number;
   sectionCount: number;
   professorCount: number;
@@ -90,14 +91,44 @@ type SubjectOverview = {
 };
 
 type SubjectsOverviewPayload = {
-  v: 1;
+  v: 2;
   k: string[];
+  n: string[];
   t: [number, number, number, number];
   o: Array<number | null>;
   s: Array<number | null>;
 };
 
+type CatalogSubjectMetadata = {
+  code: string;
+  title: string;
+  path: string;
+};
+
+type CatalogCourseMetadata = {
+  code: string;
+  subjectCode: string;
+  number: string;
+  title: string;
+  description: string;
+  path: string;
+};
+
+type CatalogMetadataSnapshot = {
+  schemaVersion: 1;
+  source: string;
+  scrapedAt: string;
+  subjects: CatalogSubjectMetadata[];
+  courses: CatalogCourseMetadata[];
+};
+
+type CatalogLookup = {
+  subjectsByCode: Map<string, CatalogSubjectMetadata>;
+  coursesByCode: Map<string, CatalogCourseMetadata>;
+};
+
 const INPUT_CSV = "data/pub_rec_master_w2016-f2025.csv";
+const CATALOG_METADATA_JSON = "data/uo-catalog-course-metadata.json";
 const OUTPUT_ROOT = "public/data";
 const NUMERICAL_ORDER = ["F", "DM", "D", "DP", "CM", "C", "CP", "BM", "B", "BP", "AM", "A", "AP"] as const;
 const NON_NUMERICAL_ORDER = ["P", "N", "OTHER"] as const;
@@ -323,7 +354,7 @@ function compactSearchIndex(index: SearchIndexPayload): CompactSearchIndexPayloa
   const professors: number[] = [];
 
   for (const subject of index.subjects) {
-    subjects.push(encode(subject.code), subject.popularity);
+    subjects.push(encode(subject.code), encode(subject.title), subject.popularity);
   }
   for (const course of index.courses) {
     courses.push(encode(course.code), encode(course.title), encode(course.subject), course.popularity);
@@ -333,7 +364,7 @@ function compactSearchIndex(index: SearchIndexPayload): CompactSearchIndexPayloa
   }
 
   return {
-    v: 2,
+    v: 3,
     t: table,
     s: subjects,
     c: courses,
@@ -354,6 +385,49 @@ function compactAggregate(aggregate: Aggregate): Array<number | null> {
     ...NUMERICAL_ORDER.map((grade) => aggregate.numericalCounts[grade]),
     ...NON_NUMERICAL_ORDER.map((grade) => aggregate.nonNumericalCounts[grade]),
   ];
+}
+
+async function loadCatalogLookup(): Promise<CatalogLookup> {
+  try {
+    const jsonText = await readFile(CATALOG_METADATA_JSON, "utf8");
+    const snapshot = JSON.parse(jsonText) as CatalogMetadataSnapshot;
+    const subjectsByCode = new Map<string, CatalogSubjectMetadata>();
+    for (const subject of snapshot.subjects) {
+      if (!subject.code || !subject.title) {
+        continue;
+      }
+      subjectsByCode.set(subject.code.toUpperCase(), {
+        code: subject.code.toUpperCase(),
+        title: subject.title.trim(),
+        path: subject.path,
+      });
+    }
+
+    const coursesByCode = new Map<string, CatalogCourseMetadata>();
+    for (const course of snapshot.courses) {
+      if (!course.code || !course.title) {
+        continue;
+      }
+      coursesByCode.set(course.code.toUpperCase(), {
+        code: course.code.toUpperCase(),
+        subjectCode: course.subjectCode.toUpperCase(),
+        number: course.number.trim(),
+        title: course.title.trim(),
+        description: course.description.trim(),
+        path: course.path,
+      });
+    }
+
+    console.log(`Loaded catalog metadata (${subjectsByCode.size} subjects, ${coursesByCode.size} courses)`);
+    return { subjectsByCode, coursesByCode };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`Catalog metadata unavailable at ${CATALOG_METADATA_JSON} (${message}); falling back to CSV titles only.`);
+    return {
+      subjectsByCode: new Map<string, CatalogSubjectMetadata>(),
+      coursesByCode: new Map<string, CatalogCourseMetadata>(),
+    };
+  }
 }
 
 async function main() {
@@ -436,6 +510,14 @@ async function main() {
     byProfessor.set(section.professorId, [...(byProfessor.get(section.professorId) ?? []), section]);
   }
 
+  const catalog = await loadCatalogLookup();
+  const getSubjectTitle = (subjectCode: string) => {
+    return catalog.subjectsByCode.get(subjectCode.toUpperCase())?.title ?? subjectCode;
+  };
+  const getCourseMetadata = (courseCode: string) => {
+    return catalog.coursesByCode.get(courseCode.toUpperCase()) ?? null;
+  };
+
   const fileIndex: Record<string, FileMeta> = {};
   const subjectOverviewRows: SubjectOverview[] = [];
 
@@ -445,12 +527,15 @@ async function main() {
       courseRows.set(row.courseCode, [...(courseRows.get(row.courseCode) ?? []), row]);
     }
     const subjectAggregate = buildAggregate(rows);
+    const subjectTitle = getSubjectTitle(subjectCode);
     const payload = {
       subjectCode,
+      subjectTitle,
       aggregate: subjectAggregate,
       availableTerms: ["fall", "winter", "spring", "summer"] as TermKey[],
       courses: [...courseRows.entries()]
         .map(([courseCode, courseSections]) => {
+          const catalogCourse = getCourseMetadata(courseCode);
           const termSet = new Set<TermKey>();
           for (const section of courseSections) {
             termSet.add(getTermKey(section.termDesc));
@@ -459,7 +544,8 @@ async function main() {
           return {
             courseCode,
             number,
-            title: courseSections[0]?.title ?? "",
+            title: catalogCourse?.title ?? courseSections[0]?.title ?? "",
+            description: catalogCourse?.description ?? null,
             sectionCount: courseSections.length,
             yearBucket: getYearBucket(number),
             terms: [...termSet],
@@ -470,6 +556,7 @@ async function main() {
     };
     subjectOverviewRows.push({
       code: subjectCode,
+      title: subjectTitle,
       courseCount: courseRows.size,
       sectionCount: rows.length,
       professorCount: new Set(rows.map((row) => row.professorId)).size,
@@ -481,6 +568,7 @@ async function main() {
 
   subjectOverviewRows.sort((a, b) => a.code.localeCompare(b.code));
   const subjectCodeTable = subjectOverviewRows.map((row) => row.code);
+  const subjectTitleTable = subjectOverviewRows.map((row) => row.title);
   const codeToIndex = new Map(subjectCodeTable.map((code, index) => [code, index]));
   const compactSubjectRows: Array<number | null> = [];
   for (const subject of subjectOverviewRows) {
@@ -494,8 +582,9 @@ async function main() {
   }
   const universityAggregate = buildAggregate(sections);
   const subjectsOverview: SubjectsOverviewPayload = {
-    v: 1,
+    v: 2,
     k: subjectCodeTable,
+    n: subjectTitleTable,
     t: [bySubject.size, byCourse.size, byProfessor.size, sections.length],
     o: compactAggregate(universityAggregate),
     s: compactSubjectRows,
@@ -504,15 +593,19 @@ async function main() {
   fileIndex[`${version}/subjects-overview.json`] = await writeJson(join(OUTPUT_ROOT, `${version}/subjects-overview.json`), subjectsOverview);
 
   for (const [courseCode, rows] of byCourse) {
+    const catalogCourse = getCourseMetadata(courseCode);
     const byInstructor = new Map<string, SectionRecord[]>();
     for (const row of rows) {
       byInstructor.set(row.professorId, [...(byInstructor.get(row.professorId) ?? []), row]);
     }
+    const subjectCode = rows[0]?.subject ?? "";
     const payload = {
       courseCode,
-      subject: rows[0]?.subject ?? "",
+      subject: subjectCode,
+      subjectTitle: getSubjectTitle(subjectCode),
       number: rows[0]?.number ?? "",
-      title: rows[0]?.title ?? "",
+      title: catalogCourse?.title ?? rows[0]?.title ?? "",
+      description: catalogCourse?.description ?? null,
       aggregate: buildAggregate(rows),
       instructors: [...byInstructor.entries()]
         .map(([professorId, instructorRows]) => ({
@@ -524,6 +617,7 @@ async function main() {
             term: section.term,
             termDesc: section.termDesc,
             crn: section.crn,
+            csvTitle: section.title,
             totalNonWReported: section.totalNonWReported,
             counts: section.counts,
           })),
@@ -544,19 +638,23 @@ async function main() {
       name: rows[0]?.instructor ?? "Unknown",
       aggregate: buildAggregate(rows),
       courses: [...byCourseRows.entries()]
-        .map(([courseCode, courseSections]) => ({
-          courseCode,
-          title: courseSections[0]?.title ?? "",
-          sectionCount: courseSections.length,
-          aggregate: buildAggregate(courseSections),
-          sections: courseSections.map((section) => ({
-            term: section.term,
-            termDesc: section.termDesc,
-            crn: section.crn,
-            totalNonWReported: section.totalNonWReported,
-            counts: section.counts,
-          })),
-        }))
+        .map(([courseCode, courseSections]) => {
+          const catalogCourse = getCourseMetadata(courseCode);
+          return {
+            courseCode,
+            title: catalogCourse?.title ?? courseSections[0]?.title ?? "",
+            sectionCount: courseSections.length,
+            aggregate: buildAggregate(courseSections),
+            sections: courseSections.map((section) => ({
+              term: section.term,
+              termDesc: section.termDesc,
+              crn: section.crn,
+              csvTitle: section.title,
+              totalNonWReported: section.totalNonWReported,
+              counts: section.counts,
+            })),
+          };
+        })
         .sort((a, b) => a.courseCode.localeCompare(b.courseCode)),
     };
     const relativePath = `${version}/professors/${professorId}.json`;
@@ -565,12 +663,12 @@ async function main() {
 
   const expandedSearchIndex: SearchIndexPayload = {
     subjects: [...bySubject.entries()]
-      .map(([code, rows]) => ({ code, popularity: rows.length }))
+      .map(([code, rows]) => ({ code, title: getSubjectTitle(code), popularity: rows.length }))
       .sort((a, b) => b.popularity - a.popularity),
     courses: [...byCourse.entries()]
       .map(([code, rows]) => ({
         code,
-        title: rows[0]?.title ?? "",
+        title: getCourseMetadata(code)?.title ?? rows[0]?.title ?? "",
         subject: rows[0]?.subject ?? "",
         popularity: rows.reduce((sum, row) => sum + row.totalNonWReported, 0),
       }))
