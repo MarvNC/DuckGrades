@@ -61,7 +61,7 @@ export function CoursePage() {
         className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
         to={course?.subject ? `/subject/${course.subject}` : "/subjects"}
       >
-        Back to subjects
+        Back to {course?.subjectTitle ?? course?.subject ?? "subjects"}
       </Link>
 
       <div className="space-y-1.5">
