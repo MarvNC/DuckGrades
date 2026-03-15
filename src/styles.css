@@ -15,10 +15,10 @@
   --duck-surface: #ffffff;
   --duck-surface-soft: #f3f8ed;
   --duck-surface-muted: #edf4e6;
-  --duck-accent-strong: #124734;
+  --duck-accent-strong: #4d9f7a;
   --duck-focus: #4d8152;
   --duck-brand-duck: #1d2b16;
-  --duck-brand-grades: #4f6e3d;
+  --duck-brand-grades: var(--duck-accent-strong);
   --duck-danger-border: #fcd6a5;
   --duck-danger-bg: #fff5e6;
   --duck-danger-text: #9a5f05;
