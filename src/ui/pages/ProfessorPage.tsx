@@ -6,10 +6,55 @@ import { EntityAggregateCard } from "../components/EntityAggregateCard";
 import { SectionDrilldown } from "../components/SectionDrilldown";
 import { usePageTitle } from "../usePageTitle";
 
+type ProfessorCourseSortKey = "code" | "students" | "sections" | "mean";
+
+const SORT_OPTIONS: Array<{ key: ProfessorCourseSortKey; label: string }> = [
+  { key: "code", label: "Code" },
+  { key: "students", label: "Students" },
+  { key: "sections", label: "Sections" },
+  { key: "mean", label: "Mean" },
+];
+
+function sortCourses(courses: ProfessorShard["courses"], sortKey: ProfessorCourseSortKey, descending: boolean): ProfessorShard["courses"] {
+  const direction = descending ? -1 : 1;
+
+  return [...courses].sort((a, b) => {
+    if (sortKey === "code") {
+      return direction * a.courseCode.localeCompare(b.courseCode);
+    }
+
+    if (sortKey === "students") {
+      const delta = a.aggregate.totalNonWReported - b.aggregate.totalNonWReported;
+      if (delta !== 0) {
+        return direction * delta;
+      }
+      return a.courseCode.localeCompare(b.courseCode);
+    }
+
+    if (sortKey === "sections") {
+      const delta = a.sectionCount - b.sectionCount;
+      if (delta !== 0) {
+        return direction * delta;
+      }
+      return a.courseCode.localeCompare(b.courseCode);
+    }
+
+    const left = a.aggregate.mean ?? -1;
+    const right = b.aggregate.mean ?? -1;
+    const delta = left - right;
+    if (delta !== 0) {
+      return direction * delta;
+    }
+    return a.courseCode.localeCompare(b.courseCode);
+  });
+}
+
 export function ProfessorPage() {
   const { id } = useParams();
   const [professor, setProfessor] = useState<ProfessorShard | null>(null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
+  const [sortKey, setSortKey] = useState<ProfessorCourseSortKey>("code");
+  const [sortDescending, setSortDescending] = useState(false);
 
   const professorDisplayName = professor?.name ?? `Professor ${id}`;
   const pageTitle = `${professorDisplayName} Grade Distributions and Statistics`;
@@ -32,28 +77,41 @@ export function ProfessorPage() {
       });
   }, [id]);
 
+  useEffect(() => {
+    if (sortKey === "code") {
+      setSortDescending(false);
+      return;
+    }
+    setSortDescending(true);
+  }, [sortKey]);
+
   const courses = useMemo(() => {
-    return [...(professor?.courses ?? [])].sort((a, b) => a.courseCode.localeCompare(b.courseCode));
+    return professor?.courses ?? [];
   }, [professor?.courses]);
+
+  const visibleCourses = useMemo(() => {
+    return sortCourses(courses, sortKey, sortDescending);
+  }, [courses, sortDescending, sortKey]);
 
   const sectionCount = useMemo(() => {
     return courses.reduce((sum, course) => sum + course.sectionCount, 0);
   }, [courses]);
 
+  const totalStudents = professor?.aggregate.totalNonWReported ?? 0;
+
   return (
     <section className="space-y-4 rounded-3xl border border-slate-200/90 bg-white/85 p-5 shadow-sm backdrop-blur-sm sm:p-7">
       <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">{professorDisplayName}</h1>
-      {professor ? (
-        <div className="flex flex-wrap gap-2">
-          <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2.5 py-1 text-xs font-semibold text-slate-600">
-            {courses.length} courses
-          </span>
-          <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2.5 py-1 text-xs font-semibold text-slate-600">
-            {sectionCount} sections
-          </span>
-        </div>
-      ) : null}
-      <AggregateSummaryCard label="Professor aggregate" aggregate={professor?.aggregate} />
+      <AggregateSummaryCard
+        label="Professor aggregate"
+        aggregate={professor?.aggregate}
+        showDistributionStudentCount={false}
+        metaChips={
+          professor
+            ? [`${courses.length} courses`, `${sectionCount} sections`, `${totalStudents.toLocaleString()} students`]
+            : undefined
+        }
+      />
       {loadState === "loading" ? <p className="text-sm text-slate-600">Loading professor shard...</p> : null}
       {loadState === "error" ? <p className="text-sm text-amber-700">Unable to load this professor shard right now.</p> : null}
       {loadState === "ready" && courses.length === 0 ? <p className="text-sm text-slate-600">No visible course data for this professor.</p> : null}
@@ -63,8 +121,41 @@ export function ProfessorPage() {
         </p>
       ) : null}
 
+      {loadState === "ready" && courses.length > 0 ? (
+        <div className="sticky top-4 z-20 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur">
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500" htmlFor="professor-course-sort">
+              Sort
+            </label>
+            <select
+              id="professor-course-sort"
+              value={sortKey}
+              onChange={(event) => setSortKey(event.target.value as ProfessorCourseSortKey)}
+              className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-[#4d8152] focus:ring-2 focus:ring-[#4d8152]/20"
+            >
+              {SORT_OPTIONS.map((option) => (
+                <option key={option.key} value={option.key}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => setSortDescending((value) => !value)}
+              disabled={sortKey === "code"}
+              className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {sortDescending ? "Desc" : "Asc"}
+            </button>
+            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
+              {visibleCourses.length} of {courses.length}
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       <div className="space-y-2.5">
-        {courses.map((course) => (
+        {visibleCourses.map((course) => (
           <EntityAggregateCard
             key={course.courseCode}
             title={course.courseCode}
@@ -75,7 +166,7 @@ export function ProfessorPage() {
             distributionSize="sm"
             showStudentCountInDistribution={false}
           >
-            <SectionDrilldown sections={course.sections} identityPrefix={course.courseCode} />
+            <SectionDrilldown sections={course.sections} identityPrefix={course.courseCode} reportedTotal={course.aggregate.totalNonWReported} />
           </EntityAggregateCard>
         ))}
       </div>

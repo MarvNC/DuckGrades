@@ -7,11 +7,60 @@ import { EntityAggregateCard } from "../components/EntityAggregateCard";
 import { SectionDrilldown } from "../components/SectionDrilldown";
 import { usePageTitle } from "../usePageTitle";
 
+type InstructorSortKey = "name" | "students" | "sections" | "mean";
+
+const SORT_OPTIONS: Array<{ key: InstructorSortKey; label: string }> = [
+  { key: "name", label: "Name" },
+  { key: "students", label: "Students" },
+  { key: "sections", label: "Sections" },
+  { key: "mean", label: "Mean" },
+];
+
+function sortInstructors(
+  instructors: CourseShard["instructors"],
+  sortKey: InstructorSortKey,
+  descending: boolean,
+): CourseShard["instructors"] {
+  const direction = descending ? -1 : 1;
+
+  return [...instructors].sort((a, b) => {
+    if (sortKey === "name") {
+      return direction * a.name.localeCompare(b.name);
+    }
+
+    if (sortKey === "students") {
+      const delta = a.aggregate.totalNonWReported - b.aggregate.totalNonWReported;
+      if (delta !== 0) {
+        return direction * delta;
+      }
+      return a.name.localeCompare(b.name);
+    }
+
+    if (sortKey === "sections") {
+      const delta = a.sectionCount - b.sectionCount;
+      if (delta !== 0) {
+        return direction * delta;
+      }
+      return a.name.localeCompare(b.name);
+    }
+
+    const left = a.aggregate.mean ?? -1;
+    const right = b.aggregate.mean ?? -1;
+    const delta = left - right;
+    if (delta !== 0) {
+      return direction * delta;
+    }
+    return a.name.localeCompare(b.name);
+  });
+}
+
 export function CoursePage() {
   const { code } = useParams();
   const [course, setCourse] = useState<CourseShard | null>(null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [instructorQuery, setInstructorQuery] = useState("");
+  const [sortKey, setSortKey] = useState<InstructorSortKey>("students");
+  const [sortDescending, setSortDescending] = useState(true);
 
   const displayCourseCode = course?.courseCode ?? (code ?? "COURSE").toUpperCase();
   const pageTitle = course?.title
@@ -36,6 +85,14 @@ export function CoursePage() {
       });
   }, [code]);
 
+  useEffect(() => {
+    if (sortKey === "name") {
+      setSortDescending(false);
+      return;
+    }
+    setSortDescending(true);
+  }, [sortKey]);
+
   const visibleInstructors = useMemo(() => {
     const instructors = course?.instructors ?? [];
     const query = instructorQuery.trim();
@@ -51,9 +108,15 @@ export function CoursePage() {
       .map((result) => result.obj);
   }, [course?.instructors, instructorQuery]);
 
+  const sortedInstructors = useMemo(() => {
+    return sortInstructors(visibleInstructors, sortKey, sortDescending);
+  }, [sortDescending, sortKey, visibleInstructors]);
+
   const totalSections = useMemo(() => {
     return (course?.instructors ?? []).reduce((sum, instructor) => sum + instructor.sectionCount, 0);
   }, [course?.instructors]);
+
+  const backToName = course?.subjectTitle ?? course?.subject ?? "subjects";
 
   return (
     <section className="space-y-4 rounded-3xl border border-slate-200/90 bg-white/85 p-5 shadow-sm backdrop-blur-sm sm:p-7">
@@ -61,7 +124,7 @@ export function CoursePage() {
         className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
         to={course?.subject ? `/subject/${course.subject}` : "/subjects"}
       >
-        Back to {course?.subjectTitle ?? course?.subject ?? "subjects"}
+        Back to {backToName}
       </Link>
 
       <div className="space-y-1.5">
@@ -111,16 +174,39 @@ export function CoursePage() {
                 placeholder="Search by instructor name"
                 className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-[var(--duck-fg)] shadow-sm outline-none transition focus:border-[#4d8152] focus:ring-2 focus:ring-[#4d8152]/20 sm:flex-1"
               />
+              <label className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500" htmlFor="course-instructor-sort">
+                Sort
+              </label>
+              <select
+                id="course-instructor-sort"
+                value={sortKey}
+                onChange={(event) => setSortKey(event.target.value as InstructorSortKey)}
+                className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-[#4d8152] focus:ring-2 focus:ring-[#4d8152]/20"
+              >
+                {SORT_OPTIONS.map((option) => (
+                  <option key={option.key} value={option.key}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setSortDescending((value) => !value)}
+                disabled={sortKey === "name"}
+                className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {sortDescending ? "Desc" : "Asc"}
+              </button>
               <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
-                {visibleInstructors.length} of {course.instructors.length}
+                {sortedInstructors.length} of {course.instructors.length}
               </p>
             </div>
           </div>
 
-          {visibleInstructors.length === 0 ? <p className="text-sm text-slate-600">No instructors match your search.</p> : null}
+          {sortedInstructors.length === 0 ? <p className="text-sm text-slate-600">No instructors match your search.</p> : null}
 
           <div className="space-y-2.5">
-            {visibleInstructors.map((instructor) => (
+            {sortedInstructors.map((instructor) => (
               <EntityAggregateCard
                 key={instructor.professorId}
                 title={instructor.name}

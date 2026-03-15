@@ -6,11 +6,56 @@ import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
 import { EntityAggregateCard } from "../components/EntityAggregateCard";
 import { usePageTitle } from "../usePageTitle";
 
+type SubjectCourseSortKey = "code" | "students" | "sections" | "mean";
+
+const SORT_OPTIONS: Array<{ key: SubjectCourseSortKey; label: string }> = [
+  { key: "code", label: "Code" },
+  { key: "students", label: "Students" },
+  { key: "sections", label: "Sections" },
+  { key: "mean", label: "Mean" },
+];
+
+function sortCourses(courses: SubjectShard["courses"], sortKey: SubjectCourseSortKey, descending: boolean): SubjectShard["courses"] {
+  const direction = descending ? -1 : 1;
+
+  return [...courses].sort((a, b) => {
+    if (sortKey === "code") {
+      return direction * a.courseCode.localeCompare(b.courseCode);
+    }
+
+    if (sortKey === "students") {
+      const delta = a.aggregate.totalNonWReported - b.aggregate.totalNonWReported;
+      if (delta !== 0) {
+        return direction * delta;
+      }
+      return a.courseCode.localeCompare(b.courseCode);
+    }
+
+    if (sortKey === "sections") {
+      const delta = a.sectionCount - b.sectionCount;
+      if (delta !== 0) {
+        return direction * delta;
+      }
+      return a.courseCode.localeCompare(b.courseCode);
+    }
+
+    const left = a.aggregate.mean ?? -1;
+    const right = b.aggregate.mean ?? -1;
+    const delta = left - right;
+    if (delta !== 0) {
+      return direction * delta;
+    }
+    return a.courseCode.localeCompare(b.courseCode);
+  });
+}
+
 export function SubjectPage() {
   const { code } = useParams();
   const [subject, setSubject] = useState<SubjectShard | null>(null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [courseQuery, setCourseQuery] = useState("");
+  const [sortKey, setSortKey] = useState<SubjectCourseSortKey>("code");
+  const [sortDescending, setSortDescending] = useState(false);
 
   const displaySubjectCode = (subject?.subjectCode ?? code ?? "Subject").toUpperCase();
   const subjectTitle = subject?.subjectTitle;
@@ -37,8 +82,16 @@ export function SubjectPage() {
   }, [code]);
 
   const courses = useMemo(() => {
-    return [...(subject?.courses ?? [])].sort((a, b) => a.courseCode.localeCompare(b.courseCode));
+    return subject?.courses ?? [];
   }, [subject?.courses]);
+
+  useEffect(() => {
+    if (sortKey === "code") {
+      setSortDescending(false);
+      return;
+    }
+    setSortDescending(true);
+  }, [sortKey]);
 
   const sectionCount = useMemo(() => {
     return courses.reduce((sum, course) => sum + course.sectionCount, 0);
@@ -62,6 +115,10 @@ export function SubjectPage() {
       })
       .map((result) => result.obj);
   }, [courseQuery, courses]);
+
+  const visibleCourses = useMemo(() => {
+    return sortCourses(filteredCourses, sortKey, sortDescending);
+  }, [filteredCourses, sortDescending, sortKey]);
 
   return (
     <section className="space-y-4 rounded-3xl border border-slate-200/90 bg-white/85 p-5 shadow-sm backdrop-blur-sm sm:p-7">
@@ -107,18 +164,41 @@ export function SubjectPage() {
               placeholder="Code, number, or title"
               className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-[var(--duck-fg)] shadow-sm outline-none transition focus:border-[#4d8152] focus:ring-2 focus:ring-[#4d8152]/20 sm:flex-1"
             />
+            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500" htmlFor="subject-course-sort">
+              Sort
+            </label>
+            <select
+              id="subject-course-sort"
+              value={sortKey}
+              onChange={(event) => setSortKey(event.target.value as SubjectCourseSortKey)}
+              className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-[#4d8152] focus:ring-2 focus:ring-[#4d8152]/20"
+            >
+              {SORT_OPTIONS.map((option) => (
+                <option key={option.key} value={option.key}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => setSortDescending((value) => !value)}
+              disabled={sortKey === "code"}
+              className="rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {sortDescending ? "Desc" : "Asc"}
+            </button>
             <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
-              {filteredCourses.length} of {courses.length}
+              {visibleCourses.length} of {courses.length}
             </p>
           </div>
         </div>
       ) : null}
 
-      {loadState === "ready" && courses.length > 0 && filteredCourses.length === 0 ? <p className="text-sm text-slate-600">No courses match your search.</p> : null}
+      {loadState === "ready" && courses.length > 0 && visibleCourses.length === 0 ? <p className="text-sm text-slate-600">No courses match your search.</p> : null}
 
       {loadState === "ready" ? (
         <div className="space-y-2.5">
-          {filteredCourses.map((course) => (
+          {visibleCourses.map((course) => (
             <Link
               key={course.courseCode}
               to={`/course/${course.courseCode}`}
