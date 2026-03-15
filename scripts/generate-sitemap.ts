@@ -7,7 +7,7 @@ type VersionFile = {
 
 const PUBLIC_DIR = "public";
 const DATA_ROOT = join(PUBLIC_DIR, "data");
-const DEFAULT_SITE_URL = "https://duckgrades.com";
+const DEFAULT_SITE_URL = "https://duckgrades.maarv.dev";
 
 function normalizeSiteUrl(input: string): string {
   return input.trim().replace(/\/$/, "");
