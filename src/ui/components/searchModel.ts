@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { getSearchIndex } from "../../lib/dataClient";
-import { searchIndex } from "../../lib/search";
+import { useEffect, useRef, useState } from "react";
+import { rankSearchQuery, warmSearchWorker } from "../../lib/searchWorkerClient";
+import { EMPTY_RANKED_RESULTS, type RankedSearchResult } from "../../lib/search";
 
 export type SearchItem = {
   key: string;
@@ -12,28 +12,41 @@ export type SearchItem = {
   section: "Subjects" | "Courses" | "Professors";
 };
 
-const EMPTY_RANKED = { subjects: [], courses: [], professors: [] };
-
 export function useRankedSearch(query: string) {
-  const [index, setIndex] = useState<Awaited<ReturnType<typeof getSearchIndex>> | null>(null);
+  const [ranked, setRanked] = useState<RankedSearchResult>(EMPTY_RANKED_RESULTS);
+  const requestCounter = useRef(0);
 
   useEffect(() => {
-    if (index) {
+    warmSearchWorker();
+  }, []);
+
+  useEffect(() => {
+    const currentRequest = ++requestCounter.current;
+    if (!query.trim()) {
+      setRanked(EMPTY_RANKED_RESULTS);
       return;
     }
-    void getSearchIndex().then(setIndex).catch(() => setIndex({ subjects: [], courses: [], professors: [] }));
-  }, [index]);
 
-  return useMemo(() => {
-    if (!index) {
-      return EMPTY_RANKED;
-    }
-    return searchIndex(index, query);
-  }, [index, query]);
+    void rankSearchQuery(query)
+      .then((result) => {
+        if (currentRequest !== requestCounter.current) {
+          return;
+        }
+        setRanked(result);
+      })
+      .catch(() => {
+        if (currentRequest !== requestCounter.current) {
+          return;
+        }
+        setRanked(EMPTY_RANKED_RESULTS);
+      });
+  }, [query]);
+
+  return ranked;
 }
 
 export function buildSearchItems(
-  ranked: ReturnType<typeof searchIndex>,
+  ranked: RankedSearchResult,
   limits: { subjects?: number; courses?: number; professors?: number } = {},
 ) {
   const subjects = ranked.subjects.slice(0, limits.subjects ?? 6).map((subject) => ({
