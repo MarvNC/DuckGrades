@@ -68,8 +68,13 @@ export function UPlotChart({
 }: UPlotChartProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const mountRef = useRef<HTMLDivElement | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const pointerRef = useRef<{ x: number; y: number } | null>(null);
+  const lastTooltipRef = useRef<{ idx: number; x: number; y: number; signature: string } | null>(
+    null
+  );
   const [width, setWidth] = useState(0);
-  const [, setThemeVersion] = useState(0);
+  const [theme, setTheme] = useState<DuckChartTheme>(() => readChartTheme());
   const [tooltip, setTooltip] = useState<{
     x: number;
     y: number;
@@ -77,7 +82,6 @@ export function UPlotChart({
     items: Array<{ label: string; value: string; color?: string }>;
   } | null>(null);
 
-  const theme = readChartTheme();
   const hasData = data.length > 1 && data[0] && data[0].length > 0;
 
   useEffect(() => {
@@ -104,7 +108,7 @@ export function UPlotChart({
   useEffect(() => {
     const root = document.documentElement;
     const observer = new MutationObserver(() => {
-      setThemeVersion((value) => value + 1);
+      setTheme(readChartTheme());
     });
     observer.observe(root, { attributes: true, attributeFilter: ['data-theme', 'style'] });
     return () => {
@@ -123,7 +127,48 @@ export function UPlotChart({
 
     const over = plot.over;
     const clearTooltip = () => {
+      lastTooltipRef.current = null;
       setTooltip(null);
+    };
+
+    const updateTooltip = () => {
+      rafRef.current = null;
+      const pointer = pointerRef.current;
+      if (!pointer || !getTooltip) {
+        return;
+      }
+
+      const idx = plot.posToIdx(pointer.x);
+      const content = getTooltip({ idx, data });
+      if (!content) {
+        clearTooltip();
+        return;
+      }
+
+      const nextX = plot.bbox.left + pointer.x + 16;
+      const nextY = plot.bbox.top + pointer.y + 12;
+      const signature = `${content.title}|${content.items
+        .map((item) => `${item.label}:${item.value}`)
+        .join('|')}`;
+
+      const previous = lastTooltipRef.current;
+      if (
+        previous &&
+        previous.idx === idx &&
+        previous.signature === signature &&
+        Math.abs(previous.x - nextX) < 6 &&
+        Math.abs(previous.y - nextY) < 6
+      ) {
+        return;
+      }
+
+      lastTooltipRef.current = { idx, x: nextX, y: nextY, signature };
+      setTooltip({
+        x: nextX,
+        y: nextY,
+        title: content.title,
+        items: content.items,
+      });
     };
 
     const syncTooltip = (event: MouseEvent) => {
@@ -132,27 +177,26 @@ export function UPlotChart({
       }
 
       const bounds = over.getBoundingClientRect();
-      const left = Math.max(0, Math.min(bounds.width, event.clientX - bounds.left));
-      const top = Math.max(0, Math.min(bounds.height, event.clientY - bounds.top));
-      const idx = plot.posToIdx(left);
-      const content = getTooltip({ idx, data });
-      if (!content) {
-        setTooltip(null);
-        return;
-      }
+      pointerRef.current = {
+        x: Math.max(0, Math.min(bounds.width, event.clientX - bounds.left)),
+        y: Math.max(0, Math.min(bounds.height, event.clientY - bounds.top)),
+      };
 
-      setTooltip({
-        x: plot.bbox.left + left + 16,
-        y: plot.bbox.top + top + 12,
-        title: content.title,
-        items: content.items,
-      });
+      if (rafRef.current === null) {
+        rafRef.current = window.requestAnimationFrame(updateTooltip);
+      }
     };
 
-    over.addEventListener('mousemove', syncTooltip);
+    over.addEventListener('mousemove', syncTooltip, { passive: true });
     over.addEventListener('mouseleave', clearTooltip);
 
     return () => {
+      if (rafRef.current !== null) {
+        window.cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      pointerRef.current = null;
+      lastTooltipRef.current = null;
       over.removeEventListener('mousemove', syncTooltip);
       over.removeEventListener('mouseleave', clearTooltip);
       plot.destroy();
@@ -160,13 +204,20 @@ export function UPlotChart({
   }, [buildOptions, data, getTooltip, hasData, height, theme, width]);
 
   const tooltipWidth = Math.max(120, Math.min(220, width - 16));
+  const estimatedTooltipHeight = tooltip ? 30 + tooltip.items.length * 18 : 0;
   const tooltipLeft = tooltip
     ? Math.max(8, Math.min(tooltip.x, Math.max(8, width - tooltipWidth - 8)))
     : 8;
-  const tooltipTop = tooltip ? Math.max(8, tooltip.y) : 8;
+  const tooltipTop = tooltip
+    ? Math.max(8, Math.min(tooltip.y, Math.max(8, height - estimatedTooltipHeight - 8)))
+    : 8;
 
   return (
-    <div ref={hostRef} className={`relative ${className ?? ''}`} aria-label={ariaLabel}>
+    <div
+      ref={hostRef}
+      className={`relative overflow-y-hidden ${className ?? ''}`}
+      aria-label={ariaLabel}
+    >
       {hasData ? (
         <>
           <div ref={mountRef} />
