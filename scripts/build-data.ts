@@ -903,6 +903,20 @@ async function main() {
     const professorCount = new Set(rows.map((row) => row.professorId)).size;
     const subjectTitle = getSubjectTitle(subjectCode);
     const subjectDescription = getSubjectDescription(subjectCode);
+    let firstTerm = rows[0]?.term ?? '';
+    let lastTerm = rows[0]?.term ?? '';
+    let firstTermDesc = rows[0]?.termDesc ?? '';
+    let lastTermDesc = rows[0]?.termDesc ?? '';
+    for (const row of rows) {
+      if (row.term < firstTerm) {
+        firstTerm = row.term;
+        firstTermDesc = row.termDesc;
+      }
+      if (row.term > lastTerm) {
+        lastTerm = row.term;
+        lastTermDesc = row.termDesc;
+      }
+    }
     const payload = {
       subjectCode,
       subjectTitle,
@@ -910,6 +924,8 @@ async function main() {
       professorCount,
       aggregate: subjectAggregate,
       availableTerms: ['fall', 'winter', 'spring', 'summer'] as TermKey[],
+      firstTerm: firstTermDesc,
+      lastTerm: lastTermDesc,
       courses: [...courseRows.entries()]
         .map(([courseCode, courseSections]) => {
           const catalogCourse = getCourseMetadata(courseCode);

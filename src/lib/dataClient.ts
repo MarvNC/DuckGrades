@@ -85,6 +85,8 @@ export type SubjectShard = {
   professorCount?: number;
   aggregate: Aggregate;
   availableTerms: Array<'fall' | 'winter' | 'spring' | 'summer'>;
+  firstTerm?: string;
+  lastTerm?: string;
   courses: Array<{
     courseCode: string;
     number: string;

@@ -6,6 +6,7 @@ import {
   prefetchRouteData,
   type SubjectShard,
 } from '../../lib/dataClient';
+import { termRangeChipFromDescriptions } from '../../lib/termUtils';
 import fuzzysort from 'fuzzysort';
 import { AggregateSummaryCard } from '../components/AggregateSummaryCard';
 import { EntityAggregateCard } from '../components/EntityAggregateCard';
@@ -158,6 +159,7 @@ export function SubjectPage() {
               `${sectionCount} sections`,
               'professorCount' in subject ? `${subject.professorCount ?? '...'} professors` : null,
               `${subject.aggregate.totalNonWReported.toLocaleString()} students`,
+              termRangeChipFromDescriptions(subject.firstTerm, subject.lastTerm),
             ]
               .filter((value): value is string => Boolean(value))
               .map((chip) => (
