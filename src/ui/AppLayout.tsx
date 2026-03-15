@@ -49,6 +49,16 @@ export function AppLayout() {
     setActiveIndex(0);
   }
 
+  function onHeaderBrandClick(event: React.MouseEvent<HTMLAnchorElement>) {
+    if (!hasQuery) {
+      return;
+    }
+
+    event.preventDefault();
+    clearQuery();
+    navigate("/");
+  }
+
   function focusInput() {
     headerInputRef.current?.focus();
   }
@@ -113,7 +123,7 @@ export function AppLayout() {
       {showHeader ? (
         <header className={`relative z-30 mx-auto w-full max-w-6xl px-5 py-6 sm:px-8 ${isHome ? "home-search-header-enter" : ""}`}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <Brand />
+            <Brand onClick={onHeaderBrandClick} />
             <div className="group relative w-full flex-1 sm:min-w-0">
               <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
                 <svg
