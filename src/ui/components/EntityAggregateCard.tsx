@@ -46,7 +46,6 @@ export function EntityAggregateCard({
 
             {subtitle ? (
               <p className="max-w-full truncate text-base font-medium text-[var(--duck-muted-strong)]">
-                <span className="px-0.5 text-[var(--duck-muted)]">·</span>
                 <span>{subtitle}</span>
               </p>
             ) : null}
