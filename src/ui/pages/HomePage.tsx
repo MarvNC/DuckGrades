@@ -2,11 +2,14 @@ import { useEffect, useRef } from "react";
 import { Link, useOutletContext } from "react-router-dom";
 import type { SearchLayoutContext } from "../AppLayout";
 import { Brand } from "../components/Brand";
+import { usePageTitle } from "../usePageTitle";
 
 export function HomePage() {
   const { hasActiveSearch, query, setQuery, onSearchInputKeyDown } = useOutletContext<SearchLayoutContext>();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const wasActiveRef = useRef(hasActiveSearch);
+
+  usePageTitle("University of Oregon Grade Distributions and Statistics");
 
   useEffect(() => {
     if (wasActiveRef.current && !hasActiveSearch) {

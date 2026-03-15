@@ -4,11 +4,17 @@ import { getProfessorShard, type ProfessorShard } from "../../lib/dataClient";
 import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
 import { EntityAggregateCard } from "../components/EntityAggregateCard";
 import { SectionDrilldown } from "../components/SectionDrilldown";
+import { usePageTitle } from "../usePageTitle";
 
 export function ProfessorPage() {
   const { id } = useParams();
   const [professor, setProfessor] = useState<ProfessorShard | null>(null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
+
+  const professorDisplayName = professor?.name ?? `Professor ${id}`;
+  const pageTitle = `${professorDisplayName} Grade Distributions and Statistics`;
+
+  usePageTitle(pageTitle);
 
   useEffect(() => {
     if (!id) {
@@ -36,7 +42,7 @@ export function ProfessorPage() {
 
   return (
     <section className="space-y-4 rounded-3xl border border-slate-200/90 bg-white/85 p-5 shadow-sm backdrop-blur-sm sm:p-7">
-      <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">{professor?.name ?? `Professor ${id}`}</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">{professorDisplayName}</h1>
       {professor ? (
         <div className="flex flex-wrap gap-2">
           <span className="rounded-full border border-slate-200 bg-[#f7faf2] px-2.5 py-1 text-xs font-semibold text-slate-600">
@@ -69,7 +75,7 @@ export function ProfessorPage() {
             distributionSize="sm"
             showStudentCountInDistribution={false}
           >
-            <SectionDrilldown sections={course.sections} identityPrefix={course.courseCode} />
+            <SectionDrilldown sections={course.sections} identityPrefix={course.courseCode} canonicalSubjectCode={course.courseCode.split("-")[0]} />
           </EntityAggregateCard>
         ))}
       </div>

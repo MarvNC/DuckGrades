@@ -4,6 +4,7 @@ import fuzzysort from "fuzzysort";
 import { getSubjectsOverviewShard, type SubjectOverview, type SubjectsOverviewShard } from "../../lib/dataClient";
 import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
 import { EntityAggregateCard } from "../components/EntityAggregateCard";
+import { usePageTitle } from "../usePageTitle";
 
 type SubjectSortKey = "code" | "students" | "courses" | "mean";
 
@@ -54,6 +55,8 @@ export function SubjectsOverviewPage() {
   const [subjectQuery, setSubjectQuery] = useState("");
   const [sortKey, setSortKey] = useState<SubjectSortKey>("code");
   const [sortDescending, setSortDescending] = useState(false);
+
+  usePageTitle("All UO Subjects Grade Distributions and Statistics");
 
   useEffect(() => {
     setLoadState("loading");
@@ -113,7 +116,7 @@ export function SubjectsOverviewPage() {
     <section className="space-y-4 rounded-3xl border border-slate-200/90 bg-white/85 p-5 shadow-sm backdrop-blur-sm sm:p-7">
       <div className="space-y-1.5">
         <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">Subject overview</h1>
-        <p className="text-sm text-slate-600">Browse all subjects and compare high-level grade trends across the university.</p>
+        <p className="text-sm text-slate-600">Browse all subjects and compare grade distributions and summary statistics across the university.</p>
       </div>
 
       <AggregateSummaryCard

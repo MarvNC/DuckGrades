@@ -4,6 +4,7 @@ import { getCourseShard, getSubjectShard, type SubjectShard } from "../../lib/da
 import fuzzysort from "fuzzysort";
 import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
 import { EntityAggregateCard } from "../components/EntityAggregateCard";
+import { usePageTitle } from "../usePageTitle";
 
 export function SubjectPage() {
   const { code } = useParams();
@@ -11,6 +12,14 @@ export function SubjectPage() {
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [courseQuery, setCourseQuery] = useState("");
   const [professorCount, setProfessorCount] = useState<number | null>(null);
+
+  const displaySubjectCode = (subject?.subjectCode ?? code ?? "Subject").toUpperCase();
+  const subjectTitle = subject?.subjectTitle;
+  const pageTitle = subjectTitle
+    ? `${displaySubjectCode} ${subjectTitle} Grade Distributions and Statistics`
+    : `${displaySubjectCode} Grade Distributions and Statistics`;
+
+  usePageTitle(pageTitle);
 
   useEffect(() => {
     if (!code) {
@@ -98,8 +107,11 @@ export function SubjectPage() {
       </Link>
 
       <div className="space-y-1.5">
-        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">{(subject?.subjectCode ?? code ?? "SUBJ").toUpperCase()}</h1>
-        <p className="text-sm text-slate-600">{subject?.subjectTitle ?? "Loading subject title..."}</p>
+        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">
+          {displaySubjectCode}
+          {subject?.subjectTitle ? ` - ${subject.subjectTitle}` : ""}
+        </h1>
+        {subject?.subjectDescription ? <p className="max-w-4xl text-sm leading-relaxed text-slate-700">{subject.subjectDescription}</p> : null}
       </div>
 
       <AggregateSummaryCard

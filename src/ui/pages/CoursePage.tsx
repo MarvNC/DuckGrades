@@ -5,12 +5,20 @@ import fuzzysort from "fuzzysort";
 import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
 import { EntityAggregateCard } from "../components/EntityAggregateCard";
 import { SectionDrilldown } from "../components/SectionDrilldown";
+import { usePageTitle } from "../usePageTitle";
 
 export function CoursePage() {
   const { code } = useParams();
   const [course, setCourse] = useState<CourseShard | null>(null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [instructorQuery, setInstructorQuery] = useState("");
+
+  const displayCourseCode = course?.courseCode ?? (code ?? "COURSE").toUpperCase();
+  const pageTitle = course?.title
+    ? `${displayCourseCode} ${course.title} Grade Distributions and Statistics`
+    : `${displayCourseCode} Grade Distributions and Statistics`;
+
+  usePageTitle(pageTitle);
 
   useEffect(() => {
     if (!code) {
@@ -57,7 +65,7 @@ export function CoursePage() {
       </Link>
 
       <div className="space-y-1.5">
-        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">{course?.courseCode ?? (code ?? "COURSE").toUpperCase()}</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">{displayCourseCode}</h1>
         <p className="text-sm text-slate-600">{course?.title ?? "Loading course details..."}</p>
         {course?.description ? <p className="max-w-4xl text-sm leading-relaxed text-slate-700">{course.description}</p> : null}
       </div>
@@ -122,7 +130,7 @@ export function CoursePage() {
                 distributionSize="sm"
                 showStudentCountInDistribution={false}
               >
-                <SectionDrilldown sections={instructor.sections} identityPrefix={instructor.professorId} />
+                <SectionDrilldown sections={instructor.sections} identityPrefix={instructor.professorId} canonicalSubjectCode={course.subject} />
               </EntityAggregateCard>
             ))}
           </div>
