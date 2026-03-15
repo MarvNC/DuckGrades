@@ -9,6 +9,7 @@ import {
 import { AggregateSummaryCard } from '../components/AggregateSummaryCard';
 import { EntityAggregateCard } from '../components/EntityAggregateCard';
 import { usePageTitle } from '../usePageTitle';
+import { MetaChip } from '../components/MetaChip';
 
 type SubjectSortKey = 'code' | 'students' | 'courses' | 'mean';
 
@@ -128,12 +129,7 @@ export function SubjectsOverviewPage() {
               `${overview.totals.professorCount.toLocaleString()} professors`,
               `${totalStudents.toLocaleString()} students`,
             ].map((chip) => (
-              <span
-                key={chip}
-                className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]"
-              >
-                {chip}
-              </span>
+              <MetaChip key={chip} chip={chip} />
             ))}
           </div>
         ) : null}

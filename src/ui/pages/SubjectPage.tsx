@@ -11,6 +11,7 @@ import { AggregateSummaryCard } from '../components/AggregateSummaryCard';
 import { EntityAggregateCard } from '../components/EntityAggregateCard';
 import { NotFoundPage } from './NotFoundPage';
 import { usePageTitle } from '../usePageTitle';
+import { MetaChip } from '../components/MetaChip';
 
 type SubjectCourseSortKey = 'code' | 'students' | 'sections' | 'mean';
 
@@ -153,12 +154,7 @@ export function SubjectPage() {
             ]
               .filter((value): value is string => Boolean(value))
               .map((chip) => (
-                <span
-                  key={chip}
-                  className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]"
-                >
-                  {chip}
-                </span>
+                <MetaChip key={chip} chip={chip} />
               ))}
           </div>
         ) : null}

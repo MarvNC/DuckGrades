@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Layers, Users } from 'lucide-react';
+import { MetaChip } from './MetaChip';
 import { Link } from 'react-router-dom';
 import { prefetchRouteData, type Aggregate } from '../../lib/dataClient';
 import { formatGradeCode, formatGradeStat } from '../../lib/grades';
@@ -15,25 +15,6 @@ type EntityAggregateCardProps = {
   showStudentCountInDistribution?: boolean;
   children?: ReactNode;
 };
-
-function renderMetaChip(chip: string) {
-  const normalized = chip.trim().toLowerCase();
-  const icon = normalized.endsWith(' sections') ? (
-    <Layers className="h-3 w-3" aria-hidden="true" />
-  ) : normalized.endsWith(' students') ? (
-    <Users className="h-3 w-3" aria-hidden="true" />
-  ) : null;
-
-  return (
-    <span
-      key={chip}
-      className="inline-flex items-center gap-1 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2.5 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]"
-    >
-      {icon}
-      <span>{chip}</span>
-    </span>
-  );
-}
 
 export function EntityAggregateCard({
   title,
@@ -73,7 +54,9 @@ export function EntityAggregateCard({
 
           {(inlineMetaChips ?? []).length > 0 ? (
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {(inlineMetaChips ?? []).map(renderMetaChip)}
+              {(inlineMetaChips ?? []).map((chip) => (
+                <MetaChip key={chip} chip={chip} />
+              ))}
             </div>
           ) : null}
         </div>
