@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getSubjectShard, prefetchRouteData, type SubjectShard } from "../../lib/dataClient";
+import { getSubjectShard, isNotFoundDataError, prefetchRouteData, type SubjectShard } from "../../lib/dataClient";
 import fuzzysort from "fuzzysort";
 import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
 import { EntityAggregateCard } from "../components/EntityAggregateCard";
+import { NotFoundPage } from "./NotFoundPage";
 import { usePageTitle } from "../usePageTitle";
 
 type SubjectCourseSortKey = "code" | "students" | "sections" | "mean";
@@ -52,7 +53,7 @@ function sortCourses(courses: SubjectShard["courses"], sortKey: SubjectCourseSor
 export function SubjectPage() {
   const { code } = useParams();
   const [subject, setSubject] = useState<SubjectShard | null>(null);
-  const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
+  const [loadState, setLoadState] = useState<"loading" | "ready" | "error" | "not-found">("loading");
   const [courseQuery, setCourseQuery] = useState("");
   const [sortKey, setSortKey] = useState<SubjectCourseSortKey>("code");
   const [sortDescending, setSortDescending] = useState(false);
@@ -75,9 +76,9 @@ export function SubjectPage() {
         setSubject(value);
         setLoadState("ready");
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         setSubject(null);
-        setLoadState("error");
+        setLoadState(isNotFoundDataError(error) ? "not-found" : "error");
       });
   }, [code]);
 
@@ -119,6 +120,10 @@ export function SubjectPage() {
   const visibleCourses = useMemo(() => {
     return sortCourses(filteredCourses, sortKey, sortDescending);
   }, [filteredCourses, sortDescending, sortKey]);
+
+  if (loadState === "not-found") {
+    return <NotFoundPage title={`Subject ${displaySubjectCode} was not found`} />;
+  }
 
   return (
     <section className="space-y-4 rounded-3xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-5 shadow-sm backdrop-blur-sm sm:p-7">

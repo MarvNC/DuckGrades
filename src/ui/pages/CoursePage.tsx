@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getCourseShard, type CourseShard } from "../../lib/dataClient";
+import { getCourseShard, isNotFoundDataError, type CourseShard } from "../../lib/dataClient";
 import fuzzysort from "fuzzysort";
 import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
 import { EntityAggregateCard } from "../components/EntityAggregateCard";
 import { SectionDrilldown } from "../components/SectionDrilldown";
+import { NotFoundPage } from "./NotFoundPage";
 import { usePageTitle } from "../usePageTitle";
 
 type InstructorSortKey = "name" | "students" | "sections" | "mean";
@@ -57,7 +58,7 @@ function sortInstructors(
 export function CoursePage() {
   const { code } = useParams();
   const [course, setCourse] = useState<CourseShard | null>(null);
-  const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
+  const [loadState, setLoadState] = useState<"loading" | "ready" | "error" | "not-found">("loading");
   const [instructorQuery, setInstructorQuery] = useState("");
   const [sortKey, setSortKey] = useState<InstructorSortKey>("students");
   const [sortDescending, setSortDescending] = useState(true);
@@ -79,9 +80,9 @@ export function CoursePage() {
         setCourse(value);
         setLoadState("ready");
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         setCourse(null);
-        setLoadState("error");
+        setLoadState(isNotFoundDataError(error) ? "not-found" : "error");
       });
   }, [code]);
 
@@ -117,6 +118,10 @@ export function CoursePage() {
   }, [course?.instructors]);
 
   const backToName = course?.subjectTitle ?? course?.subject ?? "subjects";
+
+  if (loadState === "not-found") {
+    return <NotFoundPage title={`Course ${displayCourseCode} was not found`} />;
+  }
 
   return (
     <section className="space-y-4 rounded-3xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-5 shadow-sm backdrop-blur-sm sm:p-7">

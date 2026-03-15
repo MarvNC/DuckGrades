@@ -4,6 +4,22 @@ export type SearchIndex = {
   professors: Array<{ id: string; name: string; popularity: number }>;
 };
 
+export class DataRequestError extends Error {
+  status: number;
+  path: string;
+
+  constructor(path: string, status: number) {
+    super(`Request failed for ${path}: ${status}`);
+    this.name = "DataRequestError";
+    this.path = path;
+    this.status = status;
+  }
+}
+
+export function isNotFoundDataError(error: unknown): boolean {
+  return error instanceof DataRequestError && error.status === 404;
+}
+
 type CompactSearchIndex = {
   v: 1 | 2 | 3;
   t: string[];
@@ -134,9 +150,23 @@ const fallbackBase = "/data";
 async function fetchJson<T>(path: string): Promise<T> {
   const response = await fetch(path);
   if (!response.ok) {
-    throw new Error(`Request failed for ${path}: ${response.status}`);
+    throw new DataRequestError(path, response.status);
   }
-  return (await response.json()) as T;
+
+  const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+  const inferredStatus = response.status === 200 ? 404 : response.status;
+  if (!contentType.includes("application/json")) {
+    throw new DataRequestError(path, inferredStatus);
+  }
+
+  try {
+    return (await response.json()) as T;
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new DataRequestError(path, inferredStatus);
+    }
+    throw error;
+  }
 }
 
 async function fetchDataJson<T>(relativePath: string): Promise<T> {

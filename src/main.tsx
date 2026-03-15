@@ -7,6 +7,7 @@ import { CoursePage } from "./ui/pages/CoursePage";
 import { ProfessorPage } from "./ui/pages/ProfessorPage";
 import { SubjectPage } from "./ui/pages/SubjectPage";
 import { SubjectsOverviewPage } from "./ui/pages/SubjectsOverviewPage";
+import { NotFoundPage } from "./ui/pages/NotFoundPage";
 import "./styles.css";
 
 const router = createBrowserRouter([
@@ -19,6 +20,7 @@ const router = createBrowserRouter([
       { path: "subject/:code", element: <SubjectPage /> },
       { path: "course/:code", element: <CoursePage /> },
       { path: "professor/:id", element: <ProfessorPage /> },
+      { path: "*", element: <NotFoundPage /> },
     ],
   },
 ]);

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getProfessorShard, type ProfessorShard } from "../../lib/dataClient";
+import { getProfessorShard, isNotFoundDataError, type ProfessorShard } from "../../lib/dataClient";
 import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
 import { EntityAggregateCard } from "../components/EntityAggregateCard";
 import { SectionDrilldown } from "../components/SectionDrilldown";
+import { NotFoundPage } from "./NotFoundPage";
 import { usePageTitle } from "../usePageTitle";
 
 type ProfessorCourseSortKey = "code" | "students" | "sections" | "mean";
@@ -52,7 +53,7 @@ function sortCourses(courses: ProfessorShard["courses"], sortKey: ProfessorCours
 export function ProfessorPage() {
   const { id } = useParams();
   const [professor, setProfessor] = useState<ProfessorShard | null>(null);
-  const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
+  const [loadState, setLoadState] = useState<"loading" | "ready" | "error" | "not-found">("loading");
   const [sortKey, setSortKey] = useState<ProfessorCourseSortKey>("code");
   const [sortDescending, setSortDescending] = useState(false);
 
@@ -71,9 +72,9 @@ export function ProfessorPage() {
         setProfessor(value);
         setLoadState("ready");
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         setProfessor(null);
-        setLoadState("error");
+        setLoadState(isNotFoundDataError(error) ? "not-found" : "error");
       });
   }, [id]);
 
@@ -98,6 +99,10 @@ export function ProfessorPage() {
   }, [courses]);
 
   const totalStudents = professor?.aggregate.totalNonWReported ?? 0;
+
+  if (loadState === "not-found") {
+    return <NotFoundPage title={`${professorDisplayName} was not found`} />;
+  }
 
   return (
     <section className="space-y-4 rounded-3xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-5 shadow-sm backdrop-blur-sm sm:p-7">
