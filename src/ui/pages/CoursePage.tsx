@@ -68,7 +68,7 @@ export function CoursePage() {
 
   const displayCourseCode = course?.courseCode ?? (code ?? 'COURSE').toUpperCase();
   const pageTitle = course?.title
-    ? `${displayCourseCode} ${course.title} Grade Distributions and Statistics`
+    ? `${displayCourseCode} - ${course.title} Grade Distributions and Statistics`
     : `${displayCourseCode} Grade Distributions and Statistics`;
 
   usePageTitle(pageTitle);
@@ -144,6 +144,7 @@ export function CoursePage() {
       <div className="space-y-2">
         <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">
           {displayCourseCode}
+          {course?.title ? ` - ${course.title}` : ''}
         </h1>
         {course ? (
           <div className="flex flex-wrap gap-1.5">
@@ -162,9 +163,6 @@ export function CoursePage() {
 
         <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between lg:gap-5">
           <div className="min-w-0 lg:max-w-4xl">
-            <p className="text-sm text-[var(--duck-muted)]">
-              {course?.title ?? 'Loading course details...'}
-            </p>
             {course?.description ? (
               <p className="mt-1 text-sm leading-relaxed text-[var(--duck-muted-strong)]">
                 {course.description}
