@@ -93,6 +93,53 @@ export function AppLayout() {
   }, [isHome, hasQuery]);
 
   useEffect(() => {
+    const onWindowKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.isComposing) {
+        return;
+      }
+
+      const isModified = event.metaKey || event.ctrlKey || event.altKey;
+      if (isModified) {
+        return;
+      }
+
+      const activeElement = document.activeElement;
+      const hasNoFocusedElement =
+        !activeElement ||
+        activeElement === document.body ||
+        activeElement === document.documentElement;
+
+      if (!hasNoFocusedElement) {
+        return;
+      }
+
+      if (event.key === "Backspace") {
+        event.preventDefault();
+        setQuery((current) => current.slice(0, -1));
+        window.requestAnimationFrame(() => {
+          focusInput();
+        });
+        return;
+      }
+
+      if (event.key.length !== 1) {
+        return;
+      }
+
+      event.preventDefault();
+      setQuery((current) => `${current}${event.key}`);
+      window.requestAnimationFrame(() => {
+        focusInput();
+      });
+    };
+
+    window.addEventListener("keydown", onWindowKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onWindowKeyDown);
+    };
+  }, []);
+
+  useEffect(() => {
     const header = headerRef.current;
     if (!header) {
       setHeaderHeight(0);
