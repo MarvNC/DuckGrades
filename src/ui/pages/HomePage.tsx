@@ -40,7 +40,9 @@ export function HomePage() {
             <section className="fade-in-up" style={{ animationDelay: "80ms" }}>
               <Brand home className="justify-center" />
               <p className="mx-auto mt-4 max-w-2xl text-lg font-medium leading-relaxed text-[var(--duck-muted)] sm:text-xl">
-                View past grades at the <span className="font-semibold text-[var(--duck-accent-strong)]">University of Oregon</span>.
+                <span>
+                  View past grades at the <span className="font-semibold text-[var(--duck-accent-strong)]">University of Oregon</span> (not affiliated).
+                </span>
               </p>
             </section>
 
