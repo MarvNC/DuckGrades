@@ -51,7 +51,11 @@ export function EntityAggregateCard({
 
           {subtitle ? <p className="mt-1 truncate text-sm text-[var(--duck-muted)]">{subtitle}</p> : null}
 
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-medium text-[var(--duck-muted)]">
+        </div>
+
+        <div className="flex w-full flex-col items-end gap-1.5 sm:w-auto sm:pl-2">
+          <GradeDistributionStrip aggregate={aggregate} size={distributionSize} showStudentCount={showStudentCountInDistribution} />
+          <div className="flex flex-wrap justify-end gap-x-3 gap-y-1 text-[10px] font-normal text-[var(--duck-muted)] opacity-70">
             <span>
               <span className="uppercase tracking-[0.08em] text-[var(--duck-muted)]">Mean</span> {formatGradeStat(aggregate?.mean)}
             </span>
@@ -62,10 +66,6 @@ export function EntityAggregateCard({
               <span className="uppercase tracking-[0.08em] text-[var(--duck-muted)]">Mode</span> {formatGradeCode(aggregate?.mode)}
             </span>
           </div>
-        </div>
-
-        <div className="flex w-full justify-end sm:w-auto sm:pl-2">
-          <GradeDistributionStrip aggregate={aggregate} size={distributionSize} showStudentCount={showStudentCountInDistribution} />
         </div>
       </div>
 

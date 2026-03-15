@@ -87,7 +87,11 @@ export function SectionDrilldown({ sections, summaryLabel = "Section details", i
                       {hasHiddenBuckets ? <span className="rounded-full border border-[var(--duck-danger-border)] bg-[var(--duck-danger-bg)] px-2 py-0.5 text-[10px] font-semibold text-[var(--duck-danger-text)]">redacted</span> : null}
                     </div>
 
-                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-normal text-[var(--duck-muted)] opacity-70">
+                  </div>
+
+                  <div className="flex flex-col items-end gap-1.5 sm:pl-2">
+                    <GradeDistributionStrip aggregate={sectionAggregate} size="sm" showStudentCount={false} />
+                    <div className="flex flex-wrap justify-end gap-x-3 gap-y-1 text-[10px] font-normal text-[var(--duck-muted)] opacity-70">
                       <span>
                         <span className="uppercase tracking-[0.08em] text-[var(--duck-muted)]">Mean</span> {formatGradeStat(sectionAggregate.mean)}
                       </span>
@@ -98,10 +102,6 @@ export function SectionDrilldown({ sections, summaryLabel = "Section details", i
                         <span className="uppercase tracking-[0.08em] text-[var(--duck-muted)]">Mode</span> {formatGradeCode(sectionAggregate.mode)}
                       </span>
                     </div>
-                  </div>
-
-                  <div className="flex justify-end sm:pl-2">
-                    <GradeDistributionStrip aggregate={sectionAggregate} size="sm" showStudentCount={false} />
                   </div>
                 </div>
               </article>

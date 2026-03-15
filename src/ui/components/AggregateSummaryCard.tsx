@@ -24,7 +24,11 @@ export function AggregateSummaryCard({ aggregate, label, metaChips, showDistribu
             ))}
           </div>
 
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-medium text-[var(--duck-muted)]">
+        </div>
+
+        <div className="flex w-full flex-col items-end gap-1.5 sm:w-auto">
+          <GradeDistributionStrip aggregate={aggregate} size="md" showStudentCount={showDistributionStudentCount} />
+          <div className="flex flex-wrap justify-end gap-x-3 gap-y-1 text-[10px] font-normal text-[var(--duck-muted)] opacity-70">
             <span>
               <span className="uppercase tracking-[0.08em] text-[var(--duck-muted)]">Mean</span> {formatGradeStat(aggregate?.mean)}
             </span>
@@ -35,10 +39,6 @@ export function AggregateSummaryCard({ aggregate, label, metaChips, showDistribu
               <span className="uppercase tracking-[0.08em] text-[var(--duck-muted)]">Mode</span> {formatGradeCode(aggregate?.mode)}
             </span>
           </div>
-        </div>
-
-        <div className="flex w-full justify-end sm:w-auto">
-          <GradeDistributionStrip aggregate={aggregate} size="md" showStudentCount={showDistributionStudentCount} />
         </div>
       </div>
     </section>
