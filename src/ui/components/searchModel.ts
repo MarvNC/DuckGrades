@@ -13,6 +13,11 @@ export type SearchItem = {
   section: 'Subject' | 'Course' | 'Professor';
 };
 
+export type SearchSection = {
+  name: 'Subject' | 'Course' | 'Professor';
+  items: SearchItem[];
+};
+
 export function useRankedSearch(query: string) {
   const [ranked, setRanked] = useState<RankedSearchResult>(EMPTY_RANKED_RESULTS);
   const requestCounter = useRef(0);
@@ -60,6 +65,7 @@ export function buildSearchItems(
     to: `/subject/${subject.code}`,
     section: 'Subject' as const,
   }));
+
   const courses = ranked.courses.slice(0, limits.courses ?? 6).map((course) => ({
     key: `course:${course.code}`,
     label: course.code,
@@ -70,28 +76,35 @@ export function buildSearchItems(
     to: `/course/${course.code}`,
     section: 'Course' as const,
   }));
+
   const professors = ranked.professors.slice(0, limits.professors ?? 6).map((professor) => ({
     key: `professor:${professor.id}`,
     label: professor.name,
-    subtitle: `${professor.popularity} students`,
+    subtitle: `${professor.popularity.toLocaleString()} students`,
     score: professor.score,
     labelMatchIndexes: professor.labelMatchIndexes,
     to: `/professor/${professor.id}`,
     section: 'Professor' as const,
   }));
 
-  const flattened = [...subjects, ...courses, ...professors]
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limits.total ?? 18) as SearchItem[];
+  // Order sections by their top result's score so the most relevant type surfaces first
+  const allSections: SearchSection[] = [
+    { name: 'Subject' as const, items: subjects },
+    { name: 'Course' as const, items: courses },
+    { name: 'Professor' as const, items: professors },
+  ]
+    .filter((s) => s.items.length > 0)
+    .sort((a, b) => (b.items[0]?.score ?? 0) - (a.items[0]?.score ?? 0));
 
-  const grouped = {
-    Subjects: flattened.filter((item) => item.section === 'Subject'),
-    Courses: flattened.filter((item) => item.section === 'Course'),
-    Professors: flattened.filter((item) => item.section === 'Professor'),
-  };
+  // Build flattened in visual/section order so keyboard navigation matches what's on screen
+  const flattenedAll = allSections.flatMap((s) => s.items);
+  const flattened = flattenedAll.slice(0, limits.total ?? 18) as SearchItem[];
 
-  return {
-    grouped,
-    flattened,
-  };
+  // Trim sections to only include items that survived the total cap
+  const keptKeys = new Set(flattened.map((i) => i.key));
+  const orderedSections = allSections
+    .map((s) => ({ ...s, items: s.items.filter((i) => keptKeys.has(i.key)) }))
+    .filter((s) => s.items.length > 0);
+
+  return { orderedSections, flattened };
 }

@@ -47,7 +47,7 @@ export function AppLayout() {
   const resultRefs = useRef<Array<HTMLAnchorElement | null>>([]);
   const [headerHeight, setHeaderHeight] = useState(0);
   const ranked = useRankedSearch(query);
-  const { grouped, flattened } = useMemo(() => buildSearchItems(ranked), [ranked]);
+  const { orderedSections, flattened } = useMemo(() => buildSearchItems(ranked), [ranked]);
   const indexByKey = useMemo(
     () => new Map(flattened.map((item, index) => [item.key, index])),
     [flattened]
@@ -336,7 +336,7 @@ export function AppLayout() {
         {isHome || !hasQuery ? <Outlet context={outletContext} /> : null}
         {hasQuery ? (
           <SearchResultsPage
-            grouped={grouped}
+            orderedSections={orderedSections}
             flattened={flattened}
             activeIndex={activeIndex}
             setActiveIndex={setActiveIndex}
