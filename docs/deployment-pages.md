@@ -11,8 +11,7 @@ Use this build flow before any deploy:
 
 ```bash
 bun install
-bun run build:data
-bun run build
+bun run build:all
 ```
 
 ## Runtime env
@@ -25,11 +24,11 @@ bun run build
 
 Use these build settings in Cloudflare Pages:
 
-- Build command: `bun run build:data && bun run build`
+- Build command: `bun run build:all`
 - Build output directory: `dist`
 - Node/Bun runtime: Bun 1.x
 
-If data remains same-origin, copy `public/data` into deployed static output as part of build (Vite handles this automatically).
+`build:all` copies non-data public assets (`robots.txt`, `sitemap.xml`, icons, manifest) and then copies only the current versioned data shard into `dist/data`.
 
 ## Notes
 

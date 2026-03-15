@@ -9,10 +9,11 @@
     "build:programs": "bun scripts/scrape-uo-programs.ts",
     "build:data": "bun scripts/build-data.ts",
     "build:sitemap": "bun scripts/generate-sitemap.ts",
+    "copy:public:dist": "bun scripts/copy-public-static-to-dist.ts",
     "copy:data:dist": "bun scripts/copy-current-data-to-dist.ts",
     "analyze:budgets": "bun scripts/analyze-budgets.ts",
     "build": "tsc -b && vite build",
-    "build:all": "bun run build:data && bun run build:sitemap && bun run build && bun run copy:data:dist",
+    "build:all": "bun run build:data && bun run build:sitemap && bun run build && bun run copy:public:dist && bun run copy:data:dist",
     "preview": "vite preview",
     "check": "tsc -b --pretty false"
   },
