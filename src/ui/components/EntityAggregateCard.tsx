@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Layers, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { prefetchRouteData, type Aggregate } from "../../lib/dataClient";
 import { formatGradeCode, formatGradeStat } from "../../lib/grades";
@@ -14,6 +15,18 @@ type EntityAggregateCardProps = {
   showStudentCountInDistribution?: boolean;
   children?: ReactNode;
 };
+
+function renderMetaChip(chip: string) {
+  const normalized = chip.trim().toLowerCase();
+  const icon = normalized.endsWith(" sections") ? <Layers className="h-3 w-3" aria-hidden="true" /> : normalized.endsWith(" students") ? <Users className="h-3 w-3" aria-hidden="true" /> : null;
+
+  return (
+    <span key={chip} className="inline-flex items-center gap-1 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2.5 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]">
+      {icon}
+      <span>{chip}</span>
+    </span>
+  );
+}
 
 export function EntityAggregateCard({
   title,
@@ -42,14 +55,16 @@ export function EntityAggregateCard({
             ) : (
               <p className="text-lg font-bold tracking-tight text-[var(--duck-fg)]">{title}</p>
             )}
-            {(inlineMetaChips ?? []).map((chip) => (
-              <span key={chip} className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2.5 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]">
-                {chip}
-              </span>
-            ))}
+
+            {subtitle ? (
+              <p className="max-w-full truncate text-base font-medium text-[var(--duck-muted-strong)]">
+                <span className="px-0.5 text-[var(--duck-muted)]">·</span>
+                <span>{subtitle}</span>
+              </p>
+            ) : null}
           </div>
 
-          {subtitle ? <p className="mt-1 truncate text-sm text-[var(--duck-muted)]">{subtitle}</p> : null}
+          {(inlineMetaChips ?? []).length > 0 ? <div className="mt-2 flex flex-wrap gap-1.5">{(inlineMetaChips ?? []).map(renderMetaChip)}</div> : null}
 
         </div>
 

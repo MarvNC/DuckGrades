@@ -1,3 +1,4 @@
+import { Layers, Users } from "lucide-react";
 import type { Aggregate } from "../../lib/dataClient";
 import { formatGradeCode, formatGradeStat } from "../../lib/grades";
 import { GradeDistributionStrip } from "./GradeDistributionStrip";
@@ -9,6 +10,18 @@ type AggregateSummaryCardProps = {
   showDistributionStudentCount?: boolean;
 };
 
+function renderMetaChip(chip: string) {
+  const normalized = chip.trim().toLowerCase();
+  const icon = normalized.endsWith(" sections") ? <Layers className="h-3 w-3" aria-hidden="true" /> : normalized.endsWith(" students") ? <Users className="h-3 w-3" aria-hidden="true" /> : null;
+
+  return (
+    <span key={chip} className="inline-flex items-center gap-1 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2.5 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]">
+      {icon}
+      <span>{chip}</span>
+    </span>
+  );
+}
+
 export function AggregateSummaryCard({ aggregate, label, metaChips, showDistributionStudentCount = true }: AggregateSummaryCardProps) {
   return (
     <section className="rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3.5 shadow-sm sm:p-4">
@@ -17,11 +30,7 @@ export function AggregateSummaryCard({ aggregate, label, metaChips, showDistribu
       <div className="mt-2.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="min-w-0 sm:flex-1">
           <div className="flex flex-wrap gap-1.5">
-            {(metaChips ?? []).map((chip) => (
-              <span key={chip} className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2.5 py-0.5 text-[10px] font-semibold text-[var(--duck-muted-strong)]">
-                {chip}
-              </span>
-            ))}
+            {(metaChips ?? []).map(renderMetaChip)}
           </div>
 
         </div>
