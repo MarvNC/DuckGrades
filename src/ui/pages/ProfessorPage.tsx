@@ -122,7 +122,7 @@ export function ProfessorPage() {
       ) : null}
 
       {loadState === "ready" && courses.length > 0 ? (
-        <div className="z-20 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm backdrop-blur lg:sticky lg:top-[calc(var(--duck-header-height,0px)+0.75rem)]">
+        <div className="z-20 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm backdrop-blur">
           <div className="flex flex-wrap items-center gap-2">
             <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--duck-muted)]" htmlFor="professor-course-sort">
               Sort

@@ -158,7 +158,7 @@ export function SubjectsOverviewPage() {
       ) : null}
 
       {loadState === "ready" && overview ? (
-        <div className="z-20 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm backdrop-blur lg:sticky lg:top-[calc(var(--duck-header-height,0px)+0.75rem)]">
+        <div className="z-20 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm backdrop-blur">
           <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
             <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--duck-muted)]" htmlFor="subjects-overview-search">
               Search subjects
