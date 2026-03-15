@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Brand } from "./components/Brand";
 import { SearchResultsPage } from "./components/SearchResultsPage";
 import { buildSearchItems, type SearchItem, useRankedSearch } from "./components/searchModel";
 
@@ -111,10 +112,7 @@ export function AppLayout() {
       {showHeader ? (
         <header className={`relative z-30 mx-auto w-full max-w-6xl px-5 py-6 sm:px-8 ${isHome ? "home-search-header-enter" : ""}`}>
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link to="/" className="brand">
-              <span className="brand-duck">Duck</span>
-              <span className="brand-grades">Grades</span>
-            </Link>
+            <Brand />
             <div className="group relative w-full max-w-md flex-1 min-w-[18rem]">
               <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
                 <svg

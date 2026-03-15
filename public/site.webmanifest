@@ -1,0 +1,21 @@
+{
+  "name": "DuckGrades",
+  "short_name": "DuckGrades",
+  "description": "Explore University of Oregon grade trends by subject, course, and professor.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f9ef",
+  "theme_color": "#4f6e3d",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

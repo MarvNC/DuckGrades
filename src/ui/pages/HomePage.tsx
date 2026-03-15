@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Link, useOutletContext } from "react-router-dom";
 import type { SearchLayoutContext } from "../AppLayout";
+import { Brand } from "../components/Brand";
 
 export function HomePage() {
   const { hasActiveSearch, query, setQuery, onSearchInputKeyDown } = useOutletContext<SearchLayoutContext>();
@@ -26,10 +27,7 @@ export function HomePage() {
     >
       <main className="relative z-10 w-full max-w-4xl">
         <section className="fade-in-up" style={{ animationDelay: "80ms" }}>
-          <Link to="/" className="brand brand-home justify-center">
-            <span className="brand-duck">Duck</span>
-            <span className="brand-grades">Grades</span>
-          </Link>
+          <Brand home className="justify-center" />
           <p className="mx-auto mt-4 max-w-2xl text-lg font-medium leading-relaxed text-[#4a5d49] sm:text-xl">
             View past grades at the <span className="font-semibold text-[#124734]">University of Oregon</span>.
           </p>
@@ -96,7 +94,7 @@ export function HomePage() {
 
         <footer className="fade-in-up mx-auto mt-20 w-full max-w-2xl border-t border-slate-200/70 pt-8" style={{ animationDelay: "400ms" }}>
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-5">
-            <p className="text-sm text-slate-500">Data obtained via FOIA request.</p>
+            <p className="text-sm text-slate-500">Data obtained via FOIA request. Some data is not available due to anonymization by the University.</p>
             <a
               href="https://github.com/MarvNC/DuckGrades"
               target="_blank"
