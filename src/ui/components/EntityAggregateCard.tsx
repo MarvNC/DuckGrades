@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import type { Aggregate } from "../../lib/dataClient";
+import { prefetchRouteData, type Aggregate } from "../../lib/dataClient";
 import { formatGradeCode, formatGradeStat } from "../../lib/grades";
 import { GradeDistributionStrip } from "./GradeDistributionStrip";
 
@@ -31,7 +31,12 @@ export function EntityAggregateCard({
         <div className="min-w-0 sm:flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
             {titleHref ? (
-              <Link to={titleHref} className="text-lg font-bold tracking-tight text-[var(--duck-fg)] hover:underline">
+              <Link
+                to={titleHref}
+                className="text-lg font-bold tracking-tight text-[var(--duck-fg)] hover:underline"
+                onMouseEnter={() => prefetchRouteData(titleHref)}
+                onFocus={() => prefetchRouteData(titleHref)}
+              >
                 {title}
               </Link>
             ) : (

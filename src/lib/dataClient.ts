@@ -52,6 +52,7 @@ export type SubjectShard = {
   subjectCode: string;
   subjectTitle?: string;
   subjectDescription?: string | null;
+  professorCount?: number;
   aggregate: Aggregate;
   availableTerms: Array<"fall" | "winter" | "spring" | "summer">;
   courses: Array<{
@@ -313,8 +314,13 @@ function decodeSubjectsOverview(raw: SubjectsOverviewShard | CompactSubjectsOver
 export async function getDatasetVersion(): Promise<string> {
   if (!cachedVersion) {
     cachedVersion = (async () => {
-      const currentVersion = await fetchDataJson<VersionFile>("current-version.json");
-      return currentVersion.version;
+      try {
+        const currentVersion = await fetchDataJson<VersionFile>("current-version.json");
+        return currentVersion.version;
+      } catch (error) {
+        cachedVersion = null;
+        throw error;
+      }
     })();
   }
   return cachedVersion;
@@ -323,9 +329,14 @@ export async function getDatasetVersion(): Promise<string> {
 export async function getSearchIndex(): Promise<SearchIndex> {
   if (!cachedSearchIndex) {
     cachedSearchIndex = (async () => {
-      const version = await getDatasetVersion();
-      const raw = await fetchDataJson<SearchIndex | CompactSearchIndex>(`${version}/search-index.json`);
-      return decodeSearchIndex(raw);
+      try {
+        const version = await getDatasetVersion();
+        const raw = await fetchDataJson<SearchIndex | CompactSearchIndex>(`${version}/search-index.json`);
+        return decodeSearchIndex(raw);
+      } catch (error) {
+        cachedSearchIndex = null;
+        throw error;
+      }
     })();
   }
   return cachedSearchIndex;
@@ -334,9 +345,14 @@ export async function getSearchIndex(): Promise<SearchIndex> {
 export async function getSubjectsOverviewShard(): Promise<SubjectsOverviewShard> {
   if (!cachedSubjectsOverview) {
     cachedSubjectsOverview = (async () => {
-      const version = await getDatasetVersion();
-      const raw = await fetchDataJson<SubjectsOverviewShard | CompactSubjectsOverview>(`${version}/subjects-overview.json`);
-      return decodeSubjectsOverview(raw);
+      try {
+        const version = await getDatasetVersion();
+        const raw = await fetchDataJson<SubjectsOverviewShard | CompactSubjectsOverview>(`${version}/subjects-overview.json`);
+        return decodeSubjectsOverview(raw);
+      } catch (error) {
+        cachedSubjectsOverview = null;
+        throw error;
+      }
     })();
   }
   return cachedSubjectsOverview;
@@ -351,7 +367,10 @@ export async function getSubjectShard(code: string): Promise<SubjectShard> {
   const request = (async () => {
     const version = await getDatasetVersion();
     return fetchDataJson<SubjectShard>(`${version}/subjects/${key}.json`);
-  })();
+  })().catch((error) => {
+    subjectShardCache.delete(key);
+    throw error;
+  });
   subjectShardCache.set(key, request);
   return request;
 }
@@ -365,7 +384,10 @@ export async function getCourseShard(code: string): Promise<CourseShard> {
   const request = (async () => {
     const version = await getDatasetVersion();
     return fetchDataJson<CourseShard>(`${version}/courses/${key}.json`);
-  })();
+  })().catch((error) => {
+    courseShardCache.delete(key);
+    throw error;
+  });
   courseShardCache.set(key, request);
   return request;
 }
@@ -379,7 +401,10 @@ export async function getProfessorShard(id: string): Promise<ProfessorShard> {
   const request = (async () => {
     const version = await getDatasetVersion();
     return fetchDataJson<ProfessorShard>(`${version}/professors/${key}.json`);
-  })();
+  })().catch((error) => {
+    professorShardCache.delete(key);
+    throw error;
+  });
   professorShardCache.set(key, request);
   return request;
 }

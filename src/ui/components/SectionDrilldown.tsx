@@ -8,6 +8,7 @@ type SectionDrilldownProps = {
   sections: SectionRow[];
   summaryLabel?: string;
   identityPrefix: string;
+  reportedTotal?: number;
 };
 
 function visibleNumericalCount(section: SectionRow): number {
@@ -46,8 +47,10 @@ function buildSectionAggregate(section: SectionRow): Aggregate {
   };
 }
 
-export function SectionDrilldown({ sections, summaryLabel = "Section details", identityPrefix }: SectionDrilldownProps) {
+export function SectionDrilldown({ sections, summaryLabel = "Section details", identityPrefix, reportedTotal }: SectionDrilldownProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const sectionCount = sections.length;
+  const totalReported = reportedTotal ?? sections.reduce((sum, section) => sum + section.totalNonWReported, 0);
 
   return (
     <details className="mt-3 rounded-xl border border-slate-200 bg-[#f7faf2] p-3 open:shadow-sm" onToggle={(event) => setIsOpen(event.currentTarget.open)}>
@@ -55,6 +58,10 @@ export function SectionDrilldown({ sections, summaryLabel = "Section details", i
         <span className="inline-flex items-center gap-2">
           <span className="text-slate-500">▼</span>
           {summaryLabel}
+        </span>
+        <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+          <span className="rounded-full border border-slate-200 bg-white/70 px-2 py-0.5">{sectionCount} sections</span>
+          <span className="rounded-full border border-slate-200 bg-white/70 px-2 py-0.5">{totalReported} students</span>
         </span>
       </summary>
 

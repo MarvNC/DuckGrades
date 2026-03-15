@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getCourseShard, getSubjectShard, type SubjectShard } from "../../lib/dataClient";
+import { getSubjectShard, prefetchRouteData, type SubjectShard } from "../../lib/dataClient";
 import fuzzysort from "fuzzysort";
 import { AggregateSummaryCard } from "../components/AggregateSummaryCard";
 import { EntityAggregateCard } from "../components/EntityAggregateCard";
@@ -11,7 +11,6 @@ export function SubjectPage() {
   const [subject, setSubject] = useState<SubjectShard | null>(null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [courseQuery, setCourseQuery] = useState("");
-  const [professorCount, setProfessorCount] = useState<number | null>(null);
 
   const displaySubjectCode = (subject?.subjectCode ?? code ?? "Subject").toUpperCase();
   const subjectTitle = subject?.subjectTitle;
@@ -44,39 +43,6 @@ export function SubjectPage() {
   const sectionCount = useMemo(() => {
     return courses.reduce((sum, course) => sum + course.sectionCount, 0);
   }, [courses]);
-
-  useEffect(() => {
-    if (!subject || courses.length === 0) {
-      setProfessorCount(0);
-      return;
-    }
-
-    let cancelled = false;
-    setProfessorCount(null);
-
-    void Promise.all(
-      courses.map((course) =>
-        getCourseShard(course.courseCode)
-          .then((courseShard) => courseShard.instructors.map((instructor) => instructor.professorId))
-          .catch(() => []),
-      ),
-    ).then((professorGroups) => {
-      if (cancelled) {
-        return;
-      }
-      const unique = new Set<string>();
-      for (const group of professorGroups) {
-        for (const professorId of group) {
-          unique.add(professorId);
-        }
-      }
-      setProfessorCount(unique.size);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [courses, subject]);
 
   const filteredCourses = useMemo(() => {
     const query = courseQuery.trim();
@@ -117,13 +83,15 @@ export function SubjectPage() {
       <AggregateSummaryCard
         label="Subject aggregate"
         aggregate={subject?.aggregate}
+        showDistributionStudentCount={false}
         metaChips={
           loadState === "ready" && subject
             ? [
                 `${courses.length} courses`,
                 `${sectionCount} sections`,
-                `${professorCount === null ? "..." : professorCount} professors`,
-              ]
+                "professorCount" in subject ? `${subject.professorCount ?? "..."} professors` : null,
+                `${subject.aggregate.totalNonWReported.toLocaleString()} students`,
+              ].filter((value): value is string => Boolean(value))
             : undefined
         }
       />
@@ -162,6 +130,8 @@ export function SubjectPage() {
               key={course.courseCode}
               to={`/course/${course.courseCode}`}
               className="block transition hover:-translate-y-0.5"
+              onMouseEnter={() => prefetchRouteData(`/course/${course.courseCode}`)}
+              onFocus={() => prefetchRouteData(`/course/${course.courseCode}`)}
             >
               <EntityAggregateCard
                 title={course.courseCode}
