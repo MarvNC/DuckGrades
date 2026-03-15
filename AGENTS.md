@@ -9,3 +9,5 @@
 - We use bun
 - Before committing, run lint and format checks and fix any issues: `bun run lint:fix && bun run format:fix`
 - Follow the design identity defined in [docs/design.md](docs/design.md) for all UI work: colors, typography, spacing, components, and interaction patterns.
+- For browser automation and UI checks, load and use the `playwright-cli` skill.
+- Default local app URL is `http://localhost:5173/` unless otherwise specified; if unavailable, assume the dev server is not currently running.
