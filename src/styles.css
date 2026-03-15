@@ -22,6 +22,16 @@
   --duck-danger-border: #fcd6a5;
   --duck-danger-bg: #fff5e6;
   --duck-danger-text: #9a5f05;
+  --duck-chart-1: #4f6e3d;
+  --duck-chart-2: #7dbf8a;
+  --duck-chart-3: #88a7c6;
+  --duck-chart-4: #c7b182;
+  --duck-chart-5: #c98f90;
+  --duck-level-100: #4f7f6a;
+  --duck-level-200: #6a8b4f;
+  --duck-level-300: #5f84a4;
+  --duck-level-400: #b07a5d;
+  --duck-level-500: #6f7f86;
 }
 
 :root[data-theme='dark'] {
@@ -42,6 +52,16 @@
   --duck-danger-border: #846130;
   --duck-danger-bg: #3f321d;
   --duck-danger-text: #f2cd96;
+  --duck-chart-1: #8fcf9d;
+  --duck-chart-2: #78b588;
+  --duck-chart-3: #86a9ca;
+  --duck-chart-4: #bda57a;
+  --duck-chart-5: #c48f89;
+  --duck-level-100: #7ebea0;
+  --duck-level-200: #9abf7c;
+  --duck-level-300: #7ea8cd;
+  --duck-level-400: #d0a078;
+  --duck-level-500: #99a8ad;
 }
 
 * {
@@ -222,4 +242,17 @@ summary:focus-visible {
 .pill-button-secondary {
   border-color: var(--duck-border-strong);
   background: var(--duck-accent);
+}
+
+.uplot {
+  font-family: 'Sora', ui-sans-serif, system-ui, sans-serif;
+}
+
+.uplot .u-axis,
+.uplot .u-legend {
+  color: var(--duck-muted);
+}
+
+.uplot .u-legend {
+  font-size: 11px;
 }

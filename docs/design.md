@@ -22,59 +22,63 @@ All colors are CSS custom properties under the `--duck-*` namespace, defined in 
 
 ### Light Mode (`:root`)
 
-| Token | Hex | Role |
-|---|---|---|
-| `--duck-bg` | `#f5f9ef` | Page background (soft sage-white) |
-| `--duck-bg-accent` | `#f8fbf4` | Slightly lighter background accent |
-| `--duck-fg` | `#182116` | Primary text (very dark green-black) |
-| `--duck-primary` | `#b9e48c` | Primary brand green (light lime) |
-| `--duck-accent` | `#ffec8f` | Accent yellow (secondary pill buttons) |
-| `--duck-muted` | `#5f6f5d` | Muted body text (medium sage green) |
-| `--duck-muted-strong` | `#485747` | Stronger muted text (darker green-grey) |
-| `--duck-border` | `#d4e2ca` | Default border (light sage) |
-| `--duck-border-strong` | `#bfd1b1` | Stronger/hover border |
-| `--duck-surface` | `#ffffff` | Card/surface background |
-| `--duck-surface-soft` | `#f3f8ed` | Softer surface (hover states) |
-| `--duck-surface-muted` | `#edf4e6` | Even softer surface variant |
-| `--duck-accent-strong` | `#4f6e3d` | Deep forest green (hover text, active links) |
-| `--duck-focus` | `#4d8152` | Focus ring color |
-| `--duck-brand-duck` | `#1d2b16` | "Duck" wordmark (near-black dark green) |
-| `--duck-brand-grades` | `#4f6e3d` | "Grades" wordmark (deep forest green) |
-| `--duck-danger-border` | `#fcd6a5` | Warning badge border (pale amber) |
-| `--duck-danger-bg` | `#fff5e6` | Warning badge background (warm cream) |
-| `--duck-danger-text` | `#9a5f05` | Warning badge text (amber-brown) |
+| Token                                   | Hex                    | Role                                                  |
+| --------------------------------------- | ---------------------- | ----------------------------------------------------- |
+| `--duck-bg`                             | `#f5f9ef`              | Page background (soft sage-white)                     |
+| `--duck-bg-accent`                      | `#f8fbf4`              | Slightly lighter background accent                    |
+| `--duck-fg`                             | `#182116`              | Primary text (very dark green-black)                  |
+| `--duck-primary`                        | `#b9e48c`              | Primary brand green (light lime)                      |
+| `--duck-accent`                         | `#ffec8f`              | Accent yellow (secondary pill buttons)                |
+| `--duck-muted`                          | `#5f6f5d`              | Muted body text (medium sage green)                   |
+| `--duck-muted-strong`                   | `#485747`              | Stronger muted text (darker green-grey)               |
+| `--duck-border`                         | `#d4e2ca`              | Default border (light sage)                           |
+| `--duck-border-strong`                  | `#bfd1b1`              | Stronger/hover border                                 |
+| `--duck-surface`                        | `#ffffff`              | Card/surface background                               |
+| `--duck-surface-soft`                   | `#f3f8ed`              | Softer surface (hover states)                         |
+| `--duck-surface-muted`                  | `#edf4e6`              | Even softer surface variant                           |
+| `--duck-accent-strong`                  | `#4f6e3d`              | Deep forest green (hover text, active links)          |
+| `--duck-focus`                          | `#4d8152`              | Focus ring color                                      |
+| `--duck-brand-duck`                     | `#1d2b16`              | "Duck" wordmark (near-black dark green)               |
+| `--duck-brand-grades`                   | `#4f6e3d`              | "Grades" wordmark (deep forest green)                 |
+| `--duck-danger-border`                  | `#fcd6a5`              | Warning badge border (pale amber)                     |
+| `--duck-danger-bg`                      | `#fff5e6`              | Warning badge background (warm cream)                 |
+| `--duck-danger-text`                    | `#9a5f05`              | Warning badge text (amber-brown)                      |
+| `--duck-chart-1` … `--duck-chart-5`     | semantic chart palette | Reusable analytics series colors                      |
+| `--duck-level-100` … `--duck-level-500` | level accent palette   | Course-level series colors (100, 200, 300, 400, 500+) |
 
 ### Dark Mode (`:root[data-theme='dark']`)
 
-| Token | Hex | Role |
-|---|---|---|
-| `--duck-bg` | `#121418` | Dark background (near-black blue-grey) |
-| `--duck-bg-accent` | `#1a1d23` | Slightly lighter dark bg |
-| `--duck-fg` | `#e9edf2` | Light text (cool off-white) |
-| `--duck-muted` | `#a8b0ba` | Muted text (medium cool grey) |
-| `--duck-muted-strong` | `#c6ced8` | Stronger muted (lighter cool grey) |
-| `--duck-border` | `#373e49` | Dark border (dark blue-grey) |
-| `--duck-border-strong` | `#4c5563` | Stronger dark border |
-| `--duck-surface` | `#20262f` | Card surface (dark blue-grey) |
-| `--duck-surface-soft` | `#2a313b` | Softer dark surface |
-| `--duck-surface-muted` | `#303843` | Muted dark surface |
-| `--duck-accent-strong` | `#8fcf9d` | Soft mint green (hover text) |
-| `--duck-focus` | `#73ba86` | Focus ring (lighter mint) |
-| `--duck-brand-duck` | `#e9edf2` | "Duck" wordmark (light in dark mode) |
-| `--duck-brand-grades` | `#8fcf9d` | "Grades" wordmark (mint) |
-| `--duck-danger-border` | `#846130` | Dark danger border (dark amber) |
-| `--duck-danger-bg` | `#3f321d` | Dark danger background (dark brown) |
-| `--duck-danger-text` | `#f2cd96` | Dark danger text (light gold) |
+| Token                                   | Hex                    | Role                                                  |
+| --------------------------------------- | ---------------------- | ----------------------------------------------------- |
+| `--duck-bg`                             | `#121418`              | Dark background (near-black blue-grey)                |
+| `--duck-bg-accent`                      | `#1a1d23`              | Slightly lighter dark bg                              |
+| `--duck-fg`                             | `#e9edf2`              | Light text (cool off-white)                           |
+| `--duck-muted`                          | `#a8b0ba`              | Muted text (medium cool grey)                         |
+| `--duck-muted-strong`                   | `#c6ced8`              | Stronger muted (lighter cool grey)                    |
+| `--duck-border`                         | `#373e49`              | Dark border (dark blue-grey)                          |
+| `--duck-border-strong`                  | `#4c5563`              | Stronger dark border                                  |
+| `--duck-surface`                        | `#20262f`              | Card surface (dark blue-grey)                         |
+| `--duck-surface-soft`                   | `#2a313b`              | Softer dark surface                                   |
+| `--duck-surface-muted`                  | `#303843`              | Muted dark surface                                    |
+| `--duck-accent-strong`                  | `#8fcf9d`              | Soft mint green (hover text)                          |
+| `--duck-focus`                          | `#73ba86`              | Focus ring (lighter mint)                             |
+| `--duck-brand-duck`                     | `#e9edf2`              | "Duck" wordmark (light in dark mode)                  |
+| `--duck-brand-grades`                   | `#8fcf9d`              | "Grades" wordmark (mint)                              |
+| `--duck-danger-border`                  | `#846130`              | Dark danger border (dark amber)                       |
+| `--duck-danger-bg`                      | `#3f321d`              | Dark danger background (dark brown)                   |
+| `--duck-danger-text`                    | `#f2cd96`              | Dark danger text (light gold)                         |
+| `--duck-chart-1` … `--duck-chart-5`     | semantic chart palette | Reusable analytics series colors                      |
+| `--duck-level-100` … `--duck-level-500` | level accent palette   | Course-level series colors (100, 200, 300, 400, 500+) |
 
 ### Data Visualization Colors
 
-| Usage | Color |
-|---|---|
+| Usage             | Color                                                                    |
+| ----------------- | ------------------------------------------------------------------------ |
 | Grade bars F → A+ | `hsl(10 62% 58%)` (warm red) → `hsl(138 62% 58%)` (green), 13-step sweep |
-| Pass (P) | `#7dbf8a` (muted sage green) |
-| No Pass (NP) | `#88a7c6` (muted blue) |
-| Other | `#c7b182` (muted sand/gold) |
-| Withdrawal (W) | `#c98f90` (muted rose/salmon) |
+| Pass (P)          | `#7dbf8a` (muted sage green)                                             |
+| No Pass (NP)      | `#88a7c6` (muted blue)                                                   |
+| Other             | `#c7b182` (muted sand/gold)                                              |
+| Withdrawal (W)    | `#c98f90` (muted rose/salmon)                                            |
 
 ### Color Rules
 
@@ -94,25 +98,25 @@ All colors are CSS custom properties under the `--duck-*` namespace, defined in 
 
 ### Font Weights
 
-| Weight | Class | Usage |
-|---|---|---|
-| 400 | (normal) | Body text |
-| 500 | `font-medium` | Secondary labels |
-| 600 | `font-semibold` | Meta chips, card labels |
-| 700 | `font-bold` | Card titles, nav links |
-| 800 | `font-extrabold` | Page `<h1>` headings |
-| 900 | `.brand-duck` CSS class | Brand "Duck" wordmark only |
+| Weight | Class                   | Usage                      |
+| ------ | ----------------------- | -------------------------- |
+| 400    | (normal)                | Body text                  |
+| 500    | `font-medium`           | Secondary labels           |
+| 600    | `font-semibold`         | Meta chips, card labels    |
+| 700    | `font-bold`             | Card titles, nav links     |
+| 800    | `font-extrabold`        | Page `<h1>` headings       |
+| 900    | `.brand-duck` CSS class | Brand "Duck" wordmark only |
 
 ### Letter Spacing Conventions
 
 Metadata labels (MEAN, MEDIAN, MODE, SORT BY, etc.) always use generous uppercase tracking:
 
-| Usage | Value |
-|---|---|
-| Filter bar labels | `tracking-[0.1em]` uppercase |
+| Usage                          | Value                         |
+| ------------------------------ | ----------------------------- |
+| Filter bar labels              | `tracking-[0.1em]` uppercase  |
 | Stat labels (MEAN/MEDIAN/MODE) | `tracking-[0.08em]` uppercase |
-| Card section labels | `tracking-[0.12em]` uppercase |
-| Chart axis labels | `tracking-[0.06em]` |
+| Card section labels            | `tracking-[0.12em]` uppercase |
+| Chart axis labels              | `tracking-[0.06em]`           |
 
 ### Typography Rules
 
@@ -138,15 +142,15 @@ Metadata labels (MEAN, MEDIAN, MODE, SORT BY, etc.) always use generous uppercas
 
 ## Border Radius
 
-| Value | Usage |
-|---|---|
+| Value                              | Usage                                                            |
+| ---------------------------------- | ---------------------------------------------------------------- |
 | `rounded-full` / `rounded-[999px]` | Pills: MetaChips, nav buttons, ThemeToggle, pill-buttons, badges |
-| `rounded-3xl` | Page section containers |
-| `rounded-2xl` | Cards, header bar, filter bars |
-| `rounded-xl` | Inputs, selects, search result items, SectionDrilldown container |
-| `rounded-lg` | SectionDrilldown summary row |
-| `rounded-md` | Student count labels |
-| `rounded-[3px]` | Individual bars in GradeDistributionStrip |
+| `rounded-3xl`                      | Page section containers                                          |
+| `rounded-2xl`                      | Cards, header bar, filter bars                                   |
+| `rounded-xl`                       | Inputs, selects, search result items, SectionDrilldown container |
+| `rounded-lg`                       | SectionDrilldown summary row                                     |
+| `rounded-md`                       | Student count labels                                             |
+| `rounded-[3px]`                    | Individual bars in GradeDistributionStrip                        |
 
 **Rule**: No sharp corners (`rounded-none`) on any interactive or content surface.
 
@@ -154,14 +158,14 @@ Metadata labels (MEAN, MEDIAN, MODE, SORT BY, etc.) always use generous uppercas
 
 ## Shadows
 
-| Style | Usage |
-|---|---|
-| `shadow-sm` | Standard card/surface shadow |
-| `shadow-md` | Hover state on buttons |
-| `shadow-lg` | Homepage hero search input |
-| Custom `0 6px 18px -14px rgba(0,0,0,0.45)` | Sticky header bar |
-| Custom `color-mix` shadow | `.pill-button:hover` — colored shadow using `--duck-border-strong` |
-| `filter: drop-shadow(0 6px 12px rgba(18,71,52,0.12))` | Brand logo — subtle green-tinted |
+| Style                                                 | Usage                                                              |
+| ----------------------------------------------------- | ------------------------------------------------------------------ |
+| `shadow-sm`                                           | Standard card/surface shadow                                       |
+| `shadow-md`                                           | Hover state on buttons                                             |
+| `shadow-lg`                                           | Homepage hero search input                                         |
+| Custom `0 6px 18px -14px rgba(0,0,0,0.45)`            | Sticky header bar                                                  |
+| Custom `color-mix` shadow                             | `.pill-button:hover` — colored shadow using `--duck-border-strong` |
+| `filter: drop-shadow(0 6px 12px rgba(18,71,52,0.12))` | Brand logo — subtle green-tinted                                   |
 
 ---
 
@@ -226,6 +230,7 @@ Rounded-full pills are used universally for metadata. `MetaChip` auto-selects a 
 ### Cards
 
 Two card types:
+
 - **`AggregateSummaryCard`**: bordered `rounded-2xl` white card for top-level grade stats. Contains label, MetaChip row, GradeDistributionStrip, and Mean/Median/Mode stats.
 - **`EntityAggregateCard`**: list-item `<article>` card. Title + subtitle + MetaChip row + GradeDistributionStrip + micro stats.
 
@@ -235,6 +240,13 @@ Two card types:
 - Right group: 13 bars for F → A+ (red-to-green hue ramp)
 - Bar height uses a power-curve function (not linear) for visual clarity
 - Hover/focus/touch on any bar shows grade + count + percentage in an info line above
+
+### Analytics Charts
+
+- `uPlot` is the default engine for analytics charts (time-series, scatter, histogram)
+- Chart colors come from `--duck-chart-*` and `--duck-level-*` tokens for theme consistency
+- Axis labels follow uppercase metadata styling (`tracking-[0.06em]`)
+- Use bordered `rounded-2xl` cards to frame each chart section; avoid full-bleed chart canvases
 
 ### Search Results
 

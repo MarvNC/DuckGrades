@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { BarChart3, Search } from 'lucide-react';
 import { Brand } from './components/Brand';
 import { SiteFooter } from './components/SiteFooter';
 import { SearchResultsPage } from './components/SearchResultsPage';
@@ -291,13 +291,22 @@ export function AppLayout() {
                 className="w-full rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] py-2.5 pr-4 pl-10 text-sm font-semibold text-[var(--duck-fg)] shadow-sm transition-all outline-none placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
               />
             </div>
-            <div className="ml-auto flex shrink-0 items-center justify-end gap-2 sm:flex-none">
+            <div className="ml-auto flex shrink-0 items-center justify-end gap-1 sm:flex-none sm:gap-2">
               <ThemeToggleButton themePreference={themePreference} cycleTheme={cycleTheme} />
               <Link
                 to="/subjects"
-                className="inline-flex items-center rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-4 py-2 text-sm font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)]"
+                className="inline-flex items-center rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-3 py-2 text-xs font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)] sm:px-4 sm:text-sm"
               >
-                Subjects
+                <span className="sm:hidden">Subj</span>
+                <span className="hidden sm:inline">Subjects</span>
+              </Link>
+              <Link
+                to="/analytics"
+                className="inline-flex items-center gap-1 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)] sm:gap-1.5 sm:px-4 sm:text-sm"
+              >
+                <BarChart3 className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Analytics</span>
+                <span className="sr-only sm:hidden">Analytics</span>
               </Link>
             </div>
           </div>

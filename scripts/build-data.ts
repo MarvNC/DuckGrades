@@ -64,6 +64,82 @@ type Aggregate = {
   withdrawals: number;
 };
 
+type AnalyticsLevel = '100' | '200' | '300' | '400' | '500+';
+
+type AnalyticsTermAggregate = {
+  term: string;
+  termDesc: string;
+  aggregate: Aggregate;
+};
+
+type AnalyticsTermLevelAggregate = {
+  term: string;
+  termDesc: string;
+  aggregate: Aggregate;
+};
+
+type AnalyticsLevelAggregate = {
+  level: AnalyticsLevel;
+  aggregate: Aggregate;
+  min: number | null;
+  q1: number | null;
+  q3: number | null;
+  max: number | null;
+};
+
+type AnalyticsSubjectSummary = {
+  code: string;
+  title: string;
+  courseCount: number;
+  sectionCount: number;
+  professorCount: number;
+  aggregate: Aggregate;
+};
+
+type AnalyticsCourseSizePoint = {
+  courseCode: string;
+  title: string;
+  subject: string;
+  level: AnalyticsLevel;
+  meanGpa: number;
+  avgClassSize: number;
+  totalStudents: number;
+  sectionCount: number;
+};
+
+type AnalyticsClassSizeBucket = {
+  key: string;
+  label: string;
+  min: number;
+  max: number | null;
+  courseCount: number;
+  studentCount: number;
+};
+
+type AnalyticsPayload = {
+  schemaVersion: 1;
+  builtAt: string;
+  termRange: {
+    firstTerm: string;
+    firstTermDesc: string;
+    lastTerm: string;
+    lastTermDesc: string;
+  };
+  totals: {
+    termCount: number;
+    subjectCount: number;
+    courseCount: number;
+    sectionCount: number;
+  };
+  levelOrder: AnalyticsLevel[];
+  termAggregates: AnalyticsTermAggregate[];
+  termByLevel: Record<AnalyticsLevel, AnalyticsTermLevelAggregate[]>;
+  levelAggregates: AnalyticsLevelAggregate[];
+  subjectSummaries: AnalyticsSubjectSummary[];
+  courseSizeVsGpa: AnalyticsCourseSizePoint[];
+  classSizeDistribution: AnalyticsClassSizeBucket[];
+};
+
 type FileMeta = {
   bytes: number;
   sha256: string;
@@ -100,6 +176,24 @@ type SubjectsOverviewPayload = {
   o: Array<number | null>;
   s: Array<number | null>;
 };
+
+const ANALYTICS_LEVEL_ORDER: AnalyticsLevel[] = ['100', '200', '300', '400', '500+'];
+const ANALYTICS_NUMERICAL_SCALE: Array<{ grade: (typeof NUMERICAL_ORDER)[number]; value: number }> =
+  [
+    { grade: 'F', value: 0 },
+    { grade: 'DM', value: 0.7 },
+    { grade: 'D', value: 1 },
+    { grade: 'DP', value: 1.3 },
+    { grade: 'CM', value: 1.7 },
+    { grade: 'C', value: 2 },
+    { grade: 'CP', value: 2.3 },
+    { grade: 'BM', value: 2.7 },
+    { grade: 'B', value: 3 },
+    { grade: 'BP', value: 3.3 },
+    { grade: 'AM', value: 3.7 },
+    { grade: 'A', value: 4 },
+    { grade: 'AP', value: 4 },
+  ];
 
 type CatalogSubjectMetadata = {
   code: string;
@@ -271,6 +365,22 @@ function getYearBucket(courseNumber: string): 1 | 2 | 3 | 4 | 5 {
   return 5;
 }
 
+function yearBucketToAnalyticsLevel(bucket: 1 | 2 | 3 | 4 | 5): AnalyticsLevel {
+  if (bucket === 1) {
+    return '100';
+  }
+  if (bucket === 2) {
+    return '200';
+  }
+  if (bucket === 3) {
+    return '300';
+  }
+  if (bucket === 4) {
+    return '400';
+  }
+  return '500+';
+}
+
 function getTermKey(termDesc: string): TermKey {
   const normalized = termDesc.trim().toLowerCase();
   if (normalized.startsWith('fall')) {
@@ -283,6 +393,50 @@ function getTermKey(termDesc: string): TermKey {
     return 'spring';
   }
   return 'summer';
+}
+
+function getQuantileFromCounts(
+  numericalCounts: Record<(typeof NUMERICAL_ORDER)[number], number>,
+  quantile: number
+): number | null {
+  const clampedQuantile = Math.min(1, Math.max(0, quantile));
+  const total = NUMERICAL_ORDER.reduce((sum, grade) => sum + numericalCounts[grade], 0);
+  if (total <= 0) {
+    return null;
+  }
+
+  const target = Math.max(1, Math.ceil(total * clampedQuantile));
+  let running = 0;
+  for (const item of ANALYTICS_NUMERICAL_SCALE) {
+    running += numericalCounts[item.grade];
+    if (running >= target) {
+      return item.value;
+    }
+  }
+
+  return ANALYTICS_NUMERICAL_SCALE[ANALYTICS_NUMERICAL_SCALE.length - 1]?.value ?? null;
+}
+
+function getMinFromCounts(
+  numericalCounts: Record<(typeof NUMERICAL_ORDER)[number], number>
+): number | null {
+  for (const item of ANALYTICS_NUMERICAL_SCALE) {
+    if (numericalCounts[item.grade] > 0) {
+      return item.value;
+    }
+  }
+  return null;
+}
+
+function getMaxFromCounts(
+  numericalCounts: Record<(typeof NUMERICAL_ORDER)[number], number>
+): number | null {
+  for (const item of [...ANALYTICS_NUMERICAL_SCALE].reverse()) {
+    if (numericalCounts[item.grade] > 0) {
+      return item.value;
+    }
+  }
+  return null;
 }
 
 function buildAggregate(rows: SectionRecord[]): Aggregate {
@@ -442,6 +596,7 @@ function verifyCrossReferences(params: {
     );
   }
   assert(fileIndex[`${version}/subjects-overview.json`], 'Missing subjects overview file');
+  assert(fileIndex[`${version}/analytics.json`], 'Missing analytics file');
 }
 
 function compactSearchIndex(index: SearchIndexPayload): CompactSearchIndexPayload {
@@ -693,6 +848,174 @@ async function loadSubjectCodeMappings(): Promise<SubjectCodeMappingsLookup> {
       descriptionProgramNames: new Map<string, string[]>(),
     };
   }
+}
+
+function buildClassSizeDistribution(
+  points: AnalyticsCourseSizePoint[]
+): AnalyticsClassSizeBucket[] {
+  const bucketDefs: Array<{ key: string; label: string; min: number; max: number | null }> = [
+    { key: '1-19', label: '1-19', min: 1, max: 19 },
+    { key: '20-39', label: '20-39', min: 20, max: 39 },
+    { key: '40-79', label: '40-79', min: 40, max: 79 },
+    { key: '80-149', label: '80-149', min: 80, max: 149 },
+    { key: '150+', label: '150+', min: 150, max: null },
+  ];
+
+  const buckets = bucketDefs.map((bucket) => ({
+    ...bucket,
+    courseCount: 0,
+    studentCount: 0,
+  }));
+
+  for (const point of points) {
+    const bucket =
+      buckets.find((candidate) => {
+        if (candidate.max === null) {
+          return point.avgClassSize >= candidate.min;
+        }
+        return point.avgClassSize >= candidate.min && point.avgClassSize <= candidate.max;
+      }) ?? buckets[buckets.length - 1];
+
+    if (!bucket) {
+      continue;
+    }
+    bucket.courseCount += 1;
+    bucket.studentCount += point.totalStudents;
+  }
+
+  return buckets;
+}
+
+function buildAnalyticsPayload(params: {
+  sections: SectionRecord[];
+  byCourse: Map<string, SectionRecord[]>;
+  bySubject: Map<string, SectionRecord[]>;
+  subjectOverviewRows: SubjectOverview[];
+  getCourseMetadata: (courseCode: string) => CatalogCourseMetadata | null;
+  builtAt: string;
+}): AnalyticsPayload {
+  const { sections, byCourse, bySubject, subjectOverviewRows, getCourseMetadata, builtAt } = params;
+
+  const byTerm = new Map<string, SectionRecord[]>();
+  const termDescByTerm = new Map<string, string>();
+  const byTermLevel = new Map<string, SectionRecord[]>();
+  const byLevel = new Map<AnalyticsLevel, SectionRecord[]>();
+
+  for (const section of sections) {
+    pushGrouped(byTerm, section.term, section);
+    if (!termDescByTerm.has(section.term)) {
+      termDescByTerm.set(section.term, section.termDesc);
+    }
+
+    const level = yearBucketToAnalyticsLevel(getYearBucket(section.number));
+    pushGrouped(byLevel, level, section);
+    pushGrouped(byTermLevel, `${section.term}::${level}`, section);
+  }
+
+  const sortedTerms = [...byTerm.keys()].sort((left, right) => left.localeCompare(right));
+  const firstTerm = sortedTerms[0] ?? '';
+  const lastTerm = sortedTerms[sortedTerms.length - 1] ?? '';
+
+  const termAggregates: AnalyticsTermAggregate[] = sortedTerms.map((term) => {
+    const rows = byTerm.get(term) ?? [];
+    return {
+      term,
+      termDesc: termDescByTerm.get(term) ?? term,
+      aggregate: buildAggregate(rows),
+    };
+  });
+
+  const termByLevel = Object.fromEntries(
+    ANALYTICS_LEVEL_ORDER.map((level) => {
+      const rows: AnalyticsTermLevelAggregate[] = sortedTerms
+        .map((term) => {
+          const groupedRows = byTermLevel.get(`${term}::${level}`) ?? [];
+          if (groupedRows.length === 0) {
+            return null;
+          }
+          return {
+            term,
+            termDesc: termDescByTerm.get(term) ?? term,
+            aggregate: buildAggregate(groupedRows),
+          };
+        })
+        .filter((value): value is AnalyticsTermLevelAggregate => value !== null);
+      return [level, rows];
+    })
+  ) as Record<AnalyticsLevel, AnalyticsTermLevelAggregate[]>;
+
+  const levelAggregates: AnalyticsLevelAggregate[] = ANALYTICS_LEVEL_ORDER.map((level) => {
+    const rows = byLevel.get(level) ?? [];
+    const aggregate = buildAggregate(rows);
+    return {
+      level,
+      aggregate,
+      min: getMinFromCounts(aggregate.numericalCounts),
+      q1: getQuantileFromCounts(aggregate.numericalCounts, 0.25),
+      q3: getQuantileFromCounts(aggregate.numericalCounts, 0.75),
+      max: getMaxFromCounts(aggregate.numericalCounts),
+    };
+  });
+
+  const subjectSummaries: AnalyticsSubjectSummary[] = [...subjectOverviewRows]
+    .map((subject) => ({
+      code: subject.code,
+      title: subject.title,
+      courseCount: subject.courseCount,
+      sectionCount: subject.sectionCount,
+      professorCount: subject.professorCount,
+      aggregate: subject.aggregate,
+    }))
+    .sort((left, right) => left.code.localeCompare(right.code));
+
+  const courseSizeVsGpa: AnalyticsCourseSizePoint[] = [...byCourse.entries()]
+    .map(([courseCode, rows]) => {
+      const aggregate = buildAggregate(rows);
+      const avgClassSize =
+        rows.length > 0 ? Number((aggregate.totalNonWReported / rows.length).toFixed(2)) : 0;
+      const level = yearBucketToAnalyticsLevel(getYearBucket(rows[0]?.number ?? ''));
+      return {
+        courseCode,
+        title: getCourseMetadata(courseCode)?.title ?? rows[0]?.title ?? courseCode,
+        subject: rows[0]?.subject ?? courseCode.split('-')[0] ?? '',
+        level,
+        meanGpa: aggregate.mean ?? Number.NaN,
+        avgClassSize,
+        totalStudents: aggregate.totalNonWReported,
+        sectionCount: rows.length,
+      };
+    })
+    .filter(
+      (course): course is AnalyticsCourseSizePoint =>
+        Number.isFinite(course.meanGpa) && course.totalStudents > 0
+    )
+    .sort((left, right) => right.totalStudents - left.totalStudents);
+
+  const classSizeDistribution = buildClassSizeDistribution(courseSizeVsGpa);
+
+  return {
+    schemaVersion: 1,
+    builtAt,
+    termRange: {
+      firstTerm,
+      firstTermDesc: termDescByTerm.get(firstTerm) ?? firstTerm,
+      lastTerm,
+      lastTermDesc: termDescByTerm.get(lastTerm) ?? lastTerm,
+    },
+    totals: {
+      termCount: sortedTerms.length,
+      subjectCount: bySubject.size,
+      courseCount: byCourse.size,
+      sectionCount: sections.length,
+    },
+    levelOrder: ANALYTICS_LEVEL_ORDER,
+    termAggregates,
+    termByLevel,
+    levelAggregates,
+    subjectSummaries,
+    courseSizeVsGpa,
+    classSizeDistribution,
+  };
 }
 
 async function main() {
@@ -994,6 +1317,19 @@ async function main() {
     subjectsOverview
   );
 
+  const analyticsPayload = buildAnalyticsPayload({
+    sections,
+    byCourse,
+    bySubject,
+    subjectOverviewRows,
+    getCourseMetadata,
+    builtAt: new Date().toISOString(),
+  });
+  fileIndex[`${version}/analytics.json`] = await writeJson(
+    join(OUTPUT_ROOT, `${version}/analytics.json`),
+    analyticsPayload
+  );
+
   for (const [courseCode, rows] of byCourse) {
     const catalogCourse = getCourseMetadata(courseCode);
     const byInstructor = new Map<string, SectionRecord[]>();
@@ -1144,6 +1480,7 @@ async function main() {
     compatibilityFlags: {
       coverageMetric: true,
       deterministicProfessorIds: true,
+      analyticsShard: true,
     },
   };
   fileIndex[`${version}/manifest.json`] = await writeJson(

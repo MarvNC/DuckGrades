@@ -120,6 +120,76 @@ export type SubjectsOverviewShard = {
   subjects: SubjectOverview[];
 };
 
+export type AnalyticsLevel = '100' | '200' | '300' | '400' | '500+';
+
+export type AnalyticsTermAggregate = {
+  term: string;
+  termDesc: string;
+  aggregate: Aggregate;
+};
+
+export type AnalyticsLevelAggregate = {
+  level: AnalyticsLevel;
+  aggregate: Aggregate;
+  min: number | null;
+  q1: number | null;
+  q3: number | null;
+  max: number | null;
+};
+
+export type AnalyticsSubjectSummary = {
+  code: string;
+  title: string;
+  courseCount: number;
+  sectionCount: number;
+  professorCount: number;
+  aggregate: Aggregate;
+};
+
+export type AnalyticsCourseSizePoint = {
+  courseCode: string;
+  title: string;
+  subject: string;
+  level: AnalyticsLevel;
+  meanGpa: number;
+  avgClassSize: number;
+  totalStudents: number;
+  sectionCount: number;
+};
+
+export type AnalyticsClassSizeBucket = {
+  key: string;
+  label: string;
+  min: number;
+  max: number | null;
+  courseCount: number;
+  studentCount: number;
+};
+
+export type AnalyticsShard = {
+  schemaVersion: 1;
+  builtAt: string;
+  termRange: {
+    firstTerm: string;
+    firstTermDesc: string;
+    lastTerm: string;
+    lastTermDesc: string;
+  };
+  totals: {
+    termCount: number;
+    subjectCount: number;
+    courseCount: number;
+    sectionCount: number;
+  };
+  levelOrder: AnalyticsLevel[];
+  termAggregates: AnalyticsTermAggregate[];
+  termByLevel: Record<AnalyticsLevel, AnalyticsTermAggregate[]>;
+  levelAggregates: AnalyticsLevelAggregate[];
+  subjectSummaries: AnalyticsSubjectSummary[];
+  courseSizeVsGpa: AnalyticsCourseSizePoint[];
+  classSizeDistribution: AnalyticsClassSizeBucket[];
+};
+
 export type CourseShard = {
   courseCode: string;
   subject: string;
@@ -156,6 +226,7 @@ type VersionFile = { version: string };
 let cachedVersion: Promise<string> | null = null;
 let cachedSearchIndex: Promise<SearchIndex> | null = null;
 let cachedSubjectsOverview: Promise<SubjectsOverviewShard> | null = null;
+let cachedAnalyticsShard: Promise<AnalyticsShard> | null = null;
 const subjectShardCache = new Map<string, Promise<SubjectShard>>();
 const courseShardCache = new Map<string, Promise<CourseShard>>();
 const professorShardCache = new Map<string, Promise<ProfessorShard>>();
@@ -422,6 +493,21 @@ export async function getSubjectsOverviewShard(): Promise<SubjectsOverviewShard>
   return cachedSubjectsOverview;
 }
 
+export async function getAnalyticsShard(): Promise<AnalyticsShard> {
+  if (!cachedAnalyticsShard) {
+    cachedAnalyticsShard = (async () => {
+      try {
+        const version = await getDatasetVersion();
+        return await fetchDataJson<AnalyticsShard>(`${version}/analytics.json`);
+      } catch (error) {
+        cachedAnalyticsShard = null;
+        throw error;
+      }
+    })();
+  }
+  return cachedAnalyticsShard;
+}
+
 export async function getSubjectShard(code: string): Promise<SubjectShard> {
   const key = code.toUpperCase();
   const existing = subjectShardCache.get(key);
@@ -476,6 +562,10 @@ export async function getProfessorShard(id: string): Promise<ProfessorShard> {
 export function prefetchRouteData(route: string): void {
   if (route === '/subjects') {
     void getSubjectsOverviewShard();
+    return;
+  }
+  if (route === '/analytics') {
+    void getAnalyticsShard();
     return;
   }
   if (route.startsWith('/subject/')) {

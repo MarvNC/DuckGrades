@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
-import { List, Search } from 'lucide-react';
+import { BarChart3, List, Search } from 'lucide-react';
 import type { SearchLayoutContext } from '../AppLayout';
 import { Brand } from '../components/Brand';
 import { ThemeToggleButton } from '../components/ThemeToggleButton';
@@ -79,13 +79,22 @@ export function HomePage() {
             </section>
 
             <section className="fade-in-up mt-7" style={{ animationDelay: '240ms' }}>
-              <Link
-                to="/subjects"
-                className="inline-flex items-center rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-6 py-2.5 text-sm font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)] hover:shadow-md"
-              >
-                <List className="mr-2 h-4 w-4" aria-hidden="true" />
-                Browse all subjects
-              </Link>
+              <div className="flex flex-wrap items-center justify-center gap-2.5">
+                <Link
+                  to="/subjects"
+                  className="inline-flex items-center rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-6 py-2.5 text-sm font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)] hover:shadow-md"
+                >
+                  <List className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Browse all subjects
+                </Link>
+                <Link
+                  to="/analytics"
+                  className="inline-flex items-center rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-6 py-2.5 text-sm font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)] hover:shadow-md"
+                >
+                  <BarChart3 className="mr-2 h-4 w-4" aria-hidden="true" />
+                  View analytics
+                </Link>
+              </div>
             </section>
           </div>
         </div>
