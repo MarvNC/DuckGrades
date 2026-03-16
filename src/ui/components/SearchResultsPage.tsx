@@ -1,9 +1,72 @@
-import type { MutableRefObject } from 'react';
+import { useEffect, useRef, type MutableRefObject } from 'react';
 import { BookOpen, Layers, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { prefetchRouteData } from '../../lib/dataClient';
-import { prefetchRouteModule } from '../../lib/routePrefetch';
+import { canPrefetch, prefetchRoute } from '../../lib/prefetch';
 import type { SearchItem, SearchSection } from './searchModel';
+
+/**
+ * After search results settle, observe every result card in the viewport and
+ * prefetch its route after 200ms. Uses a short-lived IntersectionObserver that
+ * tears itself down once all visible items have been prefetched.
+ */
+function usePrefetchVisibleResults(
+  flattened: SearchItem[],
+  resultRefs: MutableRefObject<Array<HTMLAnchorElement | null>>
+) {
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!canPrefetch()) return;
+    if (flattened.length === 0) return;
+
+    // Cancel any pending timer from a previous render
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+
+    // Give the DOM a tick to paint the new results before observing
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null;
+      const refs = resultRefs.current;
+
+      const pending = new Map<Element, string>(); // element → route
+      flattened.forEach((item, i) => {
+        const el = refs[i];
+        if (el) pending.set(el, item.to);
+      });
+
+      if (pending.size === 0) return;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            const route = pending.get(entry.target);
+            if (route) {
+              prefetchRoute(route);
+              pending.delete(entry.target);
+              observer.unobserve(entry.target);
+            }
+          }
+          if (pending.size === 0) observer.disconnect();
+        },
+        { rootMargin: '0px 0px 120px 0px', threshold: 0 }
+      );
+
+      for (const el of pending.keys()) observer.observe(el);
+
+      return () => observer.disconnect();
+    }, 200);
+
+    return () => {
+      if (timerRef.current !== null) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [flattened, resultRefs]);
+}
 
 type SearchResultsPageProps = {
   query: string;
@@ -57,6 +120,8 @@ export function SearchResultsPage({
   resultRefs,
   indexByKey,
 }: SearchResultsPageProps) {
+  usePrefetchVisibleResults(flattened, resultRefs);
+
   function focusResult(indexValue: number) {
     const target = resultRefs.current[indexValue];
     if (target) {
@@ -109,17 +174,14 @@ export function SearchResultsPage({
                       to={item.to}
                       onMouseEnter={() => {
                         setActiveIndex(indexValue);
-                        prefetchRouteModule(item.to);
-                        prefetchRouteData(item.to);
+                        prefetchRoute(item.to);
                       }}
                       onFocus={() => {
                         setActiveIndex(indexValue);
-                        prefetchRouteModule(item.to);
-                        prefetchRouteData(item.to);
+                        prefetchRoute(item.to);
                       }}
                       onPointerDown={() => {
-                        prefetchRouteModule(item.to);
-                        prefetchRouteData(item.to);
+                        prefetchRoute(item.to);
                       }}
                       onClick={(event) => {
                         event.preventDefault();
