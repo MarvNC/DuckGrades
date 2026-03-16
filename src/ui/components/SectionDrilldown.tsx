@@ -51,9 +51,10 @@ function buildSectionAggregate(section: SectionRow): Aggregate {
 }
 
 export function SectionDrilldown({ sections, identityPrefix }: SectionDrilldownProps) {
+  const sortedSections = [...sections].sort((a, b) => a.term.localeCompare(b.term));
   return (
     <div className="space-y-2.5">
-      {sections.map((section) => {
+      {sortedSections.map((section) => {
         const visible = visibleNumericalCount(section);
         const coverage =
           section.totalNonWReported > 0 ? (visible / section.totalNonWReported) * 100 : 0;
