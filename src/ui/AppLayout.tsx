@@ -449,9 +449,14 @@ export function AppLayout() {
           <div
             className={`mx-auto mb-2 flex w-full max-w-6xl flex-col rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/55 shadow-[0_6px_18px_-14px_rgba(0,0,0,0.45)] backdrop-blur-lg backdrop-saturate-125 sm:hidden ${isHome ? 'home-search-header-enter' : ''}`}
           >
-            <div className="flex items-center justify-between px-3 py-2">
-              <Brand onClick={onHeaderBrandClick} className="shrink-0" />
-              <ThemeToggleButton themePreference={themePreference} cycleTheme={cycleTheme} />
+            {/* Brand + theme — collapses out when page bar is active (scrolled past inline controls) */}
+            <div
+              className={`overflow-hidden transition-all duration-200 ease-out ${hasPageBar ? 'max-h-0 opacity-0' : 'max-h-16 opacity-100'}`}
+            >
+              <div className="flex items-center justify-between px-3 py-2">
+                <Brand onClick={onHeaderBrandClick} className="shrink-0" />
+                <ThemeToggleButton themePreference={themePreference} cycleTheme={cycleTheme} />
+              </div>
             </div>
             {MobilePageBarRow}
           </div>
