@@ -16,6 +16,8 @@ export type RankedCourse = SearchIndex['courses'][number] & {
   score: number;
   labelMatchIndexes: MatchIndexes;
   subtitleMatchIndexes: MatchIndexes;
+  /** Best-matching individual section title when the query matched a section title */
+  matchedSectionTitle?: string;
 };
 
 export type RankedProfessor = SearchIndex['professors'][number] & {
@@ -303,6 +305,41 @@ function getFuzzyThreshold(query: string): number {
   return 0.22;
 }
 
+/**
+ * Given a pipe-separated sectionTitles string (e.g. "Cantonese | Japanese Culture"),
+ * returns the individual title that best matches the query profile, or undefined if
+ * none match well enough to surface.
+ */
+function findBestMatchingSectionTitle(
+  profile: QueryProfile,
+  sectionTitles: string | undefined
+): string | undefined {
+  if (!sectionTitles) {
+    return undefined;
+  }
+  const titles = sectionTitles
+    .split('|')
+    .map((t) => t.trim())
+    .filter(Boolean);
+  if (titles.length === 0) {
+    return undefined;
+  }
+
+  let bestTitle: string | undefined;
+  let bestScore = 0;
+
+  for (const title of titles) {
+    const score = scoreSecondaryText(profile, title);
+    if (score > bestScore) {
+      bestScore = score;
+      bestTitle = title;
+    }
+  }
+
+  // Only surface the matched section title if it scored meaningfully
+  return bestScore > 0.4 ? bestTitle : undefined;
+}
+
 export function searchIndex(index: SearchIndex, query: string) {
   const profile = createQueryProfile(query);
   if (!profile.query) {
@@ -332,9 +369,11 @@ export function searchIndex(index: SearchIndex, query: string) {
       (course) => course.code,
       (course) => course.title,
       (course) => course.subject,
+      (course) => course.sectionTitles ?? '',
       (course) => normalizeLoose(course.code),
       (course) => normalizeLoose(course.title),
       (course) => normalizeLoose(course.subject),
+      (course) => normalizeLoose(course.sectionTitles ?? ''),
     ],
     keyForMap: (course) => course.code,
   });
@@ -362,18 +401,28 @@ export function searchIndex(index: SearchIndex, query: string) {
     }))
     .sort((a, b) => b.score - a.score || b.popularity - a.popularity);
   const courses = courseCandidates
-    .map((candidate) => ({
-      ...candidate.obj,
-      score: applyPopularityBoost(
-        candidate.fuzzyScore +
-          scorePrimaryText(profile, candidate.obj.code) +
-          scoreSecondaryText(profile, `${candidate.obj.title} ${candidate.obj.subject}`) +
-          getIntentBoost(profile, 'course'),
-        candidate.obj.popularity
-      ),
-      labelMatchIndexes: candidate.labelMatchIndexes,
-      subtitleMatchIndexes: candidate.subtitleMatchIndexes,
-    }))
+    .map((candidate) => {
+      const { sectionTitles } = candidate.obj;
+      // Find the individual section title that best matches the query (if any)
+      const matchedSectionTitle = findBestMatchingSectionTitle(profile, sectionTitles);
+      const sectionTitleScore = matchedSectionTitle
+        ? scoreSecondaryText(profile, matchedSectionTitle)
+        : 0;
+      return {
+        ...candidate.obj,
+        score: applyPopularityBoost(
+          candidate.fuzzyScore +
+            scorePrimaryText(profile, candidate.obj.code) +
+            scoreSecondaryText(profile, `${candidate.obj.title} ${candidate.obj.subject}`) +
+            sectionTitleScore +
+            getIntentBoost(profile, 'course'),
+          candidate.obj.popularity
+        ),
+        labelMatchIndexes: candidate.labelMatchIndexes,
+        subtitleMatchIndexes: candidate.subtitleMatchIndexes,
+        matchedSectionTitle,
+      };
+    })
     .sort((a, b) => b.score - a.score || b.popularity - a.popularity);
 
   const professors = professorCandidates

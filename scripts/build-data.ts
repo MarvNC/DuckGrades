@@ -153,12 +153,18 @@ type FileMeta = {
 
 type SearchIndexPayload = {
   subjects: Array<{ code: string; title: string; popularity: number }>;
-  courses: Array<{ code: string; title: string; subject: string; popularity: number }>;
+  courses: Array<{
+    code: string;
+    title: string;
+    subject: string;
+    popularity: number;
+    sectionTitles?: string;
+  }>;
   professors: Array<{ id: string; name: string; popularity: number }>;
 };
 
 type CompactSearchIndexPayload = {
-  v: 3;
+  v: 4;
   t: string[];
   s: number[];
   c: number[];
@@ -652,7 +658,8 @@ function compactSearchIndex(index: SearchIndexPayload): CompactSearchIndexPayloa
       encode(course.code),
       encode(course.title),
       encode(course.subject),
-      course.popularity
+      course.popularity,
+      encode(course.sectionTitles ?? '')
     );
   }
   for (const professor of index.professors) {
@@ -660,7 +667,7 @@ function compactSearchIndex(index: SearchIndexPayload): CompactSearchIndexPayloa
   }
 
   return {
-    v: 3,
+    v: 4,
     t: table,
     s: subjects,
     c: courses,
@@ -1437,12 +1444,26 @@ async function main() {
       .map(([code, rows]) => ({ code, title: getSubjectTitle(code), popularity: rows.length }))
       .sort((a, b) => b.popularity - a.popularity),
     courses: [...byCourse.entries()]
-      .map(([code, rows]) => ({
-        code,
-        title: getCourseMetadata(code)?.title ?? rows[0]?.title ?? '',
-        subject: rows[0]?.subject ?? '',
-        popularity: rows.reduce((sum, row) => sum + row.totalNonWReported, 0),
-      }))
+      .map(([code, rows]) => {
+        const primaryTitle = getCourseMetadata(code)?.title ?? rows[0]?.title ?? '';
+        // Collect unique section titles that differ from the primary course title.
+        // These appear for special-topics courses (e.g. GSL-199: Cantonese).
+        const uniqueSectionTitles = [
+          ...new Set(
+            rows
+              .map((r) => r.title.trim())
+              .filter((t) => t && t.toLowerCase() !== primaryTitle.toLowerCase())
+          ),
+        ];
+        return {
+          code,
+          title: primaryTitle,
+          subject: rows[0]?.subject ?? '',
+          popularity: rows.reduce((sum, row) => sum + row.totalNonWReported, 0),
+          sectionTitles:
+            uniqueSectionTitles.length > 0 ? uniqueSectionTitles.join(' | ') : undefined,
+        };
+      })
       .sort((a, b) => b.popularity - a.popularity),
     professors: [...byProfessor.entries()]
       .map(([id, rows]) => ({

@@ -66,7 +66,7 @@ export function buildSearchItems(ranked: RankedSearchResult, limits: { total?: n
   const courses = ranked.courses.map((course) => ({
     key: `course:${course.code}`,
     label: course.code,
-    subtitle: course.title,
+    subtitle: course.matchedSectionTitle ?? course.title,
     score: course.score,
     labelMatchIndexes: course.labelMatchIndexes,
     subtitleMatchIndexes: course.subtitleMatchIndexes,

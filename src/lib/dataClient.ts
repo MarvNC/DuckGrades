@@ -1,6 +1,13 @@
 export type SearchIndex = {
   subjects: Array<{ code: string; title: string; popularity: number }>;
-  courses: Array<{ code: string; title: string; subject: string; popularity: number }>;
+  courses: Array<{
+    code: string;
+    title: string;
+    subject: string;
+    popularity: number;
+    /** Pipe-separated unique section titles for special-topics courses (e.g. "Cantonese | Japanese Culture") */
+    sectionTitles?: string;
+  }>;
   professors: Array<{ id: string; name: string; popularity: number }>;
 };
 
@@ -21,7 +28,7 @@ export function isNotFoundDataError(error: unknown): boolean {
 }
 
 type CompactSearchIndex = {
-  v: 1 | 2 | 3;
+  v: 1 | 2 | 3 | 4;
   t: string[];
   s: Array<[number, number]> | Array<[number, number, number]> | number[];
   c: Array<[number, number, number, number]> | number[];
@@ -291,6 +298,45 @@ function decodeSearchIndex(raw: SearchIndex | CompactSearchIndex): SearchIndex {
 
   const table = raw.t;
   const decode = (index: number) => table[index] ?? '';
+
+  if (raw.v === 4) {
+    const subjects: SearchIndex['subjects'] = [];
+    const courses: SearchIndex['courses'] = [];
+    const professors: SearchIndex['professors'] = [];
+    const subjectData = raw.s as number[];
+    const courseData = raw.c as number[];
+    const professorData = raw.p as number[];
+
+    for (let i = 0; i < subjectData.length; i += 3) {
+      const code = decode(subjectData[i] ?? 0);
+      const title = decode(subjectData[i + 1] ?? 0);
+      subjects.push({
+        code,
+        title: title || code,
+        popularity: subjectData[i + 2] ?? 0,
+      });
+    }
+    // v4 course stride is 5: code, title, subject, popularity, sectionTitles
+    for (let i = 0; i < courseData.length; i += 5) {
+      const sectionTitles = decode(courseData[i + 4] ?? 0);
+      courses.push({
+        code: decode(courseData[i] ?? 0),
+        title: decode(courseData[i + 1] ?? 0),
+        subject: decode(courseData[i + 2] ?? 0),
+        popularity: courseData[i + 3] ?? 0,
+        sectionTitles: sectionTitles || undefined,
+      });
+    }
+    for (let i = 0; i < professorData.length; i += 3) {
+      professors.push({
+        id: decode(professorData[i] ?? 0),
+        name: decode(professorData[i + 1] ?? 0),
+        popularity: professorData[i + 2] ?? 0,
+      });
+    }
+
+    return { subjects, courses, professors };
+  }
 
   if (raw.v === 3) {
     const subjects: SearchIndex['subjects'] = [];
