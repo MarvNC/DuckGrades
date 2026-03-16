@@ -10,9 +10,11 @@ type ClassSizeBucket = {
   key: string;
   label: string;
   min: number;
-  max: number | null;
+  max: number;
   courseCount: number;
 };
+
+const CLASS_SIZE_BUCKET_WIDTH = 5;
 
 const LEVEL_ORDER: AnalyticsLevel[] = ['100', '200', '300', '400', '500+'];
 const LEVEL_LABELS: Record<AnalyticsLevel, string> = {
@@ -60,30 +62,29 @@ function toTickLabels(termDescriptions: string[]): string[] {
 }
 
 function buildClassSizeBuckets(points: AnalyticsShard['courseSizeVsGpa']): ClassSizeBucket[] {
-  const buckets: ClassSizeBucket[] = [
-    { key: '1-9', label: '1-9', min: 1, max: 9, courseCount: 0 },
-    { key: '10-19', label: '10-19', min: 10, max: 19, courseCount: 0 },
-    { key: '20-29', label: '20-29', min: 20, max: 29, courseCount: 0 },
-    { key: '30-39', label: '30-39', min: 30, max: 39, courseCount: 0 },
-    { key: '40-49', label: '40-49', min: 40, max: 49, courseCount: 0 },
-    { key: '50-64', label: '50-64', min: 50, max: 64, courseCount: 0 },
-    { key: '65-79', label: '65-79', min: 65, max: 79, courseCount: 0 },
-    { key: '80-99', label: '80-99', min: 80, max: 99, courseCount: 0 },
-    { key: '100-149', label: '100-149', min: 100, max: 149, courseCount: 0 },
-    { key: '150+', label: '150+', min: 150, max: null, courseCount: 0 },
-  ];
+  const maxClassSize = points.reduce(
+    (currentMax, point) => Math.max(currentMax, Math.ceil(point.avgClassSize)),
+    CLASS_SIZE_BUCKET_WIDTH
+  );
+  const upperBound = Math.ceil(maxClassSize / CLASS_SIZE_BUCKET_WIDTH) * CLASS_SIZE_BUCKET_WIDTH;
+  const buckets: ClassSizeBucket[] = [];
+
+  for (let min = 1; min <= upperBound; min += CLASS_SIZE_BUCKET_WIDTH) {
+    const max = min + CLASS_SIZE_BUCKET_WIDTH - 1;
+    buckets.push({
+      key: `${min}-${max}`,
+      label: `${min}-${max}`,
+      min,
+      max,
+      courseCount: 0,
+    });
+  }
 
   for (const point of points) {
-    const bucket = buckets.find((candidate) => {
-      if (candidate.max === null) {
-        return point.avgClassSize >= candidate.min;
-      }
-      return point.avgClassSize >= candidate.min && point.avgClassSize <= candidate.max;
-    });
-
-    if (bucket) {
-      bucket.courseCount += 1;
-    }
+    const classSize = Math.max(1, Math.ceil(point.avgClassSize));
+    const rawIndex = Math.floor((classSize - 1) / CLASS_SIZE_BUCKET_WIDTH);
+    const bucketIndex = Math.min(rawIndex, buckets.length - 1);
+    buckets[bucketIndex].courseCount += 1;
   }
 
   return buckets;
@@ -160,7 +161,7 @@ export function AnalyticsPage() {
 
   const classSizeDistributionData = useMemo<uPlot.AlignedData>(() => {
     const rows = classSizeBuckets;
-    const x = rows.map((_, index) => index + 1);
+    const x = rows.map((_, index) => index);
     const courses = rows.map((row) => row.courseCount);
     return [x, courses];
   }, [classSizeBuckets]);
@@ -427,10 +428,27 @@ export function AnalyticsPage() {
 
           <section className="rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm sm:p-5">
             <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-base font-bold text-[var(--duck-fg)]">GPA vs class size</h2>
-              <p className="text-xs font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">
-                {analytics.courseSizeVsGpa.length.toLocaleString()} courses
-              </p>
+              <div className="space-y-1">
+                <h2 className="text-base font-bold text-[var(--duck-fg)]">GPA vs class size</h2>
+                <p className="text-xs font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">
+                  {analytics.courseSizeVsGpa.length.toLocaleString()} courses
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {LEVEL_ORDER.map((level) => (
+                  <span
+                    key={level}
+                    className="inline-flex items-center rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2 py-1 text-[11px] font-semibold text-[var(--duck-muted-strong)]"
+                  >
+                    <span
+                      className="mr-1.5 h-2 w-2 rounded-full"
+                      style={{ backgroundColor: levelToken(level) }}
+                      aria-hidden="true"
+                    />
+                    {LEVEL_LABELS[level]}
+                  </span>
+                ))}
+              </div>
             </div>
             <UPlotChart
               ariaLabel="GPA versus class size scatter chart"
@@ -538,7 +556,10 @@ export function AnalyticsPage() {
                   height,
                   padding: compact ? [8, 8, 10, 26] : [12, 14, 20, 42],
                   scales: {
-                    x: { time: false },
+                    x: {
+                      time: false,
+                      range: (_self, min, max) => [min - 0.5, max + 0.5],
+                    },
                     y: { auto: true },
                   },
                   cursor: { drag: { x: false, y: false } },
@@ -550,7 +571,7 @@ export function AnalyticsPage() {
                       splits: () => classSizeDistributionData[0] as number[],
                       values: (_self, splits) =>
                         splits.map((split) => {
-                          const index = Math.round(split) - 1;
+                          const index = Math.round(split);
                           const item = classSizeBuckets[index];
                           if (!item) {
                             return '';
