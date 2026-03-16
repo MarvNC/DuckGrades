@@ -82,21 +82,20 @@ export function CourseTopicsPanel({ sections }: CourseTopicsPanelProps) {
         }
       }}
     >
-      <div className="flex flex-wrap items-start justify-between gap-2.5">
+      <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
           <h2 className="flex items-center gap-1.5 text-sm font-bold text-[var(--duck-fg)] sm:text-base">
             <Compass
               className="h-3.5 w-3.5 text-[var(--duck-muted)] sm:h-4 sm:w-4"
               aria-hidden="true"
             />
-            Section topics
+            Topics
           </h2>
-          <p className="mt-1 text-xs font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">
-            {topics.length} topics - {sections.length} sections
-          </p>
         </div>
 
-        <p className="hidden text-xs text-[var(--duck-muted)] sm:block">Most common first</p>
+        <p className="shrink-0 text-[11px] font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">
+          {topics.length} topics - {sections.length} sections
+        </p>
       </div>
 
       <div
