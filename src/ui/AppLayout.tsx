@@ -483,13 +483,16 @@ export function AppLayout() {
           <div
             className={`mx-auto mb-2 flex w-full max-w-6xl flex-col rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/55 shadow-[0_6px_18px_-14px_rgba(0,0,0,0.45)] backdrop-blur-lg backdrop-saturate-125 sm:hidden ${isHome ? 'home-search-header-enter' : ''}`}
           >
-            {/* Brand + theme — collapses when scrolling down past inline controls, restores on scroll up */}
+            {/* Brand + theme — collapses when scrolling down past inline controls, restores on scroll up.
+                Uses grid-template-rows 1fr→0fr for a smooth exact-height animation (no fixed max-h guess). */}
             <div
-              className={`overflow-hidden transition-all duration-200 ease-out ${hasPageBar && scrollingDown ? 'max-h-0 opacity-0' : 'max-h-16 opacity-100'}`}
+              className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out ${hasPageBar && scrollingDown ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`}
             >
-              <div className="flex items-center justify-between px-3 py-2">
-                <Brand onClick={onHeaderBrandClick} className="shrink-0" />
-                <ThemeToggleButton themePreference={themePreference} cycleTheme={cycleTheme} />
+              <div className="min-h-0 overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-2">
+                  <Brand onClick={onHeaderBrandClick} className="shrink-0" />
+                  <ThemeToggleButton themePreference={themePreference} cycleTheme={cycleTheme} />
+                </div>
               </div>
             </div>
             {MobilePageBarRow}
