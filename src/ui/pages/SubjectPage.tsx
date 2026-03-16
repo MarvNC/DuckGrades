@@ -1,12 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import uPlot from 'uplot';
-import {
-  getSubjectShard,
-  isNotFoundDataError,
-  prefetchRouteData,
-  type SubjectShard,
-} from '../../lib/dataClient';
+import { getSubjectShard, isNotFoundDataError, type SubjectShard } from '../../lib/dataClient';
+import { PrefetchLink } from '../components/PrefetchLink';
 import { abbreviateTermDesc, termRangeChipFromDescriptions } from '../../lib/termUtils';
 import fuzzysort from 'fuzzysort';
 import { AggregateSummaryCard } from '../components/AggregateSummaryCard';
@@ -366,12 +362,10 @@ export function SubjectPage() {
       {loadState === 'ready' ? (
         <div className="space-y-2.5">
           {visibleCourses.map((course) => (
-            <Link
+            <PrefetchLink
               key={course.courseCode}
               to={`/course/${course.courseCode}`}
               className="block"
-              onMouseEnter={() => prefetchRouteData(`/course/${course.courseCode}`)}
-              onFocus={() => prefetchRouteData(`/course/${course.courseCode}`)}
             >
               <EntityAggregateCard
                 title={course.courseCode}
@@ -387,7 +381,7 @@ export function SubjectPage() {
                 distributionSize="sm"
                 showStudentCountInDistribution={false}
               />
-            </Link>
+            </PrefetchLink>
           ))}
         </div>
       ) : null}

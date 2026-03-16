@@ -1,10 +1,10 @@
 import { useState, type ReactNode } from 'react';
 import { MetaChip } from './MetaChip';
-import { Link } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
-import { prefetchRouteData, type Aggregate } from '../../lib/dataClient';
+import { type Aggregate } from '../../lib/dataClient';
 import { formatGradeCode, formatGradeStat } from '../../lib/grades';
 import { GradeDistributionStrip } from './GradeDistributionStrip';
+import { PrefetchLink } from './PrefetchLink';
 
 type EntityAggregateCardProps = {
   title: string;
@@ -43,14 +43,12 @@ export function EntityAggregateCard({
         <div className="min-w-0 sm:flex-1">
           <div className="flex flex-wrap items-center">
             {titleHref ? (
-              <Link
+              <PrefetchLink
                 to={titleHref}
                 className="text-lg font-bold tracking-tight text-[var(--duck-fg)] hover:underline"
-                onMouseEnter={() => prefetchRouteData(titleHref)}
-                onFocus={() => prefetchRouteData(titleHref)}
               >
                 {title}
-              </Link>
+              </PrefetchLink>
             ) : (
               <p className="text-lg font-bold tracking-tight text-[var(--duck-fg)]">{title}</p>
             )}

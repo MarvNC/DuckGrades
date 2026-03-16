@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import fuzzysort from 'fuzzysort';
 import {
   getSubjectsOverviewShard,
@@ -9,6 +8,7 @@ import {
 import { AggregateSummaryCard } from '../components/AggregateSummaryCard';
 import { EntityAggregateCard } from '../components/EntityAggregateCard';
 import { PageControlBar } from '../components/PageControlBar';
+import { PrefetchLink } from '../components/PrefetchLink';
 import { usePageTitle } from '../usePageTitle';
 import { MetaChip } from '../components/MetaChip';
 
@@ -185,7 +185,7 @@ export function SubjectsOverviewPage() {
       {loadState === 'ready' ? (
         <div className="space-y-2.5">
           {visibleSubjects.map((subject) => (
-            <Link key={subject.code} to={`/subject/${subject.code}`} className="block">
+            <PrefetchLink key={subject.code} to={`/subject/${subject.code}`} className="block">
               <EntityAggregateCard
                 title={subject.code}
                 subtitle={subject.title}
@@ -199,7 +199,7 @@ export function SubjectsOverviewPage() {
                 distributionSize="sm"
                 showStudentCountInDistribution={false}
               />
-            </Link>
+            </PrefetchLink>
           ))}
         </div>
       ) : null}
