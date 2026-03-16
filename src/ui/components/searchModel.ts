@@ -63,16 +63,22 @@ export function buildSearchItems(ranked: RankedSearchResult, limits: { total?: n
     section: 'Subject' as const,
   }));
 
-  const courses = ranked.courses.map((course) => ({
-    key: `course:${course.code}`,
-    label: course.code,
-    subtitle: course.matchedSectionTitle ?? course.title,
-    score: course.score,
-    labelMatchIndexes: course.labelMatchIndexes,
-    subtitleMatchIndexes: course.subtitleMatchIndexes,
-    to: `/course/${course.code}`,
-    section: 'Course' as const,
-  }));
+  const courses = ranked.courses.map((course) => {
+    const baseTo = `/course/${course.code}`;
+    const to = course.matchedSectionTitle
+      ? `${baseTo}?topic=${encodeURIComponent(course.matchedSectionTitle)}`
+      : baseTo;
+    return {
+      key: `course:${course.code}`,
+      label: course.code,
+      subtitle: course.matchedSectionTitle ?? course.title,
+      score: course.score,
+      labelMatchIndexes: course.labelMatchIndexes,
+      subtitleMatchIndexes: course.subtitleMatchIndexes,
+      to,
+      section: 'Course' as const,
+    };
+  });
 
   const professors = ranked.professors.map((professor) => ({
     key: `professor:${professor.id}`,

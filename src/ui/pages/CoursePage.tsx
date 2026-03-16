@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useOutletContext, useParams } from 'react-router-dom';
+import { Link, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
 import uPlot from 'uplot';
 import { getCourseShard, isNotFoundDataError, type CourseShard } from '../../lib/dataClient';
 import type { SearchLayoutContext } from '../AppLayout';
@@ -68,13 +68,17 @@ function sortInstructors(
 
 export function CoursePage() {
   const { code } = useParams();
+  const [searchParams] = useSearchParams();
   const { scrollToPageControlBar } = useOutletContext<SearchLayoutContext>();
   const [course, setCourse] = useState<CourseShard | null>(null);
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error' | 'not-found'>(
     'loading'
   );
-  const [filterQuery, setFilterQuery] = useState('');
-  const [filterMode, setFilterMode] = useState<'instructor' | 'course'>('instructor');
+  const topicParam = searchParams.get('topic') ?? '';
+  const [filterQuery, setFilterQuery] = useState(topicParam);
+  const [filterMode, setFilterMode] = useState<'instructor' | 'course'>(
+    topicParam ? 'course' : 'instructor'
+  );
   const [sortKey, setSortKey] = useState<InstructorSortKey>('students');
   const [sortDescending, setSortDescending] = useState(true);
 
@@ -84,6 +88,13 @@ export function CoursePage() {
     : `${displayCourseCode} Grade Distributions and Statistics`;
 
   usePageTitle(pageTitle);
+
+  // When navigating to a new course (or the same course with a different ?topic),
+  // sync the filter state from the URL.
+  useEffect(() => {
+    setFilterQuery(topicParam);
+    setFilterMode(topicParam ? 'course' : 'instructor');
+  }, [code, topicParam]);
 
   useEffect(() => {
     if (!code) {
