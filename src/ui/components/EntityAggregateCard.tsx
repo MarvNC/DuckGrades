@@ -32,7 +32,7 @@ export function EntityAggregateCard({
 
   return (
     <article
-      className={`rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3.5 shadow-sm transition-colors ${isExpandable ? 'cursor-pointer hover:border-[var(--duck-muted)] hover:bg-[var(--duck-surface-soft)]' : ''}`}
+      className={`relative rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3.5 shadow-sm transition-colors ${isExpandable ? 'cursor-pointer hover:border-[var(--duck-muted)] hover:bg-[var(--duck-surface-soft)]' : ''}`}
       onClick={(e) => {
         if (isExpandable && !(e.target as HTMLElement).closest('a')) {
           setIsOpen(!isOpen);
@@ -95,9 +95,10 @@ export function EntityAggregateCard({
         </div>
       </div>
       {isExpandable && !isOpen ? (
-        <div className="mt-2 flex items-center text-[var(--duck-muted)]">
-          <ChevronDown className="h-4 w-4" aria-hidden="true" />
-        </div>
+        <ChevronDown
+          className="absolute bottom-1 left-1/2 h-3 w-3 -translate-x-1/2 text-[var(--duck-muted)]/60"
+          aria-hidden="true"
+        />
       ) : null}
       {children && isOpen ? (
         <div className="mt-4 border-t border-[var(--duck-border)] pt-4">{children}</div>
