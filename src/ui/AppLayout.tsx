@@ -262,10 +262,13 @@ export function AppLayout() {
     <div className="shell-bg relative flex min-h-screen flex-col" style={shellStyle}>
       <div className="home-grid-bg" aria-hidden="true" />
       <div className="home-bg-overlay" aria-hidden="true" />
+
+      {/* ── Desktop sticky header (sm and up) ── */}
       {showHeader ? (
         <header ref={headerRef} className="sticky top-0 z-30 w-full px-2 pt-3 sm:px-8 sm:pt-4">
+          {/* Desktop row — hidden on mobile */}
           <div
-            className={`mx-auto mb-2 flex w-full max-w-6xl items-center gap-2 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/55 px-3 py-2.5 shadow-[0_6px_18px_-14px_rgba(0,0,0,0.45)] backdrop-blur-lg backdrop-saturate-125 sm:mb-3 sm:gap-4 sm:px-8 sm:py-5 ${isHome ? 'home-search-header-enter' : ''}`}
+            className={`mx-auto mb-2 hidden w-full max-w-6xl items-center gap-2 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/55 px-3 py-2.5 shadow-[0_6px_18px_-14px_rgba(0,0,0,0.45)] backdrop-blur-lg backdrop-saturate-125 sm:mb-3 sm:flex sm:gap-4 sm:px-8 sm:py-5 ${isHome ? 'home-search-header-enter' : ''}`}
           >
             <Brand onClick={onHeaderBrandClick} className="shrink-0" hideWordmarkOnTiny />
             <div className="group relative hidden flex-1 sm:block sm:min-w-0">
@@ -295,53 +298,86 @@ export function AppLayout() {
               <ThemeToggleButton themePreference={themePreference} cycleTheme={cycleTheme} />
               <Link
                 to="/subjects"
-                className="inline-flex items-center gap-1 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)] sm:gap-1.5 sm:px-4 sm:text-sm"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-4 py-2 text-sm font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)]"
               >
                 <List className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden sm:inline">Subjects</span>
-                <span className="sr-only sm:hidden">Subjects</span>
+                Subjects
               </Link>
               <Link
                 to="/analytics"
-                className="inline-flex items-center gap-1 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)] sm:gap-1.5 sm:px-4 sm:text-sm"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-4 py-2 text-sm font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)]"
               >
                 <BarChart3 className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden sm:inline">Analytics</span>
-                <span className="sr-only sm:hidden">Analytics</span>
+                Analytics
               </Link>
             </div>
           </div>
+
+          {/* Mobile top bar — visible only below sm */}
+          <div
+            className={`mx-auto mb-2 flex w-full max-w-6xl items-center justify-between rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/55 px-3 py-2 shadow-[0_6px_18px_-14px_rgba(0,0,0,0.45)] backdrop-blur-lg backdrop-saturate-125 sm:hidden ${isHome ? 'home-search-header-enter' : ''}`}
+          >
+            <Brand onClick={onHeaderBrandClick} className="shrink-0" />
+            <ThemeToggleButton themePreference={themePreference} cycleTheme={cycleTheme} />
+          </div>
         </header>
       ) : null}
+
+      {/* ── Mobile bottom floating island (sm:hidden) ── */}
       {showHeader ? (
-        <div className="fixed inset-x-1 bottom-2 z-40 sm:hidden">
-          <div className="group relative mx-auto w-full max-w-6xl">
-            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
-              <Search
-                className="h-4 w-4 text-[var(--duck-muted)] transition-colors group-focus-within:text-[var(--duck-accent-strong)]"
-                aria-hidden="true"
+        <div className="fixed inset-x-3 bottom-4 z-40 sm:hidden">
+          <div className="mx-auto flex w-full max-w-lg items-center rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/85 shadow-[0_8px_32px_-6px_rgba(0,0,0,0.18)] backdrop-blur-xl backdrop-saturate-150">
+            {/* Search input — borderless, fills the island */}
+            <div className="group relative min-w-0 flex-1">
+              <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
+                <Search
+                  className="h-4 w-4 text-[var(--duck-muted)] transition-colors group-focus-within:text-[var(--duck-accent-strong)]"
+                  aria-hidden="true"
+                />
+              </div>
+              <label htmlFor="global-search-mobile" className="sr-only">
+                Search subjects, courses, or professors
+              </label>
+              <input
+                id="global-search-mobile"
+                ref={mobileSearchInputRef}
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                }}
+                onKeyDown={onSearchInputKeyDown}
+                placeholder="Search..."
+                autoComplete="off"
+                className="w-full rounded-l-2xl bg-transparent py-3.5 pr-3 pl-10 text-sm font-semibold text-[var(--duck-fg)] outline-none placeholder:text-[var(--duck-muted)]"
               />
             </div>
-            <label htmlFor="global-search-mobile" className="sr-only">
-              Search subjects, courses, or professors
-            </label>
-            <input
-              id="global-search-mobile"
-              ref={mobileSearchInputRef}
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-              }}
-              onKeyDown={onSearchInputKeyDown}
-              placeholder="Search by course, professor, or subject..."
-              autoComplete="off"
-              className="w-full rounded-2xl border border-[var(--duck-border-strong)] bg-[var(--duck-surface)]/95 py-3.5 pr-4 pl-10 text-sm font-semibold text-[var(--duck-fg)] shadow-lg backdrop-blur outline-none placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
-            />
+
+            {/* Divider */}
+            <div className="h-6 w-px shrink-0 bg-[var(--duck-border)]" aria-hidden="true" />
+
+            {/* Subjects nav button */}
+            <Link
+              to="/subjects"
+              className="flex h-12 w-12 shrink-0 items-center justify-center text-[var(--duck-muted)] transition-all duration-200 hover:text-[var(--duck-accent-strong)] active:scale-90"
+              aria-label="Browse all subjects"
+            >
+              <List className="h-5 w-5" aria-hidden="true" />
+            </Link>
+
+            {/* Analytics nav button */}
+            <Link
+              to="/analytics"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-r-2xl text-[var(--duck-muted)] transition-all duration-200 hover:text-[var(--duck-accent-strong)] active:scale-90"
+              aria-label="View analytics"
+            >
+              <BarChart3 className="h-5 w-5" aria-hidden="true" />
+            </Link>
           </div>
         </div>
       ) : null}
+
       <main
-        className={`relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 sm:px-8 ${showHeader ? 'pb-24 sm:pb-16' : ''}`}
+        className={`relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 sm:px-8 ${showHeader ? 'pb-28 sm:pb-16' : ''}`}
       >
         {isHome || !hasQuery ? <Outlet context={outletContext} /> : null}
         {hasQuery ? (
