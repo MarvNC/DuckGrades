@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { BarChart3, Search } from 'lucide-react';
+import { BarChart3, List, Search } from 'lucide-react';
 import { Brand } from './components/Brand';
 import { SiteFooter } from './components/SiteFooter';
 import { SearchResultsPage } from './components/SearchResultsPage';
@@ -295,10 +295,11 @@ export function AppLayout() {
               <ThemeToggleButton themePreference={themePreference} cycleTheme={cycleTheme} />
               <Link
                 to="/subjects"
-                className="inline-flex items-center rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-3 py-2 text-xs font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)] sm:px-4 sm:text-sm"
+                className="inline-flex items-center gap-1 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)] sm:gap-1.5 sm:px-4 sm:text-sm"
               >
-                <span className="sm:hidden">Subj</span>
+                <List className="h-4 w-4" aria-hidden="true" />
                 <span className="hidden sm:inline">Subjects</span>
+                <span className="sr-only sm:hidden">Subjects</span>
               </Link>
               <Link
                 to="/analytics"
