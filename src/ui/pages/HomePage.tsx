@@ -53,7 +53,7 @@ export function HomePage() {
 
             <section className="fade-in-up mt-8" style={{ animationDelay: '160ms' }}>
               <div className="group relative mx-auto w-full max-w-2xl text-left">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-5">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 sm:pl-5">
                   <Search
                     className="h-5 w-5 text-[var(--duck-muted)] transition-colors group-focus-within:text-[var(--duck-accent-strong)]"
                     aria-hidden="true"
@@ -65,7 +65,7 @@ export function HomePage() {
                 <input
                   id="search"
                   ref={inputRef}
-                  className="w-full rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] py-4 pr-4 pl-14 text-lg text-[var(--duck-fg)] shadow-lg transition-all outline-none placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/25"
+                  className="w-full rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] py-4 pr-3 pl-12 text-base text-[var(--duck-fg)] shadow-lg transition-all outline-none placeholder:text-sm placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/25 sm:pr-4 sm:pl-14 sm:text-lg sm:placeholder:text-base"
                   value={query}
                   onChange={(event) => {
                     setQuery(event.target.value);
