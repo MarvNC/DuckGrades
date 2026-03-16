@@ -185,11 +185,7 @@ export function SubjectsOverviewPage() {
       {loadState === 'ready' ? (
         <div className="space-y-2.5">
           {visibleSubjects.map((subject) => (
-            <Link
-              key={subject.code}
-              to={`/subject/${subject.code}`}
-              className="block transition hover:-translate-y-0.5"
-            >
+            <Link key={subject.code} to={`/subject/${subject.code}`} className="block">
               <EntityAggregateCard
                 title={subject.code}
                 subtitle={subject.title}

@@ -29,13 +29,13 @@ export function NotFoundPage({
         <div className="mt-5 flex flex-wrap gap-2.5">
           <Link
             to="/"
-            className="inline-flex items-center rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-4 py-2 text-sm font-semibold text-[var(--duck-fg)] transition hover:-translate-y-0.5 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface)]"
+            className="inline-flex items-center rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-4 py-2 text-sm font-semibold text-[var(--duck-fg)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface)] hover:text-[var(--duck-accent-strong)] hover:shadow-md"
           >
             Go home
           </Link>
           <Link
             to="/subjects"
-            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-4 py-2 text-sm font-semibold text-[var(--duck-muted-strong)] transition hover:-translate-y-0.5 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)]"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-4 py-2 text-sm font-semibold text-[var(--duck-muted-strong)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)] hover:shadow-md"
           >
             <Search className="h-4 w-4" aria-hidden="true" />
             Browse subjects

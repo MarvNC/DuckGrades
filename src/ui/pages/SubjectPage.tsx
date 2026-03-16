@@ -369,7 +369,7 @@ export function SubjectPage() {
             <Link
               key={course.courseCode}
               to={`/course/${course.courseCode}`}
-              className="block transition hover:-translate-y-0.5"
+              className="block"
               onMouseEnter={() => prefetchRouteData(`/course/${course.courseCode}`)}
               onFocus={() => prefetchRouteData(`/course/${course.courseCode}`)}
             >

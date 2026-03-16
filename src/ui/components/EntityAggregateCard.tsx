@@ -32,7 +32,7 @@ export function EntityAggregateCard({
 
   return (
     <article
-      className={`relative rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3.5 shadow-sm transition-colors ${isExpandable ? 'cursor-pointer hover:border-[var(--duck-muted)] hover:bg-[var(--duck-surface-soft)]' : ''}`}
+      className={`relative rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:shadow-md ${isExpandable ? 'cursor-pointer' : ''}`}
       onClick={(e) => {
         if (isExpandable && !(e.target as HTMLElement).closest('a')) {
           setIsOpen(!isOpen);
