@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import uPlot from 'uplot';
 import { getAnalyticsShard, type AnalyticsLevel, type AnalyticsShard } from '../../lib/dataClient';
+import { NUMERICAL_GRADE_ORDER } from '../../lib/grades';
 import { abbreviateTermDesc } from '../../lib/termUtils';
 import { MetaChip } from '../components/MetaChip';
 import { usePageTitle } from '../usePageTitle';
@@ -24,6 +25,73 @@ const LEVEL_LABELS: Record<AnalyticsLevel, string> = {
   '400': '400-level',
   '500+': '500+ level',
 };
+
+type OverallGradeCode = 'P' | 'N' | 'OTHER' | 'W' | (typeof NUMERICAL_GRADE_ORDER)[number];
+
+type OverallGradeBucket = {
+  code: OverallGradeCode;
+  label: string;
+  detailLabel: string;
+  color: string;
+  count: number;
+};
+
+const NON_NUMERICAL_GRADE_BUCKETS: Array<Omit<OverallGradeBucket, 'count'>> = [
+  {
+    code: 'P',
+    label: 'P',
+    detailLabel: 'Pass',
+    color: 'var(--duck-chart-2)',
+  },
+  {
+    code: 'N',
+    label: 'NP',
+    detailLabel: 'No Pass',
+    color: 'var(--duck-chart-3)',
+  },
+  {
+    code: 'OTHER',
+    label: 'O',
+    detailLabel: 'Other',
+    color: 'var(--duck-chart-4)',
+  },
+  {
+    code: 'W',
+    label: 'W',
+    detailLabel: 'Withdrawn',
+    color: 'var(--duck-chart-5)',
+  },
+];
+
+function numericalGradeLabel(code: (typeof NUMERICAL_GRADE_ORDER)[number]): string {
+  return code
+    .replace('AP', 'A+')
+    .replace('AM', 'A-')
+    .replace('BP', 'B+')
+    .replace('BM', 'B-')
+    .replace('CP', 'C+')
+    .replace('CM', 'C-')
+    .replace('DP', 'D+')
+    .replace('DM', 'D-');
+}
+
+function numericalGradeColor(index: number): string {
+  const hue = 10 + (index / (NUMERICAL_GRADE_ORDER.length - 1)) * 128;
+  return `hsl(${hue} 62% 58%)`;
+}
+
+function nonNumericalChartColor(theme: DuckChartTheme, code: 'P' | 'N' | 'OTHER' | 'W'): string {
+  if (code === 'P') {
+    return theme.chart2;
+  }
+  if (code === 'N') {
+    return theme.chart3;
+  }
+  if (code === 'OTHER') {
+    return theme.chart4;
+  }
+  return theme.chart5;
+}
 
 function levelColor(theme: DuckChartTheme, level: AnalyticsLevel): string {
   if (level === '100') {
@@ -113,6 +181,53 @@ export function AnalyticsPage() {
     const rows = analytics?.termAggregates ?? [];
     return rows.filter((row) => !/\blaw\b/i.test(row.termDesc));
   }, [analytics?.termAggregates]);
+
+  const overallGradeBuckets = useMemo<OverallGradeBucket[]>(() => {
+    const totals = {
+      P: 0,
+      N: 0,
+      OTHER: 0,
+      W: 0,
+      ...Object.fromEntries(NUMERICAL_GRADE_ORDER.map((grade) => [grade, 0])),
+    } as Record<OverallGradeCode, number>;
+
+    for (const row of analytics?.termAggregates ?? []) {
+      totals.P += row.aggregate.nonNumericalCounts.P ?? 0;
+      totals.N += row.aggregate.nonNumericalCounts.N ?? 0;
+      totals.OTHER += row.aggregate.nonNumericalCounts.OTHER ?? 0;
+      totals.W += row.aggregate.withdrawals ?? 0;
+      for (const grade of NUMERICAL_GRADE_ORDER) {
+        totals[grade] += row.aggregate.numericalCounts[grade] ?? 0;
+      }
+    }
+
+    return [
+      ...NON_NUMERICAL_GRADE_BUCKETS.map((bucket) => ({
+        ...bucket,
+        count: totals[bucket.code],
+      })),
+      ...NUMERICAL_GRADE_ORDER.map((grade, index) => ({
+        code: grade,
+        label: numericalGradeLabel(grade),
+        detailLabel: numericalGradeLabel(grade),
+        color: numericalGradeColor(index),
+        count: totals[grade],
+      })),
+    ];
+  }, [analytics?.termAggregates]);
+
+  const overallGradeTotal = useMemo(
+    () => overallGradeBuckets.reduce((sum, bucket) => sum + bucket.count, 0),
+    [overallGradeBuckets]
+  );
+
+  const overallGradeDistributionData = useMemo<uPlot.AlignedData>(() => {
+    const x = overallGradeBuckets.map((_, index) => index + 1);
+    const perGradeSeries = overallGradeBuckets.map((bucket, bucketIndex) =>
+      x.map((_, index) => (index === bucketIndex ? bucket.count : null))
+    );
+    return [x, ...perGradeSeries];
+  }, [overallGradeBuckets]);
 
   const trendTermLabels = useMemo(
     () => toTickLabels(trendTerms.map((row) => row.termDesc)),
@@ -204,6 +319,122 @@ export function AnalyticsPage() {
 
       {loadState === 'ready' && analytics ? (
         <>
+          <section className="rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm sm:p-5">
+            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-base font-bold text-[var(--duck-fg)]">
+                Overall grade distribution
+              </h2>
+              <p className="text-xs font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">
+                {overallGradeTotal.toLocaleString()} grade outcomes
+              </p>
+            </div>
+            <UPlotChart
+              ariaLabel="Overall historical grade distribution"
+              className="w-full"
+              height={270}
+              data={overallGradeDistributionData}
+              buildOptions={({ width, height, theme }) => {
+                const compact = width < 640;
+                const xSeries = overallGradeDistributionData[0] as number[];
+                return {
+                  width,
+                  height,
+                  padding: compact ? [8, 8, 10, 26] : [12, 14, 20, 42],
+                  scales: {
+                    x: {
+                      time: false,
+                      range: [0.5, overallGradeBuckets.length + 0.5],
+                    },
+                    y: { auto: true },
+                  },
+                  cursor: { drag: { x: false, y: false } },
+                  legend: { show: false },
+                  axes: [
+                    {
+                      stroke: theme.border,
+                      grid: { stroke: theme.border, width: 1 },
+                      splits: () => xSeries,
+                      values: (_self, splits) =>
+                        splits.map((split) => {
+                          const index = Math.round(split) - 1;
+                          const bucket = overallGradeBuckets[index];
+                          if (!bucket) {
+                            return '';
+                          }
+                          if (compact && index > 3 && (index - 4) % 2 === 1 && index !== 16) {
+                            return '';
+                          }
+                          return bucket.label;
+                        }),
+                      size: compact ? 26 : 42,
+                      label: compact ? '' : 'GRADE',
+                      labelColor: theme.muted,
+                      labelSize: compact ? 0 : 10,
+                      labelGap: compact ? 0 : 8,
+                      font: compact ? '600 9px Sora' : '600 10px Sora',
+                    },
+                    {
+                      stroke: theme.border,
+                      grid: { stroke: theme.border, width: 1 },
+                      size: compact ? 32 : 58,
+                      label: compact ? '' : 'COUNT',
+                      labelColor: theme.muted,
+                      labelSize: compact ? 0 : 10,
+                      labelGap: compact ? 0 : 14,
+                      font: compact ? '600 9px Sora' : '600 10px Sora',
+                    },
+                  ],
+                  series: [
+                    {},
+                    ...overallGradeBuckets.map((bucket) => {
+                      const resolvedColor =
+                        bucket.code === 'P' ||
+                        bucket.code === 'N' ||
+                        bucket.code === 'OTHER' ||
+                        bucket.code === 'W'
+                          ? nonNumericalChartColor(theme, bucket.code)
+                          : bucket.color;
+                      return {
+                        label: bucket.label,
+                        stroke: resolvedColor,
+                        fill: resolvedColor,
+                        width: 1,
+                        paths: uPlot.paths!.bars!({
+                          size: compact ? [0.86, 96] : [0.72, 96],
+                          align: 0,
+                          radius: compact ? 0.14 : 0.2,
+                        }),
+                        points: { show: false },
+                      };
+                    }),
+                  ],
+                };
+              }}
+              getTooltip={({ idx }) => {
+                const bucket = overallGradeBuckets[idx];
+                if (!bucket) {
+                  return null;
+                }
+                const percent =
+                  overallGradeTotal > 0 ? (bucket.count / overallGradeTotal) * 100 : 0;
+                return {
+                  title: bucket.detailLabel,
+                  items: [
+                    {
+                      label: 'Count',
+                      value: bucket.count.toLocaleString(),
+                      color: bucket.color,
+                    },
+                    {
+                      label: 'Share',
+                      value: `${percent.toFixed(1)}%`,
+                    },
+                  ],
+                };
+              }}
+            />
+          </section>
+
           <section className="rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm sm:p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-base font-bold text-[var(--duck-fg)]">Average GPA over time</h2>
