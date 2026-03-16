@@ -231,6 +231,10 @@ export type ProfessorShard = {
 
 type VersionFile = { version: string };
 
+// Version may be injected at build time by the vite.config.ts plugin to avoid
+// an extra network round-trip. Falls back to fetching current-version.json.
+const BUILD_TIME_VERSION = (import.meta.env.VITE_DATA_VERSION as string | undefined) ?? null;
+
 let cachedVersion: Promise<string> | null = null;
 let cachedSearchIndex: Promise<SearchIndex> | null = null;
 let cachedSubjectsOverview: Promise<SubjectsOverviewShard> | null = null;
@@ -451,6 +455,9 @@ function decodeSubjectsOverview(
 }
 
 export async function getDatasetVersion(): Promise<string> {
+  if (BUILD_TIME_VERSION) {
+    return BUILD_TIME_VERSION;
+  }
   if (!cachedVersion) {
     cachedVersion = (async () => {
       try {
