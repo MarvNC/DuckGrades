@@ -64,10 +64,13 @@ export function AppLayout() {
   );
   const [pageBar, setPageBar] = useState<PageBarConfig | null>(null);
   const [mobileSearchFocused, setMobileSearchFocused] = useState(false);
+  const [mobileFilterFocused, setMobileFilterFocused] = useState(false);
+  const [scrollingDown, setScrollingDown] = useState(false);
 
   const desktopSearchInputRef = useRef<HTMLInputElement | null>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement | null>(null);
   const mobileFilterInputRef = useRef<HTMLInputElement | null>(null);
+  const lastScrollY = useRef(0);
   const headerRef = useRef<HTMLElement | null>(null);
   const resultRefs = useRef<Array<HTMLAnchorElement | null>>([]);
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -133,6 +136,28 @@ export function AppLayout() {
     window.addEventListener('keydown', onWindowKeyDown);
     return () => window.removeEventListener('keydown', onWindowKeyDown);
   }, []);
+
+  // Scroll direction detection — only relevant on mobile when page bar is active
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      const delta = y - lastScrollY.current;
+      if (Math.abs(delta) > 4) {
+        setScrollingDown(delta > 0);
+        lastScrollY.current = y;
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Reset scroll direction when page bar disappears (route change / back in view)
+  useEffect(() => {
+    if (!hasPageBar) {
+      setScrollingDown(false);
+      lastScrollY.current = window.scrollY;
+    }
+  }, [hasPageBar]);
 
   useEffect(() => {
     const header = headerRef.current;
@@ -316,14 +341,15 @@ export function AppLayout() {
     ) : null;
 
   // Mobile top bar page bar row: shown when scrolled past inline PageControlBar.
-  // Layout: [filter input (flex-1, if any)] [sort pills scrollable] [count]
+  // Layout: [filter flex-1] [sort pills shrink-0, right-aligned] [count shrink-0]
+  // On filter focus: pills + count fade out, filter expands to fill the row.
   const MobilePageBarRow = hasPageBar ? (
     <div className="flex items-center gap-2 border-t border-[var(--duck-border)]/50 px-3 py-2">
-      {/* Filter input — always visible when page has a filter; min-w ensures it stays usable */}
+      {/* Filter input — flex-1 always, expands fully on focus */}
       {pageBar?.filter && (
-        <div className="relative min-w-[5rem] flex-1">
+        <div className="relative min-w-0 flex-1">
           <Search
-            className={`pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 transition-colors ${pageBar.filter.value ? 'text-[var(--duck-accent-strong)]' : 'text-[var(--duck-muted)]'}`}
+            className={`pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 transition-colors duration-200 ${mobileFilterFocused || pageBar.filter.value ? 'text-[var(--duck-accent-strong)]' : 'text-[var(--duck-muted)]'}`}
             aria-hidden="true"
           />
           <label htmlFor="mobile-header-filter" className="sr-only">
@@ -335,19 +361,26 @@ export function AppLayout() {
             type="search"
             value={pageBar.filter.value}
             onChange={(e) => pageBar.filter!.onChange(e.target.value)}
+            onFocus={() => setMobileFilterFocused(true)}
+            onBlur={() => setTimeout(() => setMobileFilterFocused(false), 150)}
             onKeyDown={(e) => {
-              if (e.key === 'Escape') pageBar.filter!.onChange('');
+              if (e.key === 'Escape') {
+                pageBar.filter!.onChange('');
+                mobileFilterInputRef.current?.blur();
+              }
             }}
             placeholder="Filter..."
-            className={`w-full rounded-xl border py-1.5 pr-3 pl-7 text-sm font-medium text-[var(--duck-fg)] transition outline-none placeholder:text-[var(--duck-muted)] focus:ring-2 focus:ring-[var(--duck-focus)]/20 ${pageBar.filter.value ? 'border-[var(--duck-focus)] bg-[var(--duck-surface)]' : 'border-[var(--duck-border)] bg-[var(--duck-surface)]'} focus:border-[var(--duck-focus)]`}
+            className={`w-full rounded-xl border py-1.5 pr-3 pl-7 text-sm font-medium text-[var(--duck-fg)] transition-all duration-200 outline-none placeholder:text-[var(--duck-muted)] ${mobileFilterFocused || pageBar.filter.value ? 'border-[var(--duck-focus)] bg-[var(--duck-surface)] ring-2 ring-[var(--duck-focus)]/20' : 'border-[var(--duck-border)] bg-[var(--duck-surface)]'}`}
           />
         </div>
       )}
 
-      {/* Sort pills — horizontally scrollable, no "Sort" label */}
-      {pageBar?.sort && (
-        <div className="no-scrollbar shrink-0 overflow-x-auto">
-          <div className="flex items-center gap-1" style={{ width: 'max-content' }}>
+      {/* Sort pills + count — right-aligned, fade out when filter focused */}
+      <div
+        className={`flex shrink-0 items-center gap-1.5 transition-all duration-200 ease-out ${mobileFilterFocused ? 'pointer-events-none w-0 overflow-hidden opacity-0' : 'opacity-100'}`}
+      >
+        {pageBar?.sort && (
+          <div className="no-scrollbar flex items-center gap-1 overflow-x-auto">
             {pageBar.sort.options.map((opt) => {
               const active = opt.key === pageBar.sort!.activeKey;
               return (
@@ -378,8 +411,13 @@ export function AppLayout() {
               );
             })}
           </div>
-        </div>
-      )}
+        )}
+        {pageBar?.countLabel && (
+          <span className="shrink-0 text-xs font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">
+            {pageBar.countLabel}
+          </span>
+        )}
+      </div>
     </div>
   ) : null;
 
@@ -449,9 +487,9 @@ export function AppLayout() {
           <div
             className={`mx-auto mb-2 flex w-full max-w-6xl flex-col rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/55 shadow-[0_6px_18px_-14px_rgba(0,0,0,0.45)] backdrop-blur-lg backdrop-saturate-125 sm:hidden ${isHome ? 'home-search-header-enter' : ''}`}
           >
-            {/* Brand + theme — collapses out when page bar is active (scrolled past inline controls) */}
+            {/* Brand + theme — collapses when scrolling down past inline controls, restores on scroll up */}
             <div
-              className={`overflow-hidden transition-all duration-200 ease-out ${hasPageBar ? 'max-h-0 opacity-0' : 'max-h-16 opacity-100'}`}
+              className={`overflow-hidden transition-all duration-200 ease-out ${hasPageBar && scrollingDown ? 'max-h-0 opacity-0' : 'max-h-16 opacity-100'}`}
             >
               <div className="flex items-center justify-between px-3 py-2">
                 <Brand onClick={onHeaderBrandClick} className="shrink-0" />
