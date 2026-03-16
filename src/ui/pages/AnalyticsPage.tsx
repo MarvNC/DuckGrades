@@ -827,16 +827,16 @@ export function AnalyticsPage() {
                     {
                       stroke: theme.border,
                       grid: { stroke: theme.border, width: 1 },
-                      splits: () => classSizeDistributionData[0] as number[],
+                      splits: () =>
+                        (classSizeDistributionData[0] as number[]).filter((_, i) => {
+                          const isLastBucket = i === classSizeBuckets.length - 1;
+                          return isLastBucket || i % labelStride === 0;
+                        }),
                       values: (_self, splits) =>
                         splits.map((split) => {
                           const index = Math.round(split);
                           const item = classSizeBuckets[index];
                           if (!item) {
-                            return '';
-                          }
-                          const isLastBucket = index === classSizeBuckets.length - 1;
-                          if (!isLastBucket && index % labelStride !== 0) {
                             return '';
                           }
                           return item.label;
