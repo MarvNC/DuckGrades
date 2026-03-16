@@ -354,16 +354,6 @@ export function CoursePage() {
           No visible instructor data for this course.
         </p>
       ) : null}
-      {loadState === 'ready' &&
-      course &&
-      course.aggregate.coverage !== null &&
-      course.aggregate.coverage < 0.99 ? (
-        <p className="text-sm text-[var(--duck-muted)]">
-          Visible grade coverage is {(course.aggregate.coverage * 100).toFixed(1)}%; source
-          redaction may hide some section-level buckets.
-        </p>
-      ) : null}
-
       {loadState === 'ready' && course && course.instructors.length > 0 ? (
         <PageControlBar
           filter={{

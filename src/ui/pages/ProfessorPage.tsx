@@ -160,16 +160,6 @@ export function ProfessorPage() {
           No visible course data for this professor.
         </p>
       ) : null}
-      {loadState === 'ready' &&
-      professor &&
-      professor.aggregate.coverage !== null &&
-      professor.aggregate.coverage < 0.99 ? (
-        <p className="text-sm text-[var(--duck-muted)]">
-          Visible grade coverage is {(professor.aggregate.coverage * 100).toFixed(1)}%; source
-          redaction may hide some section-level buckets.
-        </p>
-      ) : null}
-
       {loadState === 'ready' && courses.length > 0 ? (
         <PageControlBar
           sort={{
