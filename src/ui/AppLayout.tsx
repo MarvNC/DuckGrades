@@ -137,14 +137,30 @@ export function AppLayout() {
     return () => window.removeEventListener('keydown', onWindowKeyDown);
   }, []);
 
-  // Scroll direction detection — only relevant on mobile when page bar is active
+  // Scroll direction detection with hysteresis — requires 40px of sustained
+  // movement in one direction before committing, preventing flutter on slow/
+  // jittery scrolling. Only collapses brand row; does not affect content.
+  const accumulatedDelta = useRef(0);
   useEffect(() => {
+    const COMMIT_THRESHOLD = 40; // px of sustained movement before state flips
     const onScroll = () => {
       const y = window.scrollY;
       const delta = y - lastScrollY.current;
-      if (Math.abs(delta) > 4) {
-        setScrollingDown(delta > 0);
-        lastScrollY.current = y;
+      lastScrollY.current = y;
+
+      // Accumulate in the current direction; reset accumulator on direction change
+      if (delta > 0) {
+        accumulatedDelta.current = Math.max(0, accumulatedDelta.current) + delta;
+      } else if (delta < 0) {
+        accumulatedDelta.current = Math.min(0, accumulatedDelta.current) + delta;
+      }
+
+      if (accumulatedDelta.current > COMMIT_THRESHOLD) {
+        setScrollingDown(true);
+        accumulatedDelta.current = 0;
+      } else if (accumulatedDelta.current < -COMMIT_THRESHOLD) {
+        setScrollingDown(false);
+        accumulatedDelta.current = 0;
       }
     };
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -345,9 +361,9 @@ export function AppLayout() {
   // On filter focus: pills + count fade out, filter expands to fill the row.
   const MobilePageBarRow = hasPageBar ? (
     <div className="flex items-center gap-2 border-t border-[var(--duck-border)]/50 px-3 py-2">
-      {/* Filter input — flex-1 always, expands fully on focus */}
+      {/* Filter input — guaranteed min width, takes remaining space */}
       {pageBar?.filter && (
-        <div className="relative min-w-0 flex-1">
+        <div className="relative min-w-[4.5rem] flex-1">
           <Search
             className={`pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 transition-colors duration-200 ${mobileFilterFocused || pageBar.filter.value ? 'text-[var(--duck-accent-strong)]' : 'text-[var(--duck-muted)]'}`}
             aria-hidden="true"
@@ -375,42 +391,22 @@ export function AppLayout() {
         </div>
       )}
 
-      {/* Sort pills + count — right-aligned, fade out when filter focused */}
+      {/* Sort pills + count — right-aligned, shrinks to let filter breathe; pills scroll horizontally */}
       <div
-        className={`flex shrink-0 items-center gap-1.5 transition-all duration-200 ease-out ${mobileFilterFocused ? 'pointer-events-none w-0 overflow-hidden opacity-0' : 'opacity-100'}`}
+        className={`flex min-w-0 shrink items-center gap-1.5 transition-all duration-200 ease-out ${mobileFilterFocused ? 'pointer-events-none w-0 overflow-hidden opacity-0' : 'opacity-100'}`}
       >
-        {pageBar?.sort && (
-          <div className="no-scrollbar flex items-center gap-1 overflow-x-auto">
-            {pageBar.sort.options.map((opt) => {
-              const active = opt.key === pageBar.sort!.activeKey;
-              return (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => {
-                    if (active) {
-                      pageBar.sort!.onToggleDirection();
-                    } else {
-                      pageBar.sort!.onChangeKey(opt.key);
-                    }
-                  }}
-                  className={`inline-flex shrink-0 items-center gap-0.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all duration-150 ${
-                    active
-                      ? 'border-[var(--duck-border-strong)] bg-[var(--duck-surface-soft)] text-[var(--duck-accent-strong)]'
-                      : 'border-[var(--duck-border)] bg-[var(--duck-surface)] text-[var(--duck-muted)]'
-                  }`}
-                >
-                  {opt.label}
-                  {active && (
-                    <ChevronDown
-                      className={`h-3 w-3 transition-transform duration-150 ${pageBar.sort!.descending ? '' : 'rotate-180'}`}
-                      aria-hidden="true"
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
+        {pageBar?.sort && pageBar.sort.options.find((o) => o.key === pageBar.sort!.activeKey) && (
+          <button
+            type="button"
+            onClick={() => pageBar.sort!.onToggleDirection()}
+            className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-[var(--duck-border-strong)] bg-[var(--duck-surface-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--duck-accent-strong)] transition-all duration-150"
+          >
+            {pageBar.sort.options.find((o) => o.key === pageBar.sort!.activeKey)!.label}
+            <ChevronDown
+              className={`h-3 w-3 transition-transform duration-150 ${pageBar.sort.descending ? '' : 'rotate-180'}`}
+              aria-hidden="true"
+            />
+          </button>
         )}
         {pageBar?.countLabel && (
           <span className="shrink-0 text-xs font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">
