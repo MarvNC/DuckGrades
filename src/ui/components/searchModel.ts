@@ -11,6 +11,8 @@ export type SearchItem = {
   subtitleMatchIndexes?: number[];
   to: string;
   section: 'Subject' | 'Course' | 'Professor';
+  /** Total students (non-W) for courses and professors; undefined for subjects. */
+  popularity?: number;
 };
 
 export type SearchSection = {
@@ -77,17 +79,19 @@ export function buildSearchItems(ranked: RankedSearchResult, limits: { total?: n
       subtitleMatchIndexes: course.subtitleMatchIndexes,
       to,
       section: 'Course' as const,
+      popularity: course.popularity,
     };
   });
 
   const professors = ranked.professors.map((professor) => ({
     key: `professor:${professor.id}`,
     label: professor.name,
-    subtitle: `${professor.popularity.toLocaleString()} students`,
+    subtitle: professor.name,
     score: professor.score,
     labelMatchIndexes: professor.labelMatchIndexes,
     to: `/professor/${professor.id}`,
     section: 'Professor' as const,
+    popularity: professor.popularity,
   }));
 
   // Merge all candidates into one pool and take the global top N by score

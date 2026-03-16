@@ -1,5 +1,5 @@
 import { useEffect, useRef, type MutableRefObject } from 'react';
-import { BookOpen, Layers, User } from 'lucide-react';
+import { BookOpen, Layers, User, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { canPrefetch, prefetchRoute } from '../../lib/prefetch';
 import type { SearchItem, SearchSection } from './searchModel';
@@ -211,14 +211,24 @@ export function SearchResultsPage({
                         }
                       }}
                     >
-                      <div className="text-sm leading-snug text-[var(--duck-fg)]">
-                        <span className="font-semibold">
-                          {renderHighlightedText(item.label, item.labelMatchIndexes)}
-                        </span>
-                        {item.subtitle && item.section !== 'Professor' && (
-                          <span className="text-[var(--duck-muted)]">
-                            {' · '}
-                            {renderHighlightedText(item.subtitle, item.subtitleMatchIndexes)}
+                      <div className="flex items-center justify-between gap-4 text-sm leading-snug text-[var(--duck-fg)]">
+                        <div className="min-w-0">
+                          <span className="font-semibold">
+                            {renderHighlightedText(item.label, item.labelMatchIndexes)}
+                          </span>
+                          {item.subtitle && item.section !== 'Professor' && (
+                            <span className="text-[var(--duck-muted)]">
+                              {' · '}
+                              {renderHighlightedText(item.subtitle, item.subtitleMatchIndexes)}
+                            </span>
+                          )}
+                        </div>
+                        {item.popularity !== undefined && (
+                          <span className="flex shrink-0 items-center gap-1 text-[var(--duck-muted)] tabular-nums">
+                            <span aria-label={`${item.popularity.toLocaleString()} students`}>
+                              {item.popularity.toLocaleString()}
+                            </span>
+                            <Users className="h-3.5 w-3.5" aria-hidden="true" />
                           </span>
                         )}
                       </div>
