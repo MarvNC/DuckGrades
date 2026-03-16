@@ -117,6 +117,10 @@ export function SearchResultsPage({
                         prefetchRouteModule(item.to);
                         prefetchRouteData(item.to);
                       }}
+                      onPointerDown={() => {
+                        prefetchRouteModule(item.to);
+                        prefetchRouteData(item.to);
+                      }}
                       onClick={(event) => {
                         event.preventDefault();
                         pickResult(item);

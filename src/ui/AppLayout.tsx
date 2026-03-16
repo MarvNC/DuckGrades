@@ -126,8 +126,9 @@ export function AppLayout() {
       return;
     }
 
-    const connection = (navigator as Navigator & { connection?: { saveData?: boolean } })
-      .connection;
+    const connection = (
+      navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }
+    ).connection;
     if (connection?.saveData) {
       return;
     }
@@ -136,10 +137,21 @@ export function AppLayout() {
       prefetchRouteModule('/subjects');
       prefetchRouteData('/subjects');
       prefetchRouteModule('/analytics');
-      prefetchRouteData('/analytics');
+      if (!connection?.effectiveType || connection.effectiveType === '4g') {
+        prefetchRouteData('/analytics');
+      }
     };
 
-    const timeoutId = setTimeout(warm, 600);
+    const idleApi = window as Window & {
+      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    if (idleApi.requestIdleCallback) {
+      const idleId = idleApi.requestIdleCallback(warm, { timeout: 250 });
+      return () => idleApi.cancelIdleCallback?.(idleId);
+    }
+
+    const timeoutId = setTimeout(warm, 150);
     return () => clearTimeout(timeoutId);
   }, [isHome]);
 
@@ -507,6 +519,10 @@ export function AppLayout() {
                     prefetchRouteModule('/subjects');
                     prefetchRouteData('/subjects');
                   }}
+                  onPointerDown={() => {
+                    prefetchRouteModule('/subjects');
+                    prefetchRouteData('/subjects');
+                  }}
                 >
                   <List className="h-4 w-4" aria-hidden="true" />
                   <span className="hidden text-sm lg:inline">Subjects</span>
@@ -520,6 +536,10 @@ export function AppLayout() {
                     prefetchRouteData('/analytics');
                   }}
                   onFocus={() => {
+                    prefetchRouteModule('/analytics');
+                    prefetchRouteData('/analytics');
+                  }}
+                  onPointerDown={() => {
                     prefetchRouteModule('/analytics');
                     prefetchRouteData('/analytics');
                   }}

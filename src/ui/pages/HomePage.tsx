@@ -97,6 +97,10 @@ export function HomePage() {
                     prefetchRouteModule('/subjects');
                     prefetchRouteData('/subjects');
                   }}
+                  onPointerDown={() => {
+                    prefetchRouteModule('/subjects');
+                    prefetchRouteData('/subjects');
+                  }}
                 >
                   <List className="mr-2 h-4 w-4" aria-hidden="true" />
                   Browse all subjects
@@ -113,6 +117,10 @@ export function HomePage() {
                     prefetchRouteData('/analytics');
                   }}
                   onTouchStart={() => {
+                    prefetchRouteModule('/analytics');
+                    prefetchRouteData('/analytics');
+                  }}
+                  onPointerDown={() => {
                     prefetchRouteModule('/analytics');
                     prefetchRouteData('/analytics');
                   }}
