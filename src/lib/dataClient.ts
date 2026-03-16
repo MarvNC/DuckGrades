@@ -44,6 +44,15 @@ type CompactSubjectsOverview = {
   s: Array<number | null>;
 };
 
+type CompactAnalyticsShard = {
+  v: 2;
+  t: string[];
+  n: [number, number, number, number];
+  a: Array<number | null>;
+  l: Record<AnalyticsLevel, Array<number | null>>;
+  c: number[];
+};
+
 const NUMERICAL_ORDER = [
   'F',
   'DM',
@@ -181,27 +190,15 @@ export type AnalyticsClassSizeBucket = {
 };
 
 export type AnalyticsShard = {
-  schemaVersion: 1;
-  builtAt: string;
-  termRange: {
-    firstTerm: string;
-    firstTermDesc: string;
-    lastTerm: string;
-    lastTermDesc: string;
-  };
   totals: {
     termCount: number;
     subjectCount: number;
     courseCount: number;
     sectionCount: number;
   };
-  levelOrder: AnalyticsLevel[];
   termAggregates: AnalyticsTermAggregate[];
   termByLevel: Record<AnalyticsLevel, AnalyticsTermAggregate[]>;
-  levelAggregates: AnalyticsLevelAggregate[];
-  subjectSummaries: AnalyticsSubjectSummary[];
   courseSizeVsGpa: AnalyticsCourseSizePoint[];
-  classSizeDistribution: AnalyticsClassSizeBucket[];
 };
 
 export type CourseShard = {
@@ -500,6 +497,61 @@ function decodeSubjectsOverview(
   };
 }
 
+function decodeAnalyticsShard(raw: AnalyticsShard | CompactAnalyticsShard): AnalyticsShard {
+  if (!('v' in raw)) {
+    return raw;
+  }
+
+  const decode = (index: number) => raw.t[index] ?? '';
+  const termStride = 2 + AGGREGATE_COMPACT_LENGTH;
+  const levelFromIndex: AnalyticsLevel[] = ['100', '200', '300', '400', '500+'];
+
+  const decodeTermRows = (rows: Array<number | null>): AnalyticsTermAggregate[] => {
+    const decoded: AnalyticsTermAggregate[] = [];
+    for (let i = 0; i < rows.length; i += termStride) {
+      decoded.push({
+        term: decode(Number(rows[i] ?? 0)),
+        termDesc: decode(Number(rows[i + 1] ?? 0)),
+        aggregate: decodeCompactAggregate(rows.slice(i + 2, i + termStride)),
+      });
+    }
+    return decoded;
+  };
+
+  const termAggregates = decodeTermRows(raw.a);
+  const termByLevel = Object.fromEntries(
+    levelFromIndex.map((level) => [level, decodeTermRows(raw.l[level] ?? [])])
+  ) as Record<AnalyticsLevel, AnalyticsTermAggregate[]>;
+
+  const courseSizeVsGpa: AnalyticsCourseSizePoint[] = [];
+  for (let i = 0; i < raw.c.length; i += 8) {
+    const levelIndex = raw.c[i + 3] ?? 0;
+    const level = levelFromIndex[levelIndex] ?? '100';
+    courseSizeVsGpa.push({
+      courseCode: decode(raw.c[i] ?? 0),
+      title: decode(raw.c[i + 1] ?? 0),
+      subject: decode(raw.c[i + 2] ?? 0),
+      level,
+      meanGpa: (raw.c[i + 4] ?? 0) / 1000,
+      avgClassSize: (raw.c[i + 5] ?? 0) / 100,
+      totalStudents: raw.c[i + 6] ?? 0,
+      sectionCount: raw.c[i + 7] ?? 0,
+    });
+  }
+
+  return {
+    totals: {
+      termCount: raw.n[0] ?? termAggregates.length,
+      subjectCount: raw.n[1] ?? 0,
+      courseCount: raw.n[2] ?? 0,
+      sectionCount: raw.n[3] ?? 0,
+    },
+    termAggregates,
+    termByLevel,
+    courseSizeVsGpa,
+  };
+}
+
 export async function getDatasetVersion(): Promise<string> {
   if (BUILD_TIME_VERSION) {
     return BUILD_TIME_VERSION;
@@ -559,7 +611,10 @@ export async function getAnalyticsShard(): Promise<AnalyticsShard> {
     cachedAnalyticsShard = (async () => {
       try {
         const version = await getDatasetVersion();
-        return await fetchDataJson<AnalyticsShard>(`${version}/analytics.json`);
+        const raw = await fetchDataJson<AnalyticsShard | CompactAnalyticsShard>(
+          `${version}/analytics.json`
+        );
+        return decodeAnalyticsShard(raw);
       } catch (error) {
         cachedAnalyticsShard = null;
         throw error;
