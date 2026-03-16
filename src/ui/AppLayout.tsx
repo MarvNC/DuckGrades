@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { BarChart3, List, Search } from 'lucide-react';
+import { BarChart3, ChevronDown, List, Search } from 'lucide-react';
 import { Brand } from './components/Brand';
 import { SiteFooter } from './components/SiteFooter';
 import { SearchResultsPage } from './components/SearchResultsPage';
@@ -11,6 +11,32 @@ type ResolvedTheme = 'light' | 'dark';
 
 const THEME_CYCLE: ReadonlyArray<ThemePreference> = ['system', 'light', 'dark'];
 
+export type SortOption = {
+  key: string;
+  label: string;
+};
+
+/** Config for the secondary header row rendered by AppLayout on behalf of the current page. */
+export type PageBarConfig = {
+  /** Optional local filter/search input embedded in the header */
+  filter?: {
+    id: string;
+    value: string;
+    placeholder: string;
+    onChange: (value: string) => void;
+  };
+  /** Optional sort pill buttons */
+  sort?: {
+    options: SortOption[];
+    activeKey: string;
+    descending: boolean;
+    onChangeKey: (key: string) => void;
+    onToggleDirection: () => void;
+  };
+  /** e.g. "241/241" displayed at the end */
+  countLabel?: string;
+};
+
 export type SearchLayoutContext = {
   hasActiveSearch: boolean;
   query: string;
@@ -18,6 +44,8 @@ export type SearchLayoutContext = {
   onSearchInputKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
   themePreference: ThemePreference;
   cycleTheme: () => void;
+  /** Pages call this (in useLayoutEffect) to register a page bar. Pass null to clear. */
+  setPageBar: (config: PageBarConfig | null) => void;
 };
 
 export function AppLayout() {
@@ -28,24 +56,21 @@ export function AppLayout() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [themePreference, setThemePreference] = useState<ThemePreference>(() => {
     const stored = window.localStorage.getItem('duckgrades-theme');
-    if (stored === 'light' || stored === 'dark' || stored === 'system') {
-      return stored;
-    }
-
+    if (stored === 'light' || stored === 'dark' || stored === 'system') return stored;
     return 'system';
   });
-  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() => {
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
+  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() =>
+    window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  );
+  const [pageBar, setPageBar] = useState<PageBarConfig | null>(null);
+  const [mobileSearchFocused, setMobileSearchFocused] = useState(false);
 
-    return 'light';
-  });
   const desktopSearchInputRef = useRef<HTMLInputElement | null>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement | null>(null);
   const headerRef = useRef<HTMLElement | null>(null);
   const resultRefs = useRef<Array<HTMLAnchorElement | null>>([]);
   const [headerHeight, setHeaderHeight] = useState(0);
+
   const ranked = useRankedSearch(query);
   const { orderedSections, flattened } = useMemo(() => buildSearchItems(ranked), [ranked]);
   const indexByKey = useMemo(
@@ -55,17 +80,15 @@ export function AppLayout() {
   const hasQuery = query.trim().length > 0;
   const showHeader = !isHome || hasQuery;
   const resolvedTheme: ResolvedTheme = themePreference === 'system' ? systemTheme : themePreference;
+  const hasPageBar = pageBar !== null && !hasQuery;
+
+  // ── Effects ───────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const onChange = (event: MediaQueryListEvent) => {
-      setSystemTheme(event.matches ? 'dark' : 'light');
-    };
-
-    mediaQuery.addEventListener('change', onChange);
-    return () => {
-      mediaQuery.removeEventListener('change', onChange);
-    };
+    const mql = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = (e: MediaQueryListEvent) => setSystemTheme(e.matches ? 'dark' : 'light');
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
   }, []);
 
   useEffect(() => {
@@ -82,64 +105,32 @@ export function AppLayout() {
   }, [query]);
 
   useEffect(() => {
-    if (activeIndex >= flattened.length && flattened.length > 0) {
-      setActiveIndex(0);
-    }
+    if (activeIndex >= flattened.length && flattened.length > 0) setActiveIndex(0);
   }, [activeIndex, flattened.length]);
 
   useEffect(() => {
-    if (isHome && hasQuery) {
-      window.requestAnimationFrame(() => {
-        focusInput();
-      });
-    }
+    if (isHome && hasQuery) window.requestAnimationFrame(() => focusInput());
   }, [isHome, hasQuery]);
 
   useEffect(() => {
     const onWindowKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || event.isComposing) {
-        return;
-      }
-
-      const isModified = event.metaKey || event.ctrlKey || event.altKey;
-      if (isModified) {
-        return;
-      }
-
-      const activeElement = document.activeElement;
-      const hasNoFocusedElement =
-        !activeElement ||
-        activeElement === document.body ||
-        activeElement === document.documentElement;
-
-      if (!hasNoFocusedElement) {
-        return;
-      }
-
+      if (event.defaultPrevented || event.isComposing) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const ae = document.activeElement;
+      if (ae && ae !== document.body && ae !== document.documentElement) return;
       if (event.key === 'Backspace') {
         event.preventDefault();
-        setQuery((current) => current.slice(0, -1));
-        window.requestAnimationFrame(() => {
-          focusInput();
-        });
+        setQuery((c) => c.slice(0, -1));
+        window.requestAnimationFrame(() => focusInput());
         return;
       }
-
-      if (event.key.length !== 1) {
-        return;
-      }
-
+      if (event.key.length !== 1) return;
       event.preventDefault();
-      setQuery((current) => `${current}${event.key}`);
-      window.requestAnimationFrame(() => {
-        focusInput();
-      });
+      setQuery((c) => `${c}${event.key}`);
+      window.requestAnimationFrame(() => focusInput());
     };
-
     window.addEventListener('keydown', onWindowKeyDown);
-    return () => {
-      window.removeEventListener('keydown', onWindowKeyDown);
-    };
+    return () => window.removeEventListener('keydown', onWindowKeyDown);
   }, []);
 
   useEffect(() => {
@@ -148,25 +139,18 @@ export function AppLayout() {
       setHeaderHeight(0);
       return;
     }
-
-    const syncHeaderHeight = () => {
-      setHeaderHeight(Math.ceil(header.getBoundingClientRect().height));
-    };
-
-    syncHeaderHeight();
-
-    const observer = new ResizeObserver(() => {
-      syncHeaderHeight();
-    });
-
-    observer.observe(header);
-    window.addEventListener('resize', syncHeaderHeight);
-
+    const sync = () => setHeaderHeight(Math.ceil(header.getBoundingClientRect().height));
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(header);
+    window.addEventListener('resize', sync);
     return () => {
-      observer.disconnect();
-      window.removeEventListener('resize', syncHeaderHeight);
+      ro.disconnect();
+      window.removeEventListener('resize', sync);
     };
-  }, [showHeader]);
+  }, [showHeader, hasPageBar]);
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
 
   function clearQuery() {
     setQuery('');
@@ -174,10 +158,7 @@ export function AppLayout() {
   }
 
   function onHeaderBrandClick(event: React.MouseEvent<HTMLAnchorElement>) {
-    if (!hasQuery) {
-      return;
-    }
-
+    if (!hasQuery) return;
     event.preventDefault();
     clearQuery();
     navigate('/');
@@ -185,25 +166,21 @@ export function AppLayout() {
 
   function cycleTheme() {
     setThemePreference((current) => {
-      const currentIndex = THEME_CYCLE.indexOf(current);
-      const nextIndex = (currentIndex + 1) % THEME_CYCLE.length;
-      return THEME_CYCLE[nextIndex] ?? 'system';
+      const idx = THEME_CYCLE.indexOf(current);
+      return THEME_CYCLE[(idx + 1) % THEME_CYCLE.length] ?? 'system';
     });
   }
 
   function focusInput() {
-    const isNarrowViewport = window.matchMedia('(max-width: 639px)').matches;
-    const target = isNarrowViewport
+    const narrow = window.matchMedia('(max-width: 639px)').matches;
+    const target = narrow
       ? (mobileSearchInputRef.current ?? desktopSearchInputRef.current)
       : (desktopSearchInputRef.current ?? mobileSearchInputRef.current);
     target?.focus();
   }
 
   function focusResult(index: number) {
-    const target = resultRefs.current[index];
-    if (target) {
-      target.focus();
-    }
+    resultRefs.current[index]?.focus();
   }
 
   function pickResult(item: SearchItem) {
@@ -215,25 +192,23 @@ export function AppLayout() {
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       if (flattened.length > 0) {
-        const next = (activeIndex + 1) % flattened.length;
-        setActiveIndex(next);
-        focusResult(next);
+        const n = (activeIndex + 1) % flattened.length;
+        setActiveIndex(n);
+        focusResult(n);
       }
     }
     if (event.key === 'ArrowUp') {
       event.preventDefault();
       if (flattened.length > 0) {
-        const prev = (activeIndex - 1 + flattened.length) % flattened.length;
-        setActiveIndex(prev);
-        focusResult(prev);
+        const p = (activeIndex - 1 + flattened.length) % flattened.length;
+        setActiveIndex(p);
+        focusResult(p);
       }
     }
     if (event.key === 'Enter') {
       event.preventDefault();
       const chosen = flattened[activeIndex];
-      if (chosen) {
-        pickResult(chosen);
-      }
+      if (chosen) pickResult(chosen);
     }
     if (event.key === 'Tab' && !event.shiftKey && flattened.length > 0 && hasQuery) {
       event.preventDefault();
@@ -242,8 +217,11 @@ export function AppLayout() {
     }
     if (event.key === 'Escape') {
       clearQuery();
+      setMobileSearchFocused(false);
     }
   }
+
+  // ── Derived UI ────────────────────────────────────────────────────────────
 
   const outletContext: SearchLayoutContext = {
     hasActiveSearch: hasQuery,
@@ -252,86 +230,223 @@ export function AppLayout() {
     onSearchInputKeyDown,
     themePreference,
     cycleTheme,
+    setPageBar,
   };
 
-  const shellStyle = {
-    '--duck-header-height': `${headerHeight}px`,
-  } as CSSProperties;
+  const shellStyle = { '--duck-header-height': `${headerHeight}px` } as CSSProperties;
+
+  const isSubjectsActive =
+    location.pathname === '/subjects' || location.pathname.startsWith('/subject/');
+  const isAnalyticsActive = location.pathname === '/analytics';
+
+  // Nav pill — full text at lg+, icon-only at sm–lg (md range)
+  const navPillBase =
+    'inline-flex items-center rounded-full border px-3 py-2 font-semibold transition-all duration-200';
+  const navPillIdle =
+    'border-[var(--duck-border)] bg-[var(--duck-surface)] text-[var(--duck-muted)] hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)]';
+  const navPillActive =
+    'border-[var(--duck-border-strong)] bg-[var(--duck-surface-soft)] text-[var(--duck-accent-strong)]';
+
+  // Sort pills — shared between desktop and mobile
+  const SortPills = pageBar?.sort ? (
+    <div className="flex flex-wrap items-center gap-1">
+      {pageBar.sort.options.map((opt) => {
+        const active = opt.key === pageBar.sort!.activeKey;
+        return (
+          <button
+            key={opt.key}
+            type="button"
+            onClick={() => pageBar.sort!.onChangeKey(opt.key)}
+            className={`inline-flex items-center gap-0.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all duration-150 ${
+              active
+                ? 'border-[var(--duck-border-strong)] bg-[var(--duck-surface-soft)] text-[var(--duck-accent-strong)]'
+                : 'border-[var(--duck-border)] bg-[var(--duck-surface)] text-[var(--duck-muted)] hover:border-[var(--duck-border-strong)] hover:text-[var(--duck-accent-strong)]'
+            }`}
+          >
+            {opt.label}
+            {active && (
+              <ChevronDown
+                className={`h-3 w-3 transition-transform duration-150 ${pageBar.sort!.descending ? '' : 'rotate-180'}`}
+                aria-hidden="true"
+              />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  ) : null;
+
+  // Desktop page bar row: filter input + sort pills + count
+  const DesktopPageBarRow =
+    hasPageBar && (pageBar?.filter ?? pageBar?.sort) ? (
+      <div className="mt-2.5 flex items-center gap-3 border-t border-[var(--duck-border)]/50 pt-2.5">
+        {pageBar?.filter && (
+          <div className="relative min-w-0 flex-1">
+            <Search
+              className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-[var(--duck-muted)]"
+              aria-hidden="true"
+            />
+            <label htmlFor={pageBar.filter.id} className="sr-only">
+              {pageBar.filter.placeholder}
+            </label>
+            <input
+              id={pageBar.filter.id}
+              type="search"
+              value={pageBar.filter.value}
+              onChange={(e) => pageBar.filter!.onChange(e.target.value)}
+              placeholder={pageBar.filter.placeholder}
+              className="w-full rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] py-1.5 pr-3 pl-8 text-sm font-medium text-[var(--duck-fg)] transition outline-none placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
+            />
+          </div>
+        )}
+        {pageBar?.sort && (
+          <div className="flex shrink-0 items-center gap-1.5">
+            <span className="text-xs font-semibold tracking-[0.09em] text-[var(--duck-muted)] uppercase">
+              Sort
+            </span>
+            {SortPills}
+          </div>
+        )}
+        {pageBar?.countLabel && (
+          <span className="shrink-0 text-xs font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">
+            {pageBar.countLabel}
+          </span>
+        )}
+      </div>
+    ) : null;
+
+  // Mobile top bar row: sort + count only (filter lives in island)
+  const MobilePageBarRow =
+    hasPageBar && pageBar?.sort ? (
+      <div className="flex items-center gap-2 border-t border-[var(--duck-border)]/50 px-3 py-2">
+        <span className="shrink-0 text-xs font-semibold tracking-[0.09em] text-[var(--duck-muted)] uppercase">
+          Sort
+        </span>
+        {/* Horizontally scrollable, no wrap */}
+        <div className="no-scrollbar min-w-0 flex-1 overflow-x-auto">
+          <div className="flex items-center gap-1" style={{ width: 'max-content' }}>
+            {pageBar.sort.options.map((opt) => {
+              const active = opt.key === pageBar.sort!.activeKey;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => pageBar.sort!.onChangeKey(opt.key)}
+                  className={`inline-flex shrink-0 items-center gap-0.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all duration-150 ${
+                    active
+                      ? 'border-[var(--duck-border-strong)] bg-[var(--duck-surface-soft)] text-[var(--duck-accent-strong)]'
+                      : 'border-[var(--duck-border)] bg-[var(--duck-surface)] text-[var(--duck-muted)]'
+                  }`}
+                >
+                  {opt.label}
+                  {active && (
+                    <ChevronDown
+                      className={`h-3 w-3 transition-transform duration-150 ${pageBar.sort!.descending ? '' : 'rotate-180'}`}
+                      aria-hidden="true"
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        {pageBar?.countLabel && (
+          <span className="shrink-0 text-xs font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">
+            {pageBar.countLabel}
+          </span>
+        )}
+      </div>
+    ) : null;
 
   return (
     <div className="shell-bg relative flex min-h-screen flex-col" style={shellStyle}>
       <div className="home-grid-bg" aria-hidden="true" />
       <div className="home-bg-overlay" aria-hidden="true" />
 
-      {/* ── Desktop sticky header (sm and up) ── */}
+      {/* ── Sticky header ── */}
       {showHeader ? (
         <header ref={headerRef} className="sticky top-0 z-30 w-full px-2 pt-3 sm:px-8 sm:pt-4">
-          {/* Desktop row — hidden on mobile */}
+          {/* ── Desktop (sm+) ── */}
           <div
-            className={`mx-auto mb-2 hidden w-full max-w-6xl items-center gap-2 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/55 px-3 py-2.5 shadow-[0_6px_18px_-14px_rgba(0,0,0,0.45)] backdrop-blur-lg backdrop-saturate-125 sm:mb-3 sm:flex sm:gap-4 sm:px-8 sm:py-5 ${isHome ? 'home-search-header-enter' : ''}`}
+            className={`mx-auto mb-2 hidden w-full max-w-6xl flex-col rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/55 px-5 py-3.5 shadow-[0_6px_18px_-14px_rgba(0,0,0,0.45)] backdrop-blur-lg backdrop-saturate-125 sm:mb-3 sm:flex lg:px-8 lg:py-4 ${isHome ? 'home-search-header-enter' : ''}`}
           >
-            <Brand onClick={onHeaderBrandClick} className="shrink-0" hideWordmarkOnTiny />
-            <div className="group relative hidden flex-1 sm:block sm:min-w-0">
-              <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
-                <Search
-                  className="h-4 w-4 text-[var(--duck-muted)] transition-colors group-focus-within:text-[var(--duck-accent-strong)]"
-                  aria-hidden="true"
+            {/* Main nav row */}
+            <div className="flex items-center gap-2 lg:gap-4">
+              <Brand onClick={onHeaderBrandClick} className="shrink-0" hideWordmarkOnTiny />
+              {/* Search — takes all available space */}
+              <div className="group relative min-w-0 flex-1">
+                <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3.5 lg:pl-4">
+                  <Search
+                    className="h-4 w-4 text-[var(--duck-muted)] transition-colors group-focus-within:text-[var(--duck-accent-strong)]"
+                    aria-hidden="true"
+                  />
+                </div>
+                <label htmlFor="global-search-desktop" className="sr-only">
+                  Search subjects, courses, or professors
+                </label>
+                <input
+                  id="global-search-desktop"
+                  ref={desktopSearchInputRef}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={onSearchInputKeyDown}
+                  placeholder="Search courses, professors, subjects..."
+                  autoComplete="off"
+                  className="w-full rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] py-2 pr-3 pl-9 text-sm font-semibold text-[var(--duck-fg)] shadow-sm transition-all outline-none placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20 lg:rounded-2xl lg:py-2.5 lg:pl-10"
                 />
               </div>
-              <label htmlFor="global-search-desktop" className="sr-only">
-                Search subjects, courses, or professors
-              </label>
-              <input
-                id="global-search-desktop"
-                ref={desktopSearchInputRef}
-                value={query}
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                }}
-                onKeyDown={onSearchInputKeyDown}
-                placeholder="Search by course, professor, or subject..."
-                autoComplete="off"
-                className="w-full rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] py-2.5 pr-4 pl-10 text-sm font-semibold text-[var(--duck-fg)] shadow-sm transition-all outline-none placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
-              />
+              {/* Nav buttons — icon+label at lg, icon-only at sm–lg */}
+              <div className="flex shrink-0 items-center gap-1 lg:gap-2">
+                <ThemeToggleButton themePreference={themePreference} cycleTheme={cycleTheme} />
+                <Link
+                  to="/subjects"
+                  className={`${navPillBase} ${isSubjectsActive ? navPillActive : navPillIdle}`}
+                >
+                  <List className="h-4 w-4" aria-hidden="true" />
+                  <span className="hidden text-sm lg:inline">Subjects</span>
+                  <span className="sr-only lg:hidden">Subjects</span>
+                </Link>
+                <Link
+                  to="/analytics"
+                  className={`${navPillBase} ${isAnalyticsActive ? navPillActive : navPillIdle}`}
+                >
+                  <BarChart3 className="h-4 w-4" aria-hidden="true" />
+                  <span className="hidden text-sm lg:inline">Analytics</span>
+                  <span className="sr-only lg:hidden">Analytics</span>
+                </Link>
+              </div>
             </div>
-            <div className="ml-auto flex shrink-0 items-center justify-end gap-1 sm:flex-none sm:gap-2">
-              <ThemeToggleButton themePreference={themePreference} cycleTheme={cycleTheme} />
-              <Link
-                to="/subjects"
-                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-4 py-2 text-sm font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)]"
-              >
-                <List className="h-4 w-4" aria-hidden="true" />
-                Subjects
-              </Link>
-              <Link
-                to="/analytics"
-                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-4 py-2 text-sm font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)]"
-              >
-                <BarChart3 className="h-4 w-4" aria-hidden="true" />
-                Analytics
-              </Link>
-            </div>
+            {/* Page bar row */}
+            {DesktopPageBarRow}
           </div>
 
-          {/* Mobile top bar — visible only below sm */}
+          {/* ── Mobile top bar (below sm) ── */}
           <div
-            className={`mx-auto mb-2 flex w-full max-w-6xl items-center justify-between rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/55 px-3 py-2 shadow-[0_6px_18px_-14px_rgba(0,0,0,0.45)] backdrop-blur-lg backdrop-saturate-125 sm:hidden ${isHome ? 'home-search-header-enter' : ''}`}
+            className={`mx-auto mb-2 flex w-full max-w-6xl flex-col rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/55 shadow-[0_6px_18px_-14px_rgba(0,0,0,0.45)] backdrop-blur-lg backdrop-saturate-125 sm:hidden ${isHome ? 'home-search-header-enter' : ''}`}
           >
-            <Brand onClick={onHeaderBrandClick} className="shrink-0" />
-            <ThemeToggleButton themePreference={themePreference} cycleTheme={cycleTheme} />
+            <div className="flex items-center justify-between px-3 py-2">
+              <Brand onClick={onHeaderBrandClick} className="shrink-0" />
+              <ThemeToggleButton themePreference={themePreference} cycleTheme={cycleTheme} />
+            </div>
+            {MobilePageBarRow}
           </div>
         </header>
       ) : null}
 
       {/* ── Mobile bottom floating island (sm:hidden) ── */}
       {showHeader ? (
-        <div className="fixed inset-x-3 bottom-4 z-40 sm:hidden">
-          <div className="mx-auto flex w-full max-w-lg items-center rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/85 shadow-[0_8px_32px_-6px_rgba(0,0,0,0.18)] backdrop-blur-xl backdrop-saturate-150">
-            {/* Search input — borderless, fills the island */}
+        <div
+          className={`fixed z-40 transition-all duration-300 ease-out sm:hidden ${mobileSearchFocused ? 'inset-x-2 top-2 bottom-auto' : 'inset-x-3 top-auto bottom-4'}`}
+        >
+          {/* Main island pill */}
+          <div
+            className={`mx-auto flex w-full items-center rounded-2xl border bg-[var(--duck-surface)]/90 shadow-[0_8px_32px_-6px_rgba(0,0,0,0.22)] backdrop-blur-xl backdrop-saturate-150 transition-all duration-300 ease-out ${mobileSearchFocused ? 'max-w-full border-[var(--duck-focus)] ring-2 ring-[var(--duck-focus)]/20' : 'max-w-lg border-[var(--duck-border)]'}`}
+          >
+            {/* Global search input */}
             <div className="group relative min-w-0 flex-1">
               <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
                 <Search
-                  className="h-4 w-4 text-[var(--duck-muted)] transition-colors group-focus-within:text-[var(--duck-accent-strong)]"
+                  className={`h-4 w-4 transition-colors duration-200 ${mobileSearchFocused ? 'text-[var(--duck-accent-strong)]' : 'text-[var(--duck-muted)]'}`}
                   aria-hidden="true"
                 />
               </div>
@@ -342,37 +457,63 @@ export function AppLayout() {
                 id="global-search-mobile"
                 ref={mobileSearchInputRef}
                 value={query}
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                }}
+                onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={onSearchInputKeyDown}
-                placeholder="Search..."
+                onFocus={() => setMobileSearchFocused(true)}
+                onBlur={() => setTimeout(() => setMobileSearchFocused(false), 150)}
+                placeholder={
+                  mobileSearchFocused ? 'Search courses, professors, subjects...' : 'Search...'
+                }
                 autoComplete="off"
                 className="w-full rounded-l-2xl bg-transparent py-3.5 pr-3 pl-10 text-sm font-semibold text-[var(--duck-fg)] outline-none placeholder:text-[var(--duck-muted)]"
               />
             </div>
-
-            {/* Divider */}
-            <div className="h-6 w-px shrink-0 bg-[var(--duck-border)]" aria-hidden="true" />
-
-            {/* Subjects nav button */}
-            <Link
-              to="/subjects"
-              className="flex h-12 w-12 shrink-0 items-center justify-center text-[var(--duck-muted)] transition-all duration-200 hover:text-[var(--duck-accent-strong)] active:scale-90"
-              aria-label="Browse all subjects"
-            >
-              <List className="h-5 w-5" aria-hidden="true" />
-            </Link>
-
-            {/* Analytics nav button */}
-            <Link
-              to="/analytics"
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-r-2xl text-[var(--duck-muted)] transition-all duration-200 hover:text-[var(--duck-accent-strong)] active:scale-90"
-              aria-label="View analytics"
-            >
-              <BarChart3 className="h-5 w-5" aria-hidden="true" />
-            </Link>
+            {/* Nav buttons — hidden when focused */}
+            {!mobileSearchFocused && (
+              <>
+                <div className="h-6 w-px shrink-0 bg-[var(--duck-border)]" aria-hidden="true" />
+                <Link
+                  to="/subjects"
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center transition-all duration-200 active:scale-90 ${isSubjectsActive ? 'text-[var(--duck-accent-strong)]' : 'text-[var(--duck-muted)] hover:text-[var(--duck-accent-strong)]'}`}
+                  aria-label="Browse all subjects"
+                >
+                  <List className="h-5 w-5" aria-hidden="true" />
+                </Link>
+                <Link
+                  to="/analytics"
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-r-2xl transition-all duration-200 active:scale-90 ${isAnalyticsActive ? 'text-[var(--duck-accent-strong)]' : 'text-[var(--duck-muted)] hover:text-[var(--duck-accent-strong)]'}`}
+                  aria-label="View analytics"
+                >
+                  <BarChart3 className="h-5 w-5" aria-hidden="true" />
+                </Link>
+              </>
+            )}
           </div>
+
+          {/* Page filter pill — appears below island when page has filter + search is focused */}
+          {mobileSearchFocused && hasPageBar && pageBar?.filter && (
+            <div className="mt-2 flex items-center rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/90 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.14)] backdrop-blur-xl">
+              <div className="pointer-events-none flex items-center pl-4">
+                <Search className="h-4 w-4 text-[var(--duck-muted)]" aria-hidden="true" />
+              </div>
+              <label htmlFor={`mobile-${pageBar.filter.id}`} className="sr-only">
+                {pageBar.filter.placeholder}
+              </label>
+              <input
+                id={`mobile-${pageBar.filter.id}`}
+                type="search"
+                value={pageBar.filter.value}
+                onChange={(e) => pageBar.filter!.onChange(e.target.value)}
+                placeholder={pageBar.filter.placeholder}
+                className="w-full rounded-2xl bg-transparent py-3 pr-4 pl-3 text-sm font-semibold text-[var(--duck-fg)] outline-none placeholder:text-[var(--duck-muted)]"
+              />
+              {pageBar?.countLabel && (
+                <span className="shrink-0 pr-4 text-xs font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">
+                  {pageBar.countLabel}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       ) : null}
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import fuzzysort from 'fuzzysort';
 import {
   getSubjectsOverviewShard,
@@ -10,6 +10,7 @@ import { AggregateSummaryCard } from '../components/AggregateSummaryCard';
 import { EntityAggregateCard } from '../components/EntityAggregateCard';
 import { usePageTitle } from '../usePageTitle';
 import { MetaChip } from '../components/MetaChip';
+import type { SearchLayoutContext } from '../AppLayout';
 
 type SubjectSortKey = 'code' | 'students' | 'courses' | 'mean';
 
@@ -59,6 +60,7 @@ function sortSubjects(
 }
 
 export function SubjectsOverviewPage() {
+  const { setPageBar } = useOutletContext<SearchLayoutContext>();
   const [overview, setOverview] = useState<SubjectsOverviewShard | null>(null);
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [subjectQuery, setSubjectQuery] = useState('');
@@ -114,6 +116,27 @@ export function SubjectsOverviewPage() {
 
   const totalStudents = overview?.aggregate.totalNonWReported ?? 0;
 
+  // Register page bar (filter + sort + count) into the header
+  useEffect(() => {
+    setPageBar({
+      filter: {
+        id: 'subjects-overview-filter',
+        value: subjectQuery,
+        placeholder: 'Filter subjects...',
+        onChange: setSubjectQuery,
+      },
+      sort: {
+        options: SORT_OPTIONS,
+        activeKey: sortKey,
+        descending: sortDescending,
+        onChangeKey: (key) => setSortKey(key as SubjectSortKey),
+        onToggleDirection: () => setSortDescending((v) => !v),
+      },
+      countLabel: overview ? `${visibleSubjects.length}/${overview.subjects.length}` : undefined,
+    });
+    return () => setPageBar(null);
+  }, [subjectQuery, sortKey, sortDescending, visibleSubjects.length, overview, setPageBar]);
+
   return (
     <section className="space-y-4 rounded-3xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-5 shadow-sm backdrop-blur-sm sm:p-7">
       <div className="space-y-2">
@@ -158,57 +181,7 @@ export function SubjectsOverviewPage() {
         </p>
       ) : null}
 
-      {loadState === 'ready' && overview ? (
-        <div className="z-20 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm backdrop-blur">
-          <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-            <label
-              className="text-xs font-semibold tracking-[0.1em] text-[var(--duck-muted)] uppercase"
-              htmlFor="subjects-overview-search"
-            >
-              Search subjects
-            </label>
-            <input
-              id="subjects-overview-search"
-              type="search"
-              value={subjectQuery}
-              onChange={(event) => setSubjectQuery(event.target.value)}
-              placeholder="Type a subject code or title"
-              className="w-full rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-3 py-2 text-sm font-medium text-[var(--duck-fg)] shadow-sm transition outline-none focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20 lg:flex-1"
-            />
-            <div className="flex flex-wrap items-center gap-2">
-              <label
-                className="text-xs font-semibold tracking-[0.1em] text-[var(--duck-muted)] uppercase"
-                htmlFor="subjects-overview-sort"
-              >
-                Sort
-              </label>
-              <select
-                id="subjects-overview-sort"
-                value={sortKey}
-                onChange={(event) => setSortKey(event.target.value as SubjectSortKey)}
-                className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted-strong)] transition outline-none focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
-              >
-                {SORT_OPTIONS.map((option) => (
-                  <option key={option.key} value={option.key}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => setSortDescending((value) => !value)}
-                disabled={sortKey === 'code'}
-                className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted-strong)] transition hover:bg-[var(--duck-surface-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {sortDescending ? 'Desc' : 'Asc'}
-              </button>
-              <p className="text-xs font-semibold tracking-[0.1em] text-[var(--duck-muted)] uppercase">
-                {visibleSubjects.length} of {overview.subjects.length}
-              </p>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {/* Filter + sort controls are in the sticky header via setPageBar */}
 
       {loadState === 'ready' && overview && visibleSubjects.length === 0 ? (
         <p className="text-sm text-[var(--duck-muted)]">No subjects match your search.</p>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useOutletContext, useParams } from 'react-router-dom';
 import uPlot from 'uplot';
 import { getCourseShard, isNotFoundDataError, type CourseShard } from '../../lib/dataClient';
 import { abbreviateTermDesc, getTermRangeChip } from '../../lib/termUtils';
@@ -11,6 +11,7 @@ import { NotFoundPage } from './NotFoundPage';
 import { usePageTitle } from '../usePageTitle';
 import { MetaChip } from '../components/MetaChip';
 import { UPlotChart } from '../components/charts/UPlotChart';
+import type { SearchLayoutContext } from '../AppLayout';
 
 type InstructorSortKey = 'name' | 'students' | 'sections' | 'mean';
 
@@ -60,6 +61,7 @@ function sortInstructors(
 }
 
 export function CoursePage() {
+  const { setPageBar } = useOutletContext<SearchLayoutContext>();
   const { code } = useParams();
   const [course, setCourse] = useState<CourseShard | null>(null);
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error' | 'not-found'>(
@@ -121,6 +123,35 @@ export function CoursePage() {
   const sortedInstructors = useMemo(() => {
     return sortInstructors(visibleInstructors, sortKey, sortDescending);
   }, [sortDescending, sortKey, visibleInstructors]);
+
+  // Register page bar (filter + sort + count) into the header
+  useEffect(() => {
+    const total = course?.instructors.length ?? 0;
+    setPageBar({
+      filter: {
+        id: 'course-instructor-filter',
+        value: instructorQuery,
+        placeholder: 'Filter instructors...',
+        onChange: setInstructorQuery,
+      },
+      sort: {
+        options: SORT_OPTIONS,
+        activeKey: sortKey,
+        descending: sortDescending,
+        onChangeKey: (key) => setSortKey(key as InstructorSortKey),
+        onToggleDirection: () => setSortDescending((v) => !v),
+      },
+      countLabel: total > 0 ? `${sortedInstructors.length}/${total}` : undefined,
+    });
+    return () => setPageBar(null);
+  }, [
+    instructorQuery,
+    sortKey,
+    sortDescending,
+    sortedInstructors.length,
+    course?.instructors.length,
+    setPageBar,
+  ]);
 
   const totalSections = useMemo(() => {
     return (course?.instructors ?? []).reduce(
@@ -357,56 +388,10 @@ export function CoursePage() {
         </p>
       ) : null}
 
+      {/* Filter + sort controls are in the sticky header via setPageBar */}
+
       {loadState === 'ready' && course ? (
         <>
-          <div className="z-20 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm backdrop-blur">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <label
-                className="text-xs font-semibold tracking-[0.1em] text-[var(--duck-muted)] uppercase"
-                htmlFor="course-instructor-search"
-              >
-                Find instructor
-              </label>
-              <input
-                id="course-instructor-search"
-                type="search"
-                value={instructorQuery}
-                onChange={(event) => setInstructorQuery(event.target.value)}
-                placeholder="Search by instructor name"
-                className="w-full rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-3 py-2 text-sm font-medium text-[var(--duck-fg)] shadow-sm transition outline-none focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20 sm:flex-1"
-              />
-              <label
-                className="text-xs font-semibold tracking-[0.1em] text-[var(--duck-muted)] uppercase"
-                htmlFor="course-instructor-sort"
-              >
-                Sort
-              </label>
-              <select
-                id="course-instructor-sort"
-                value={sortKey}
-                onChange={(event) => setSortKey(event.target.value as InstructorSortKey)}
-                className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted-strong)] transition outline-none focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
-              >
-                {SORT_OPTIONS.map((option) => (
-                  <option key={option.key} value={option.key}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => setSortDescending((value) => !value)}
-                disabled={sortKey === 'name'}
-                className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted-strong)] transition hover:bg-[var(--duck-surface-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {sortDescending ? 'Desc' : 'Asc'}
-              </button>
-              <p className="text-xs font-semibold tracking-[0.1em] text-[var(--duck-muted)] uppercase">
-                {sortedInstructors.length} of {course.instructors.length}
-              </p>
-            </div>
-          </div>
-
           {sortedInstructors.length === 0 ? (
             <p className="text-sm text-[var(--duck-muted)]">No instructors match your search.</p>
           ) : null}

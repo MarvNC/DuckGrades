@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useOutletContext, useParams } from 'react-router-dom';
 import { getProfessorShard, isNotFoundDataError, type ProfessorShard } from '../../lib/dataClient';
 import { getTermRangeChip } from '../../lib/termUtils';
 import { AggregateSummaryCard } from '../components/AggregateSummaryCard';
@@ -8,6 +8,7 @@ import { SectionDrilldown } from '../components/SectionDrilldown';
 import { NotFoundPage } from './NotFoundPage';
 import { usePageTitle } from '../usePageTitle';
 import { MetaChip } from '../components/MetaChip';
+import type { SearchLayoutContext } from '../AppLayout';
 
 type ProfessorCourseSortKey = 'code' | 'students' | 'sections' | 'mean';
 
@@ -57,6 +58,7 @@ function sortCourses(
 }
 
 export function ProfessorPage() {
+  const { setPageBar } = useOutletContext<SearchLayoutContext>();
   const { id } = useParams();
   const [professor, setProfessor] = useState<ProfessorShard | null>(null);
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error' | 'not-found'>(
@@ -101,6 +103,21 @@ export function ProfessorPage() {
   const visibleCourses = useMemo(() => {
     return sortCourses(courses, sortKey, sortDescending);
   }, [courses, sortDescending, sortKey]);
+
+  // Register page bar (sort + count) into the header — no filter for professor page
+  useEffect(() => {
+    setPageBar({
+      sort: {
+        options: SORT_OPTIONS,
+        activeKey: sortKey,
+        descending: sortDescending,
+        onChangeKey: (key) => setSortKey(key as ProfessorCourseSortKey),
+        onToggleDirection: () => setSortDescending((v) => !v),
+      },
+      countLabel: courses.length > 0 ? `${visibleCourses.length}/${courses.length}` : undefined,
+    });
+    return () => setPageBar(null);
+  }, [sortKey, sortDescending, visibleCourses.length, courses.length, setPageBar]);
 
   const sectionCount = useMemo(() => {
     return courses.reduce((sum, course) => sum + course.sectionCount, 0);
@@ -169,41 +186,7 @@ export function ProfessorPage() {
         </p>
       ) : null}
 
-      {loadState === 'ready' && courses.length > 0 ? (
-        <div className="z-20 rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm backdrop-blur">
-          <div className="flex flex-wrap items-center gap-2">
-            <label
-              className="text-xs font-semibold tracking-[0.1em] text-[var(--duck-muted)] uppercase"
-              htmlFor="professor-course-sort"
-            >
-              Sort
-            </label>
-            <select
-              id="professor-course-sort"
-              value={sortKey}
-              onChange={(event) => setSortKey(event.target.value as ProfessorCourseSortKey)}
-              className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted-strong)] transition outline-none focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
-            >
-              {SORT_OPTIONS.map((option) => (
-                <option key={option.key} value={option.key}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => setSortDescending((value) => !value)}
-              disabled={sortKey === 'code'}
-              className="rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] px-2.5 py-2 text-xs font-semibold text-[var(--duck-muted-strong)] transition hover:bg-[var(--duck-surface-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {sortDescending ? 'Desc' : 'Asc'}
-            </button>
-            <p className="text-xs font-semibold tracking-[0.1em] text-[var(--duck-muted)] uppercase">
-              {visibleCourses.length} of {courses.length}
-            </p>
-          </div>
-        </div>
-      ) : null}
+      {/* Sort controls are registered into the header via setPageBar */}
 
       <div className="space-y-2.5">
         {visibleCourses.map((course) => (
