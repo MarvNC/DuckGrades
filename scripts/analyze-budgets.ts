@@ -1,4 +1,3 @@
-import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 type CurrentVersion = { version: string };
@@ -13,11 +12,11 @@ function formatKB(bytes: number): string {
 }
 
 async function main() {
-  const current = JSON.parse(
-    await readFile(join(OUTPUT_ROOT, 'current-version.json'), 'utf8')
-  ) as CurrentVersion;
+  const current = (await Bun.file(
+    join(OUTPUT_ROOT, 'current-version.json')
+  ).json()) as CurrentVersion;
   const manifestPath = join(OUTPUT_ROOT, current.version, 'manifest.json');
-  const manifest = JSON.parse(await readFile(manifestPath, 'utf8')) as Manifest;
+  const manifest = (await Bun.file(manifestPath).json()) as Manifest;
 
   const entries = Object.entries(manifest.files);
   const shardEntries = entries.filter(([path]) => /\/(subjects|courses|professors)\//.test(path));

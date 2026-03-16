@@ -1,4 +1,4 @@
-import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 type VersionFile = {
@@ -41,8 +41,9 @@ async function listCodes(pathToDir: string): Promise<string[]> {
 async function main() {
   const siteUrl = normalizeSiteUrl(process.env.SITE_URL ?? DEFAULT_SITE_URL);
 
-  const versionFileText = await readFile(join(DATA_ROOT, 'current-version.json'), 'utf8');
-  const versionFile = JSON.parse(versionFileText) as VersionFile;
+  const versionFile = (await Bun.file(
+    join(DATA_ROOT, 'current-version.json')
+  ).json()) as VersionFile;
   const datasetVersion = versionFile.version;
 
   if (!datasetVersion) {
@@ -94,8 +95,8 @@ async function main() {
   );
 
   await Promise.all([
-    writeFile(join(PUBLIC_DIR, 'sitemap.xml'), xml, 'utf8'),
-    writeFile(join(PUBLIC_DIR, 'robots.txt'), robotsText, 'utf8'),
+    Bun.write(join(PUBLIC_DIR, 'sitemap.xml'), xml),
+    Bun.write(join(PUBLIC_DIR, 'robots.txt'), robotsText),
   ]);
 
   console.log(`Generated sitemap (${urls.length} URLs) and robots.txt for ${siteUrl}`);

@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 type CatalogSubjectRecord = {
@@ -269,7 +269,7 @@ async function main() {
   const output = `${JSON.stringify(snapshot)}\n`;
   const outputPath = join(process.cwd(), OUTPUT_PATH);
   await mkdir(dirname(outputPath), { recursive: true });
-  await writeFile(outputPath, output, 'utf8');
+  await Bun.write(outputPath, output);
 
   console.log(
     `Wrote ${snapshot.subjects.length} subjects and ${snapshot.courses.length} courses to ${OUTPUT_PATH}`

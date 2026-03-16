@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, rm } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { parse } from 'csv-parse/sync';
 
@@ -477,7 +477,7 @@ async function writeJson(path: string, payload: unknown): Promise<FileMeta> {
     await mkdir(directory, { recursive: true });
     CREATED_DIRECTORIES.add(directory);
   }
-  await writeFile(path, text, 'utf8');
+  await Bun.write(path, text);
   const bytes = Buffer.byteLength(text, 'utf8');
   const sha256 = createHash('sha256').update(text).digest('hex');
   return { bytes, sha256 };
@@ -498,7 +498,7 @@ async function verifyFileHashes(fileIndex: Record<string, FileMeta>) {
   const entries = Object.entries(fileIndex);
   for (const [relativePath, meta] of entries) {
     const absolutePath = join(OUTPUT_ROOT, relativePath);
-    const text = await readFile(absolutePath, 'utf8');
+    const text = await Bun.file(absolutePath).text();
     const bytes = Buffer.byteLength(text, 'utf8');
     const sha256 = createHash('sha256').update(text).digest('hex');
     assert(bytes === meta.bytes, `Byte-size mismatch for ${relativePath}`);
@@ -677,8 +677,7 @@ function compactAnalyticsPayload(payload: AnalyticsPayload): CompactAnalyticsPay
 
 async function loadCatalogLookup(): Promise<CatalogLookup> {
   try {
-    const jsonText = await readFile(CATALOG_METADATA_JSON, 'utf8');
-    const snapshot = JSON.parse(jsonText) as CatalogMetadataSnapshot;
+    const snapshot = (await Bun.file(CATALOG_METADATA_JSON).json()) as CatalogMetadataSnapshot;
     const subjectsByCode = new Map<string, CatalogSubjectMetadata>();
     for (const subject of snapshot.subjects) {
       if (!subject.code || !subject.title) {
@@ -770,8 +769,7 @@ function buildProgramDescriptionLookup(snapshot: ProgramMetadataSnapshot): Map<s
 
 async function loadProgramDescriptionLookup(): Promise<Map<string, string>> {
   try {
-    const jsonText = await readFile(PROGRAM_METADATA_JSON, 'utf8');
-    const snapshot = JSON.parse(jsonText) as ProgramMetadataSnapshot;
+    const snapshot = (await Bun.file(PROGRAM_METADATA_JSON).json()) as ProgramMetadataSnapshot;
     const lookup = buildProgramDescriptionLookup(snapshot);
     console.log(`Loaded program metadata descriptions (${lookup.size} unique program names)`);
     return lookup;
@@ -786,8 +784,9 @@ async function loadProgramDescriptionLookup(): Promise<Map<string, string>> {
 
 async function loadSubjectCodeMappings(): Promise<SubjectCodeMappingsLookup> {
   try {
-    const jsonText = await readFile(SUBJECT_CODE_MAPPINGS_JSON, 'utf8');
-    const snapshot = JSON.parse(jsonText) as SubjectCodeMappingsSnapshot;
+    const snapshot = (await Bun.file(
+      SUBJECT_CODE_MAPPINGS_JSON
+    ).json()) as SubjectCodeMappingsSnapshot;
 
     const aliases = new Map<string, string>();
     for (const alias of snapshot.aliases) {
@@ -961,7 +960,7 @@ async function main() {
   await rm(versionRoot, { recursive: true, force: true });
   await mkdir(versionRoot, { recursive: true });
 
-  const csvText = await readFile(INPUT_CSV, 'utf8');
+  const csvText = await Bun.file(INPUT_CSV).text();
   const rawRows = parse(csvText, {
     columns: true,
     skip_empty_lines: true,
@@ -1070,7 +1069,7 @@ async function main() {
   // The supplement CSV has no TITLE column, so csvTitle will be empty for those sections.
   // Course-level titles are sourced from catalog metadata or later CSV rows (fallback chain),
   // so the absence of csvTitle only affects the section-level display for these older rows.
-  const supplementCsvText = await readFile(SUPPLEMENT_CSV, 'utf8');
+  const supplementCsvText = await Bun.file(SUPPLEMENT_CSV).text();
   const supplementRawRows = parse(supplementCsvText, {
     columns: true,
     skip_empty_lines: true,

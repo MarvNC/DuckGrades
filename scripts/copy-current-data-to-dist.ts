@@ -1,4 +1,4 @@
-import { cp, mkdir, readFile, rm } from 'node:fs/promises';
+import { cp, mkdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 
 type VersionFile = {
@@ -16,8 +16,7 @@ function assert(condition: unknown, message: string): asserts condition {
 
 async function main() {
   const versionFilePath = join(SOURCE_ROOT, 'current-version.json');
-  const versionFileText = await readFile(versionFilePath, 'utf8');
-  const versionFile = JSON.parse(versionFileText) as VersionFile;
+  const versionFile = (await Bun.file(versionFilePath).json()) as VersionFile;
 
   assert(
     typeof versionFile.version === 'string' && versionFile.version.length > 0,

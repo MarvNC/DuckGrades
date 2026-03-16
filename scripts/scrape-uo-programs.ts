@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 type ProgramCategory =
@@ -295,7 +295,7 @@ async function main() {
 
   const outputPath = join(process.cwd(), OUTPUT_PATH);
   await mkdir(dirname(outputPath), { recursive: true });
-  await writeFile(outputPath, `${JSON.stringify(snapshot)}\n`, 'utf8');
+  await Bun.write(outputPath, `${JSON.stringify(snapshot)}\n`);
 
   console.log(
     `Wrote ${snapshot.programs.length} program entries (${uniquePaths.length} pages) to ${OUTPUT_PATH}`
