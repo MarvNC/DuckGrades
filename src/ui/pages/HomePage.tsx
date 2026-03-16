@@ -30,7 +30,7 @@ export function HomePage() {
       className={`relative mx-auto w-full max-w-4xl text-center transition-all duration-300 ease-out ${
         hasActiveSearch
           ? 'max-h-0 -translate-y-6 overflow-hidden py-0 opacity-0 sm:-translate-y-8'
-          : 'flex flex-1 items-center justify-center py-12 opacity-100 sm:py-16'
+          : 'flex flex-1 items-center justify-center py-4 opacity-100 sm:py-16'
       }`}
     >
       <main className="relative z-10 w-full max-w-4xl">

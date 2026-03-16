@@ -469,7 +469,7 @@ export function AppLayout() {
   ) : null;
 
   return (
-    <div className="shell-bg relative flex min-h-screen flex-col" style={shellStyle}>
+    <div className="shell-bg relative flex min-h-[100dvh] flex-col" style={shellStyle}>
       <div className="home-grid-bg" aria-hidden="true" />
       <div className="home-bg-overlay" aria-hidden="true" />
 
@@ -642,9 +642,7 @@ export function AppLayout() {
         </div>
       ) : null}
 
-      <main
-        className={`relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 sm:px-8 ${showHeader ? 'pb-28 sm:pb-16' : ''}`}
-      >
+      <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 sm:px-8">
         {isHome || !hasQuery ? <Outlet context={outletContext} /> : null}
         {hasQuery ? (
           <SearchResultsPage
@@ -661,7 +659,9 @@ export function AppLayout() {
           />
         ) : null}
       </main>
-      <SiteFooter />
+      <div className={showHeader ? 'pb-28 sm:pb-0' : ''}>
+        <SiteFooter />
+      </div>
     </div>
   );
 }
