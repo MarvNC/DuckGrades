@@ -1,12 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { Link, useOutletContext } from 'react-router-dom';
+import { useOutletContext } from 'react-router-dom';
 import { BarChart3, List, Search } from 'lucide-react';
 import type { SearchLayoutContext } from '../AppLayout';
 import { Brand } from '../components/Brand';
 import { ThemeToggleButton } from '../components/ThemeToggleButton';
 import { usePageTitle } from '../usePageTitle';
-import { prefetchRouteData } from '../../lib/dataClient';
-import { prefetchRouteModule } from '../../lib/routePrefetch';
+import { PrefetchLink } from '../components/PrefetchLink';
 
 export function HomePage() {
   const { hasActiveSearch, query, setQuery, onSearchInputKeyDown, themePreference, cycleTheme } =
@@ -82,52 +81,20 @@ export function HomePage() {
 
             <section className="fade-in-up mt-7" style={{ animationDelay: '240ms' }}>
               <div className="flex flex-wrap items-center justify-center gap-2.5">
-                <Link
+                <PrefetchLink
                   to="/subjects"
                   className="inline-flex items-center rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-6 py-2.5 text-sm font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)] hover:shadow-md"
-                  onMouseEnter={() => {
-                    prefetchRouteModule('/subjects');
-                    prefetchRouteData('/subjects');
-                  }}
-                  onFocus={() => {
-                    prefetchRouteModule('/subjects');
-                    prefetchRouteData('/subjects');
-                  }}
-                  onTouchStart={() => {
-                    prefetchRouteModule('/subjects');
-                    prefetchRouteData('/subjects');
-                  }}
-                  onPointerDown={() => {
-                    prefetchRouteModule('/subjects');
-                    prefetchRouteData('/subjects');
-                  }}
                 >
                   <List className="mr-2 h-4 w-4" aria-hidden="true" />
                   Browse all subjects
-                </Link>
-                <Link
+                </PrefetchLink>
+                <PrefetchLink
                   to="/analytics"
                   className="inline-flex items-center rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-6 py-2.5 text-sm font-semibold text-[var(--duck-muted)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)] hover:shadow-md"
-                  onMouseEnter={() => {
-                    prefetchRouteModule('/analytics');
-                    prefetchRouteData('/analytics');
-                  }}
-                  onFocus={() => {
-                    prefetchRouteModule('/analytics');
-                    prefetchRouteData('/analytics');
-                  }}
-                  onTouchStart={() => {
-                    prefetchRouteModule('/analytics');
-                    prefetchRouteData('/analytics');
-                  }}
-                  onPointerDown={() => {
-                    prefetchRouteModule('/analytics');
-                    prefetchRouteData('/analytics');
-                  }}
                 >
                   <BarChart3 className="mr-2 h-4 w-4" aria-hidden="true" />
                   View analytics
-                </Link>
+                </PrefetchLink>
               </div>
             </section>
           </div>

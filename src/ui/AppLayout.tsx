@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { BarChart3, ChevronDown, List, Search } from 'lucide-react';
 import { Brand } from './components/Brand';
 import { SiteFooter } from './components/SiteFooter';
@@ -8,6 +8,7 @@ import { ThemeToggleButton, type ThemePreference } from './components/ThemeToggl
 import { buildSearchItems, type SearchItem, useRankedSearch } from './components/searchModel';
 import { prefetchRouteData } from '../lib/dataClient';
 import { prefetchRouteModule } from '../lib/routePrefetch';
+import { PrefetchLink } from './components/PrefetchLink';
 
 type ResolvedTheme = 'light' | 'dark';
 
@@ -508,46 +509,22 @@ export function AppLayout() {
               {/* Nav buttons — icon+label at lg, icon-only at sm–lg */}
               <div className="flex shrink-0 items-center gap-1 lg:gap-2">
                 <ThemeToggleButton themePreference={themePreference} cycleTheme={cycleTheme} />
-                <Link
+                <PrefetchLink
                   to="/subjects"
                   className={`${navPillBase} ${isSubjectsActive ? navPillActive : navPillIdle}`}
-                  onMouseEnter={() => {
-                    prefetchRouteModule('/subjects');
-                    prefetchRouteData('/subjects');
-                  }}
-                  onFocus={() => {
-                    prefetchRouteModule('/subjects');
-                    prefetchRouteData('/subjects');
-                  }}
-                  onPointerDown={() => {
-                    prefetchRouteModule('/subjects');
-                    prefetchRouteData('/subjects');
-                  }}
                 >
                   <List className="h-4 w-4" aria-hidden="true" />
                   <span className="hidden text-sm lg:inline">Subjects</span>
                   <span className="sr-only lg:hidden">Subjects</span>
-                </Link>
-                <Link
+                </PrefetchLink>
+                <PrefetchLink
                   to="/analytics"
                   className={`${navPillBase} ${isAnalyticsActive ? navPillActive : navPillIdle}`}
-                  onMouseEnter={() => {
-                    prefetchRouteModule('/analytics');
-                    prefetchRouteData('/analytics');
-                  }}
-                  onFocus={() => {
-                    prefetchRouteModule('/analytics');
-                    prefetchRouteData('/analytics');
-                  }}
-                  onPointerDown={() => {
-                    prefetchRouteModule('/analytics');
-                    prefetchRouteData('/analytics');
-                  }}
                 >
                   <BarChart3 className="h-4 w-4" aria-hidden="true" />
                   <span className="hidden text-sm lg:inline">Analytics</span>
                   <span className="sr-only lg:hidden">Analytics</span>
-                </Link>
+                </PrefetchLink>
               </div>
             </div>
             {/* Page bar row */}
@@ -614,28 +591,20 @@ export function AppLayout() {
             {!mobileSearchFocused && (
               <>
                 <div className="h-6 w-px shrink-0 bg-[var(--duck-border)]" aria-hidden="true" />
-                <Link
+                <PrefetchLink
                   to="/subjects"
                   className={`flex h-12 w-12 shrink-0 items-center justify-center transition-all duration-200 active:scale-90 ${isSubjectsActive ? 'text-[var(--duck-accent-strong)]' : 'text-[var(--duck-muted)] hover:text-[var(--duck-accent-strong)]'}`}
                   aria-label="Browse all subjects"
-                  onTouchStart={() => {
-                    prefetchRouteModule('/subjects');
-                    prefetchRouteData('/subjects');
-                  }}
                 >
                   <List className="h-5 w-5" aria-hidden="true" />
-                </Link>
-                <Link
+                </PrefetchLink>
+                <PrefetchLink
                   to="/analytics"
                   className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-r-2xl transition-all duration-200 active:scale-90 ${isAnalyticsActive ? 'text-[var(--duck-accent-strong)]' : 'text-[var(--duck-muted)] hover:text-[var(--duck-accent-strong)]'}`}
                   aria-label="View analytics"
-                  onTouchStart={() => {
-                    prefetchRouteModule('/analytics');
-                    prefetchRouteData('/analytics');
-                  }}
                 >
                   <BarChart3 className="h-5 w-5" aria-hidden="true" />
-                </Link>
+                </PrefetchLink>
               </>
             )}
           </div>

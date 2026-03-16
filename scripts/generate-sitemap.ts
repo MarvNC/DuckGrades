@@ -62,6 +62,7 @@ async function main() {
   const urls: Array<{ path: string; changefreq: string; priority: string }> = [
     { path: '/', changefreq: 'daily', priority: '1.0' },
     { path: '/subjects', changefreq: 'daily', priority: '0.9' },
+    { path: '/analytics', changefreq: 'daily', priority: '0.9' },
     ...subjectCodes.map((code) => ({
       path: `/subject/${encodeURIComponent(code)}`,
       changefreq: 'weekly',
