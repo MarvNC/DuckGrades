@@ -1,15 +1,34 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { AppLayout } from './ui/AppLayout';
 import { HomePage } from './ui/pages/HomePage';
-import { CoursePage } from './ui/pages/CoursePage';
-import { ProfessorPage } from './ui/pages/ProfessorPage';
-import { SubjectPage } from './ui/pages/SubjectPage';
-import { SubjectsOverviewPage } from './ui/pages/SubjectsOverviewPage';
-import { NotFoundPage } from './ui/pages/NotFoundPage';
-import { AnalyticsPage } from './ui/pages/AnalyticsPage';
 import './styles.css';
+
+const CoursePage = lazy(async () =>
+  import('./ui/pages/CoursePage').then((module) => ({ default: module.CoursePage }))
+);
+const ProfessorPage = lazy(async () =>
+  import('./ui/pages/ProfessorPage').then((module) => ({ default: module.ProfessorPage }))
+);
+const SubjectPage = lazy(async () =>
+  import('./ui/pages/SubjectPage').then((module) => ({ default: module.SubjectPage }))
+);
+const SubjectsOverviewPage = lazy(async () =>
+  import('./ui/pages/SubjectsOverviewPage').then((module) => ({
+    default: module.SubjectsOverviewPage,
+  }))
+);
+const NotFoundPage = lazy(async () =>
+  import('./ui/pages/NotFoundPage').then((module) => ({ default: module.NotFoundPage }))
+);
+const AnalyticsPage = lazy(async () =>
+  import('./ui/pages/AnalyticsPage').then((module) => ({ default: module.AnalyticsPage }))
+);
+
+function DeferredRoute({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<div className="sr-only">Loading page...</div>}>{children}</Suspense>;
+}
 
 const router = createBrowserRouter([
   {
@@ -17,12 +36,54 @@ const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: <HomePage /> },
-      { path: 'subjects', element: <SubjectsOverviewPage /> },
-      { path: 'analytics', element: <AnalyticsPage /> },
-      { path: 'subject/:code', element: <SubjectPage /> },
-      { path: 'course/:code', element: <CoursePage /> },
-      { path: 'professor/:id', element: <ProfessorPage /> },
-      { path: '*', element: <NotFoundPage /> },
+      {
+        path: 'subjects',
+        element: (
+          <DeferredRoute>
+            <SubjectsOverviewPage />
+          </DeferredRoute>
+        ),
+      },
+      {
+        path: 'analytics',
+        element: (
+          <DeferredRoute>
+            <AnalyticsPage />
+          </DeferredRoute>
+        ),
+      },
+      {
+        path: 'subject/:code',
+        element: (
+          <DeferredRoute>
+            <SubjectPage />
+          </DeferredRoute>
+        ),
+      },
+      {
+        path: 'course/:code',
+        element: (
+          <DeferredRoute>
+            <CoursePage />
+          </DeferredRoute>
+        ),
+      },
+      {
+        path: 'professor/:id',
+        element: (
+          <DeferredRoute>
+            <ProfessorPage />
+          </DeferredRoute>
+        ),
+      },
+      {
+        path: '*',
+        element: (
+          <DeferredRoute>
+            <NotFoundPage />
+          </DeferredRoute>
+        ),
+      },
     ],
   },
 ]);
