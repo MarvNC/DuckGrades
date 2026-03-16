@@ -1,22 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useOutletContext, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { getProfessorShard, isNotFoundDataError, type ProfessorShard } from '../../lib/dataClient';
 import { getTermRangeChip } from '../../lib/termUtils';
 import { AggregateSummaryCard } from '../components/AggregateSummaryCard';
 import { EntityAggregateCard } from '../components/EntityAggregateCard';
+import { PageControlBar } from '../components/PageControlBar';
 import { SectionDrilldown } from '../components/SectionDrilldown';
 import { NotFoundPage } from './NotFoundPage';
 import { usePageTitle } from '../usePageTitle';
 import { MetaChip } from '../components/MetaChip';
-import type { SearchLayoutContext } from '../AppLayout';
 
 type ProfessorCourseSortKey = 'code' | 'students' | 'sections' | 'mean';
 
 const SORT_OPTIONS: Array<{ key: ProfessorCourseSortKey; label: string }> = [
-  { key: 'code', label: 'Code' },
+  { key: 'code', label: 'A-Z' },
   { key: 'students', label: 'Students' },
-  { key: 'sections', label: 'Sections' },
-  { key: 'mean', label: 'Mean' },
+
+  { key: 'mean', label: 'GPA' },
 ];
 
 function sortCourses(
@@ -58,7 +58,6 @@ function sortCourses(
 }
 
 export function ProfessorPage() {
-  const { setPageBar } = useOutletContext<SearchLayoutContext>();
   const { id } = useParams();
   const [professor, setProfessor] = useState<ProfessorShard | null>(null);
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error' | 'not-found'>(
@@ -103,21 +102,6 @@ export function ProfessorPage() {
   const visibleCourses = useMemo(() => {
     return sortCourses(courses, sortKey, sortDescending);
   }, [courses, sortDescending, sortKey]);
-
-  // Register page bar (sort + count) into the header — no filter for professor page
-  useEffect(() => {
-    setPageBar({
-      sort: {
-        options: SORT_OPTIONS,
-        activeKey: sortKey,
-        descending: sortDescending,
-        onChangeKey: (key) => setSortKey(key as ProfessorCourseSortKey),
-        onToggleDirection: () => setSortDescending((v) => !v),
-      },
-      countLabel: courses.length > 0 ? `${visibleCourses.length}/${courses.length}` : undefined,
-    });
-    return () => setPageBar(null);
-  }, [sortKey, sortDescending, visibleCourses.length, courses.length, setPageBar]);
 
   const sectionCount = useMemo(() => {
     return courses.reduce((sum, course) => sum + course.sectionCount, 0);
@@ -186,7 +170,18 @@ export function ProfessorPage() {
         </p>
       ) : null}
 
-      {/* Sort controls are registered into the header via setPageBar */}
+      {loadState === 'ready' && courses.length > 0 ? (
+        <PageControlBar
+          sort={{
+            options: SORT_OPTIONS,
+            activeKey: sortKey,
+            descending: sortDescending,
+            onChangeKey: (key) => setSortKey(key as ProfessorCourseSortKey),
+            onToggleDirection: () => setSortDescending((v) => !v),
+          }}
+          countLabel={`${visibleCourses.length}/${courses.length}`}
+        />
+      ) : null}
 
       <div className="space-y-2.5">
         {visibleCourses.map((course) => (

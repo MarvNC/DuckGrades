@@ -1,25 +1,25 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useOutletContext, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import uPlot from 'uplot';
 import { getCourseShard, isNotFoundDataError, type CourseShard } from '../../lib/dataClient';
 import { abbreviateTermDesc, getTermRangeChip } from '../../lib/termUtils';
 import fuzzysort from 'fuzzysort';
 import { AggregateSummaryCard } from '../components/AggregateSummaryCard';
 import { EntityAggregateCard } from '../components/EntityAggregateCard';
+import { PageControlBar } from '../components/PageControlBar';
 import { SectionDrilldown } from '../components/SectionDrilldown';
 import { NotFoundPage } from './NotFoundPage';
 import { usePageTitle } from '../usePageTitle';
 import { MetaChip } from '../components/MetaChip';
 import { UPlotChart } from '../components/charts/UPlotChart';
-import type { SearchLayoutContext } from '../AppLayout';
 
 type InstructorSortKey = 'name' | 'students' | 'sections' | 'mean';
 
 const SORT_OPTIONS: Array<{ key: InstructorSortKey; label: string }> = [
   { key: 'name', label: 'Name' },
   { key: 'students', label: 'Students' },
-  { key: 'sections', label: 'Sections' },
-  { key: 'mean', label: 'Mean' },
+
+  { key: 'mean', label: 'GPA' },
 ];
 
 function sortInstructors(
@@ -61,7 +61,6 @@ function sortInstructors(
 }
 
 export function CoursePage() {
-  const { setPageBar } = useOutletContext<SearchLayoutContext>();
   const { code } = useParams();
   const [course, setCourse] = useState<CourseShard | null>(null);
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error' | 'not-found'>(
@@ -123,35 +122,6 @@ export function CoursePage() {
   const sortedInstructors = useMemo(() => {
     return sortInstructors(visibleInstructors, sortKey, sortDescending);
   }, [sortDescending, sortKey, visibleInstructors]);
-
-  // Register page bar (filter + sort + count) into the header
-  useEffect(() => {
-    const total = course?.instructors.length ?? 0;
-    setPageBar({
-      filter: {
-        id: 'course-instructor-filter',
-        value: instructorQuery,
-        placeholder: 'Filter instructors...',
-        onChange: setInstructorQuery,
-      },
-      sort: {
-        options: SORT_OPTIONS,
-        activeKey: sortKey,
-        descending: sortDescending,
-        onChangeKey: (key) => setSortKey(key as InstructorSortKey),
-        onToggleDirection: () => setSortDescending((v) => !v),
-      },
-      countLabel: total > 0 ? `${sortedInstructors.length}/${total}` : undefined,
-    });
-    return () => setPageBar(null);
-  }, [
-    instructorQuery,
-    sortKey,
-    sortDescending,
-    sortedInstructors.length,
-    course?.instructors.length,
-    setPageBar,
-  ]);
 
   const totalSections = useMemo(() => {
     return (course?.instructors ?? []).reduce(
@@ -388,7 +358,24 @@ export function CoursePage() {
         </p>
       ) : null}
 
-      {/* Filter + sort controls are in the sticky header via setPageBar */}
+      {loadState === 'ready' && course && course.instructors.length > 0 ? (
+        <PageControlBar
+          filter={{
+            id: 'course-instructor-filter',
+            value: instructorQuery,
+            placeholder: 'Filter instructors...',
+            onChange: setInstructorQuery,
+          }}
+          sort={{
+            options: SORT_OPTIONS,
+            activeKey: sortKey,
+            descending: sortDescending,
+            onChangeKey: (key) => setSortKey(key as InstructorSortKey),
+            onToggleDirection: () => setSortDescending((v) => !v),
+          }}
+          countLabel={`${sortedInstructors.length}/${course.instructors.length}`}
+        />
+      ) : null}
 
       {loadState === 'ready' && course ? (
         <>

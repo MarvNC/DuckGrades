@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useOutletContext } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import fuzzysort from 'fuzzysort';
 import {
   getSubjectsOverviewShard,
@@ -8,17 +8,17 @@ import {
 } from '../../lib/dataClient';
 import { AggregateSummaryCard } from '../components/AggregateSummaryCard';
 import { EntityAggregateCard } from '../components/EntityAggregateCard';
+import { PageControlBar } from '../components/PageControlBar';
 import { usePageTitle } from '../usePageTitle';
 import { MetaChip } from '../components/MetaChip';
-import type { SearchLayoutContext } from '../AppLayout';
 
 type SubjectSortKey = 'code' | 'students' | 'courses' | 'mean';
 
 const SORT_OPTIONS: Array<{ key: SubjectSortKey; label: string }> = [
-  { key: 'code', label: 'Code' },
+  { key: 'code', label: 'A-Z' },
   { key: 'students', label: 'Students' },
   { key: 'courses', label: 'Courses' },
-  { key: 'mean', label: 'Mean' },
+  { key: 'mean', label: 'GPA' },
 ];
 
 function sortSubjects(
@@ -60,7 +60,6 @@ function sortSubjects(
 }
 
 export function SubjectsOverviewPage() {
-  const { setPageBar } = useOutletContext<SearchLayoutContext>();
   const [overview, setOverview] = useState<SubjectsOverviewShard | null>(null);
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [subjectQuery, setSubjectQuery] = useState('');
@@ -116,27 +115,6 @@ export function SubjectsOverviewPage() {
 
   const totalStudents = overview?.aggregate.totalNonWReported ?? 0;
 
-  // Register page bar (filter + sort + count) into the header
-  useEffect(() => {
-    setPageBar({
-      filter: {
-        id: 'subjects-overview-filter',
-        value: subjectQuery,
-        placeholder: 'Filter subjects...',
-        onChange: setSubjectQuery,
-      },
-      sort: {
-        options: SORT_OPTIONS,
-        activeKey: sortKey,
-        descending: sortDescending,
-        onChangeKey: (key) => setSortKey(key as SubjectSortKey),
-        onToggleDirection: () => setSortDescending((v) => !v),
-      },
-      countLabel: overview ? `${visibleSubjects.length}/${overview.subjects.length}` : undefined,
-    });
-    return () => setPageBar(null);
-  }, [subjectQuery, sortKey, sortDescending, visibleSubjects.length, overview, setPageBar]);
-
   return (
     <section className="space-y-4 rounded-3xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-5 shadow-sm backdrop-blur-sm sm:p-7">
       <div className="space-y-2">
@@ -181,7 +159,24 @@ export function SubjectsOverviewPage() {
         </p>
       ) : null}
 
-      {/* Filter + sort controls are in the sticky header via setPageBar */}
+      {loadState === 'ready' && overview ? (
+        <PageControlBar
+          filter={{
+            id: 'subjects-overview-filter',
+            value: subjectQuery,
+            placeholder: 'Filter subjects...',
+            onChange: setSubjectQuery,
+          }}
+          sort={{
+            options: SORT_OPTIONS,
+            activeKey: sortKey,
+            descending: sortDescending,
+            onChangeKey: (key) => setSortKey(key as SubjectSortKey),
+            onToggleDirection: () => setSortDescending((v) => !v),
+          }}
+          countLabel={`${visibleSubjects.length}/${overview.subjects.length}`}
+        />
+      ) : null}
 
       {loadState === 'ready' && overview && visibleSubjects.length === 0 ? (
         <p className="text-sm text-[var(--duck-muted)]">No subjects match your search.</p>

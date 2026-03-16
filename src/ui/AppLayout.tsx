@@ -247,7 +247,7 @@ export function AppLayout() {
   const navPillActive =
     'border-[var(--duck-border-strong)] bg-[var(--duck-surface-soft)] text-[var(--duck-accent-strong)]';
 
-  // Sort pills — shared between desktop and mobile
+  // Sort pills — shared between desktop and mobile header
   const SortPills = pageBar?.sort ? (
     <div className="flex flex-wrap items-center gap-1">
       {pageBar.sort.options.map((opt) => {
@@ -256,7 +256,13 @@ export function AppLayout() {
           <button
             key={opt.key}
             type="button"
-            onClick={() => pageBar.sort!.onChangeKey(opt.key)}
+            onClick={() => {
+              if (active) {
+                pageBar.sort!.onToggleDirection();
+              } else {
+                pageBar.sort!.onChangeKey(opt.key);
+              }
+            }}
             className={`inline-flex items-center gap-0.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all duration-150 ${
               active
                 ? 'border-[var(--duck-border-strong)] bg-[var(--duck-surface-soft)] text-[var(--duck-accent-strong)]'
@@ -331,7 +337,13 @@ export function AppLayout() {
                 <button
                   key={opt.key}
                   type="button"
-                  onClick={() => pageBar.sort!.onChangeKey(opt.key)}
+                  onClick={() => {
+                    if (active) {
+                      pageBar.sort!.onToggleDirection();
+                    } else {
+                      pageBar.sort!.onChangeKey(opt.key);
+                    }
+                  }}
                   className={`inline-flex shrink-0 items-center gap-0.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all duration-150 ${
                     active
                       ? 'border-[var(--duck-border-strong)] bg-[var(--duck-surface-soft)] text-[var(--duck-accent-strong)]'
@@ -489,31 +501,6 @@ export function AppLayout() {
               </>
             )}
           </div>
-
-          {/* Page filter pill — appears below island when page has filter + search is focused */}
-          {mobileSearchFocused && hasPageBar && pageBar?.filter && (
-            <div className="mt-2 flex items-center rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)]/90 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.14)] backdrop-blur-xl">
-              <div className="pointer-events-none flex items-center pl-4">
-                <Search className="h-4 w-4 text-[var(--duck-muted)]" aria-hidden="true" />
-              </div>
-              <label htmlFor={`mobile-${pageBar.filter.id}`} className="sr-only">
-                {pageBar.filter.placeholder}
-              </label>
-              <input
-                id={`mobile-${pageBar.filter.id}`}
-                type="search"
-                value={pageBar.filter.value}
-                onChange={(e) => pageBar.filter!.onChange(e.target.value)}
-                placeholder={pageBar.filter.placeholder}
-                className="w-full rounded-2xl bg-transparent py-3 pr-4 pl-3 text-sm font-semibold text-[var(--duck-fg)] outline-none placeholder:text-[var(--duck-muted)]"
-              />
-              {pageBar?.countLabel && (
-                <span className="shrink-0 pr-4 text-xs font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">
-                  {pageBar.countLabel}
-                </span>
-              )}
-            </div>
-          )}
         </div>
       ) : null}
 

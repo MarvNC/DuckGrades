@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useOutletContext, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import uPlot from 'uplot';
 import {
   getSubjectShard,
@@ -11,19 +11,19 @@ import { abbreviateTermDesc, termRangeChipFromDescriptions } from '../../lib/ter
 import fuzzysort from 'fuzzysort';
 import { AggregateSummaryCard } from '../components/AggregateSummaryCard';
 import { EntityAggregateCard } from '../components/EntityAggregateCard';
+import { PageControlBar } from '../components/PageControlBar';
 import { NotFoundPage } from './NotFoundPage';
 import { usePageTitle } from '../usePageTitle';
 import { MetaChip } from '../components/MetaChip';
 import { UPlotChart } from '../components/charts/UPlotChart';
-import type { SearchLayoutContext } from '../AppLayout';
 
 type SubjectCourseSortKey = 'code' | 'students' | 'sections' | 'mean';
 
 const SORT_OPTIONS: Array<{ key: SubjectCourseSortKey; label: string }> = [
-  { key: 'code', label: 'Code' },
+  { key: 'code', label: 'A-Z' },
   { key: 'students', label: 'Students' },
-  { key: 'sections', label: 'Sections' },
-  { key: 'mean', label: 'Mean' },
+
+  { key: 'mean', label: 'GPA' },
 ];
 
 function sortCourses(
@@ -65,7 +65,6 @@ function sortCourses(
 }
 
 export function SubjectPage() {
-  const { setPageBar } = useOutletContext<SearchLayoutContext>();
   const { code } = useParams();
   const [subject, setSubject] = useState<SubjectShard | null>(null);
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error' | 'not-found'>(
@@ -137,27 +136,6 @@ export function SubjectPage() {
   const visibleCourses = useMemo(() => {
     return sortCourses(filteredCourses, sortKey, sortDescending);
   }, [filteredCourses, sortDescending, sortKey]);
-
-  // Register page bar (filter + sort + count) into the header
-  useEffect(() => {
-    setPageBar({
-      filter: {
-        id: 'subject-course-filter',
-        value: courseQuery,
-        placeholder: 'Filter courses...',
-        onChange: setCourseQuery,
-      },
-      sort: {
-        options: SORT_OPTIONS,
-        activeKey: sortKey,
-        descending: sortDescending,
-        onChangeKey: (key) => setSortKey(key as SubjectCourseSortKey),
-        onToggleDirection: () => setSortDescending((v) => !v),
-      },
-      countLabel: courses.length > 0 ? `${visibleCourses.length}/${courses.length}` : undefined,
-    });
-    return () => setPageBar(null);
-  }, [courseQuery, sortKey, sortDescending, visibleCourses.length, courses.length, setPageBar]);
 
   const termAggregates = useMemo(() => {
     return subject?.termAggregates ?? [];
@@ -362,7 +340,24 @@ export function SubjectPage() {
         <p className="text-sm text-[var(--duck-muted)]">No visible course data for this subject.</p>
       ) : null}
 
-      {/* Filter + sort controls are in the sticky header via setPageBar */}
+      {loadState === 'ready' && courses.length > 0 ? (
+        <PageControlBar
+          filter={{
+            id: 'subject-course-filter',
+            value: courseQuery,
+            placeholder: 'Filter courses...',
+            onChange: setCourseQuery,
+          }}
+          sort={{
+            options: SORT_OPTIONS,
+            activeKey: sortKey,
+            descending: sortDescending,
+            onChangeKey: (key) => setSortKey(key as SubjectCourseSortKey),
+            onToggleDirection: () => setSortDescending((v) => !v),
+          }}
+          countLabel={`${visibleCourses.length}/${courses.length}`}
+        />
+      ) : null}
 
       {loadState === 'ready' && courses.length > 0 && visibleCourses.length === 0 ? (
         <p className="text-sm text-[var(--duck-muted)]">No courses match your search.</p>
