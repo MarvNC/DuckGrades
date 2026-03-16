@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import uPlot from 'uplot';
 import { getAnalyticsShard, type AnalyticsLevel, type AnalyticsShard } from '../../lib/dataClient';
-import { NUMERICAL_GRADE_ORDER } from '../../lib/grades';
+import { NUMERICAL_GRADE_ORDER, computeNumericalStats, formatGradeStat } from '../../lib/grades';
 import { abbreviateTermDesc } from '../../lib/termUtils';
 import { MetaChip } from '../components/MetaChip';
 import { usePageTitle } from '../usePageTitle';
@@ -221,6 +221,21 @@ export function AnalyticsPage() {
     [overallGradeBuckets]
   );
 
+  const overallGradeStats = useMemo(() => {
+    const numericalCounts = Object.fromEntries(
+      NUMERICAL_GRADE_ORDER.map((grade) => {
+        const bucket = overallGradeBuckets.find((value) => value.code === grade);
+        return [grade, bucket?.count ?? 0];
+      })
+    ) as Partial<Record<(typeof NUMERICAL_GRADE_ORDER)[number], number>>;
+
+    const stats = computeNumericalStats(numericalCounts);
+    return {
+      mean: formatGradeStat(stats.mean),
+      median: formatGradeStat(stats.median),
+    };
+  }, [overallGradeBuckets]);
+
   const overallGradeDistributionData = useMemo<uPlot.AlignedData>(() => {
     const x = overallGradeBuckets.map((_, index) => index + 1);
     const perGradeSeries = overallGradeBuckets.map((bucket, bucketIndex) =>
@@ -324,9 +339,17 @@ export function AnalyticsPage() {
               <h2 className="text-base font-bold text-[var(--duck-fg)]">
                 Overall grade distribution
               </h2>
-              <p className="text-xs font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">
-                {overallGradeTotal.toLocaleString()} grade outcomes
-              </p>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <p className="text-xs font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">
+                  {overallGradeTotal.toLocaleString()} grade outcomes
+                </p>
+                <span className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-[var(--duck-muted-strong)] uppercase">
+                  Mean {overallGradeStats.mean}
+                </span>
+                <span className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-[var(--duck-muted-strong)] uppercase">
+                  Median {overallGradeStats.median}
+                </span>
+              </div>
             </div>
             <UPlotChart
               ariaLabel="Overall historical grade distribution"
