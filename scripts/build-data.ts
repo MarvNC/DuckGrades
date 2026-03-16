@@ -31,6 +31,9 @@ type CsvRow = {
   TOT_NON_W: string;
 };
 
+// Same as CsvRow but without the TITLE column (absent in the supplement CSV).
+type SupplementCsvRow = Omit<CsvRow, 'TITLE'>;
+
 type GradeCode = (typeof NUMERICAL_ORDER)[number] | (typeof NON_NUMERICAL_ORDER)[number] | 'W';
 
 type SectionRecord = {
@@ -245,6 +248,10 @@ type SubjectCodeMappingsLookup = {
 };
 
 const INPUT_CSV = 'data/pub_rec_master_w2016-f2025.csv';
+// Supplement CSV: earlier dataset that lacks TITLE but contains Fall 2015 (term 201501),
+// which is not present in the primary CSV. We extract only those exclusive terms from it.
+const SUPPLEMENT_CSV = 'data/pub_rec_master_f2015-u2025.csv';
+const SUPPLEMENT_EXCLUSIVE_TERMS = new Set(['201501']);
 const CATALOG_METADATA_JSON = 'data/uo-catalog-course-metadata.json';
 const PROGRAM_METADATA_JSON = 'data/uo-catalog-program-metadata.json';
 const SUBJECT_CODE_MAPPINGS_JSON = 'data/subject-code-mappings.json';
@@ -976,7 +983,9 @@ async function main() {
   const collisionCounts = new Map<string, number>();
   const instructorBaseIdCache = new Map<string, string>();
 
-  const sections: SectionRecord[] = rawRows.map((row) => {
+  // mapRow converts a raw CSV row (with an optional title) into a SectionRecord,
+  // using the shared professor-ID deduplication state.
+  const mapRow = (row: SupplementCsvRow, titleValue: string): SectionRecord => {
     const instructorCanonical = canonicalInstructor(row.INSTRUCTOR);
     const baseId =
       instructorCanonical === 'unknown'
@@ -1044,7 +1053,7 @@ async function main() {
       sourceCourseCode,
       subject: mappedSubject,
       number: mappedNumber,
-      title: row.TITLE.trim(),
+      title: titleValue,
       courseCode: `${mappedSubject}-${mappedNumber}`,
       crn: row.CRN,
       instructor: row.INSTRUCTOR.trim() || 'Unknown',
@@ -1053,7 +1062,29 @@ async function main() {
       counts,
       totalNonWReported: Number.parseInt(row.TOT_NON_W, 10) || 0,
     };
-  });
+  };
+
+  const sections: SectionRecord[] = rawRows.map((row) => mapRow(row, row.TITLE.trim()));
+
+  // Load the supplement CSV and append rows for terms not covered by the primary CSV.
+  // The supplement CSV has no TITLE column, so csvTitle will be empty for those sections.
+  // Course-level titles are sourced from catalog metadata or later CSV rows (fallback chain),
+  // so the absence of csvTitle only affects the section-level display for these older rows.
+  const supplementCsvText = await readFile(SUPPLEMENT_CSV, 'utf8');
+  const supplementRawRows = parse(supplementCsvText, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: false,
+  }) as SupplementCsvRow[];
+  const supplementRows = supplementRawRows.filter((row) =>
+    SUPPLEMENT_EXCLUSIVE_TERMS.has(row.TERM)
+  );
+  console.log(
+    `Supplement CSV: adding ${supplementRows.length} rows from term(s) [${[...SUPPLEMENT_EXCLUSIVE_TERMS].join(', ')}]`
+  );
+  for (const row of supplementRows) {
+    sections.push(mapRow(row, ''));
+  }
 
   const bySubject = new Map<string, SectionRecord[]>();
   const byCourse = new Map<string, SectionRecord[]>();
@@ -1444,6 +1475,8 @@ async function main() {
     datasetVersion: version,
     builtAt: new Date().toISOString(),
     sourceCsv: INPUT_CSV,
+    supplementCsv: SUPPLEMENT_CSV,
+    supplementExclusiveTerms: [...SUPPLEMENT_EXCLUSIVE_TERMS],
     gradeOrders: {
       numerical: NUMERICAL_ORDER,
       nonNumerical: NON_NUMERICAL_ORDER,
