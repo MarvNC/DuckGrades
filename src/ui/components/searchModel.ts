@@ -76,7 +76,11 @@ export function buildSearchItems(ranked: RankedSearchResult, limits: { total?: n
       subtitle: course.matchedSectionTitle ?? course.title,
       score: course.score,
       labelMatchIndexes: course.labelMatchIndexes,
-      subtitleMatchIndexes: course.subtitleMatchIndexes,
+      // When a matched section title is shown as subtitle, use its pre-adjusted highlight
+      // indexes instead of the generic subtitleMatchIndexes (which point into course.title).
+      subtitleMatchIndexes: course.matchedSectionTitle
+        ? course.sectionTitleMatchIndexes
+        : course.subtitleMatchIndexes,
       to,
       section: 'Course' as const,
       popularity: course.popularity,

@@ -18,6 +18,11 @@ export type RankedCourse = SearchIndex['courses'][number] & {
   subtitleMatchIndexes: MatchIndexes;
   /** Best-matching individual section title when the query matched a section title */
   matchedSectionTitle?: string;
+  /**
+   * Highlight indexes into `matchedSectionTitle` (when present).
+   * Use these instead of `subtitleMatchIndexes` when displaying `matchedSectionTitle` as subtitle.
+   */
+  sectionTitleMatchIndexes: MatchIndexes;
 };
 
 export type RankedProfessor = SearchIndex['professors'][number] & {
@@ -66,6 +71,8 @@ type Candidate<T> = {
   fuzzyScore: number;
   labelMatchIndexes: MatchIndexes;
   subtitleMatchIndexes: MatchIndexes;
+  /** Raw indexes from the sectionTitles key (key[3] for courses), before offset adjustment. */
+  sectionTitlesMatchIndexes: MatchIndexes;
 };
 
 function normalizeForComparison(value: string): string {
@@ -283,6 +290,7 @@ function collectBestCandidates<T>(params: {
         fuzzyScore: result.score,
         labelMatchIndexes: getIndexes(result[0]),
         subtitleMatchIndexes: getIndexes(result[1]),
+        sectionTitlesMatchIndexes: getIndexes(result[3]),
       };
 
       const current = bestByKey.get(mapKey);
@@ -307,37 +315,61 @@ function getFuzzyThreshold(query: string): number {
 
 /**
  * Given a pipe-separated sectionTitles string (e.g. "Cantonese | Japanese Culture"),
- * returns the individual title that best matches the query profile, or undefined if
- * none match well enough to surface.
+ * returns the individual title that best matches the query profile along with highlight
+ * indexes adjusted to be relative to that title string, or undefined if none match well
+ * enough to surface.
  */
 function findBestMatchingSectionTitle(
   profile: QueryProfile,
-  sectionTitles: string | undefined
-): string | undefined {
+  sectionTitles: string | undefined,
+  sectionTitlesMatchIndexes: MatchIndexes
+): { title: string; matchIndexes: MatchIndexes } | undefined {
   if (!sectionTitles) {
     return undefined;
   }
-  const titles = sectionTitles
-    .split('|')
-    .map((t) => t.trim())
-    .filter(Boolean);
-  if (titles.length === 0) {
+
+  // Build an array of {title, startOffset} so we can map highlight indexes back to the title.
+  const entries: { title: string; start: number }[] = [];
+  let searchFrom = 0;
+  for (const raw of sectionTitles.split('|')) {
+    const trimmed = raw.trim();
+    if (trimmed) {
+      // Find the actual start position of the trimmed title within sectionTitles
+      const start = sectionTitles.indexOf(trimmed, searchFrom);
+      entries.push({ title: trimmed, start });
+      searchFrom = start + trimmed.length;
+    }
+  }
+
+  if (entries.length === 0) {
     return undefined;
   }
 
-  let bestTitle: string | undefined;
+  let bestEntry: { title: string; start: number } | undefined;
   let bestScore = 0;
 
-  for (const title of titles) {
-    const score = scoreSecondaryText(profile, title);
+  for (const entry of entries) {
+    const score = scoreSecondaryText(profile, entry.title);
     if (score > bestScore) {
       bestScore = score;
-      bestTitle = title;
+      bestEntry = entry;
     }
   }
 
   // Only surface the matched section title if it scored meaningfully
-  return bestScore > 0.4 ? bestTitle : undefined;
+  if (bestScore <= 0.4 || !bestEntry) {
+    return undefined;
+  }
+
+  // Adjust the raw sectionTitles match indexes to be relative to the matched title.
+  // Only keep indexes that fall within this title's character range.
+  const { title, start } = bestEntry;
+  const end = start + title.length;
+  const matchIndexes = sectionTitlesMatchIndexes
+    .filter((i) => i >= start && i < end)
+    .map((i) => i - start);
+
+  return { title, matchIndexes };
 }
 
 export function searchIndex(index: SearchIndex, query: string) {
@@ -403,10 +435,15 @@ export function searchIndex(index: SearchIndex, query: string) {
   const courses = courseCandidates
     .map((candidate) => {
       const { sectionTitles } = candidate.obj;
-      // Find the individual section title that best matches the query (if any)
-      const matchedSectionTitle = findBestMatchingSectionTitle(profile, sectionTitles);
-      const sectionTitleScore = matchedSectionTitle
-        ? scoreSecondaryText(profile, matchedSectionTitle)
+      // Find the individual section title that best matches the query (if any),
+      // along with highlight indexes already adjusted to the matched title string.
+      const sectionTitleMatch = findBestMatchingSectionTitle(
+        profile,
+        sectionTitles,
+        candidate.sectionTitlesMatchIndexes
+      );
+      const sectionTitleScore = sectionTitleMatch
+        ? scoreSecondaryText(profile, sectionTitleMatch.title)
         : 0;
       return {
         ...candidate.obj,
@@ -420,7 +457,8 @@ export function searchIndex(index: SearchIndex, query: string) {
         ),
         labelMatchIndexes: candidate.labelMatchIndexes,
         subtitleMatchIndexes: candidate.subtitleMatchIndexes,
-        matchedSectionTitle,
+        matchedSectionTitle: sectionTitleMatch?.title,
+        sectionTitleMatchIndexes: sectionTitleMatch?.matchIndexes ?? [],
       };
     })
     .sort((a, b) => b.score - a.score || b.popularity - a.popularity);
