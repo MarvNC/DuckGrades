@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import type { MouseEventHandler } from 'react';
-import duckgradesLogo from '../../assets/duckgrades.png';
 
 type BrandProps = {
   home?: boolean;
@@ -26,12 +25,13 @@ export function Brand({
   return (
     <Link to="/" className={classes} onClick={onClick}>
       <img
-        src={duckgradesLogo}
+        src="/logo-384.png"
         alt=""
         aria-hidden="true"
         className="brand-logo"
-        width={512}
-        height={512}
+        fetchPriority="high"
+        width={384}
+        height={384}
       />
       <span className={wordmarkClasses}>
         <span className="brand-duck">Duck</span>
