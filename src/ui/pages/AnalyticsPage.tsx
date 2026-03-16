@@ -551,6 +551,11 @@ export function AnalyticsPage() {
               data={classSizeDistributionData}
               buildOptions={({ width, height, theme }) => {
                 const compact = width < 640;
+                const maxVisibleLabels = compact ? 6 : 12;
+                const labelStride = Math.max(
+                  1,
+                  Math.ceil(classSizeBuckets.length / maxVisibleLabels)
+                );
                 return {
                   width,
                   height,
@@ -576,7 +581,8 @@ export function AnalyticsPage() {
                           if (!item) {
                             return '';
                           }
-                          if (compact && index % 2 === 1) {
+                          const isLastBucket = index === classSizeBuckets.length - 1;
+                          if (!isLastBucket && index % labelStride !== 0) {
                             return '';
                           }
                           return item.label;
