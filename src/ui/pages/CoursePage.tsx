@@ -12,6 +12,7 @@ import { NotFoundPage } from './NotFoundPage';
 import { usePageTitle } from '../usePageTitle';
 import { MetaChip } from '../components/MetaChip';
 import { UPlotChart } from '../components/charts/UPlotChart';
+import { CourseTopicsPanel } from '../components/CourseTopicsPanel';
 
 type InstructorSortKey = 'name' | 'students' | 'sections' | 'mean';
 
@@ -130,10 +131,13 @@ export function CoursePage() {
     );
   }, [course?.instructors]);
 
-  const termRangeChip = useMemo(() => {
-    const allSections = (course?.instructors ?? []).flatMap((i) => i.sections);
-    return getTermRangeChip(allSections);
+  const allSections = useMemo(() => {
+    return (course?.instructors ?? []).flatMap((instructor) => instructor.sections);
   }, [course?.instructors]);
+
+  const termRangeChip = useMemo(() => {
+    return getTermRangeChip(allSections);
+  }, [allSections]);
 
   const termAggregates = useMemo(() => {
     return course?.termAggregates ?? [];
@@ -215,6 +219,8 @@ export function CoursePage() {
           </div>
         </div>
       </div>
+
+      {loadState === 'ready' && course ? <CourseTopicsPanel sections={allSections} /> : null}
 
       {loadState === 'ready' && termAggregates.length > 1 ? (
         <section className="rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm sm:p-5">
