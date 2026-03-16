@@ -158,17 +158,12 @@ export function PageControlBar({ filter, sort, countLabel }: Props) {
         {(sort ?? countLabel) && (
           <div className="flex items-center gap-2">
             {sort && (
-              <>
-                <span className="shrink-0 text-xs font-semibold tracking-[0.09em] text-[var(--duck-muted)] uppercase">
-                  Sort
-                </span>
-                {/* Horizontally scrollable no-wrap row */}
-                <div className="no-scrollbar min-w-0 flex-1 overflow-x-auto">
-                  <div className="flex items-center gap-1" style={{ width: 'max-content' }}>
-                    <SortPillGroup sort={sort} />
-                  </div>
+              /* Horizontally scrollable no-wrap row, no label */
+              <div className="no-scrollbar min-w-0 flex-1 overflow-x-auto">
+                <div className="flex items-center gap-1" style={{ width: 'max-content' }}>
+                  <SortPillGroup sort={sort} />
                 </div>
-              </>
+              </div>
             )}
             {countLabel && (
               <span className="ml-auto shrink-0 text-xs font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">

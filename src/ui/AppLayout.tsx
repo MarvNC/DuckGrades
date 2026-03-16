@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { BarChart3, ChevronDown, List, Search, X } from 'lucide-react';
+import { BarChart3, ChevronDown, List, Search } from 'lucide-react';
 import { Brand } from './components/Brand';
 import { SiteFooter } from './components/SiteFooter';
 import { SearchResultsPage } from './components/SearchResultsPage';
@@ -64,7 +64,6 @@ export function AppLayout() {
   );
   const [pageBar, setPageBar] = useState<PageBarConfig | null>(null);
   const [mobileSearchFocused, setMobileSearchFocused] = useState(false);
-  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
   const desktopSearchInputRef = useRef<HTMLInputElement | null>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement | null>(null);
@@ -134,18 +133,6 @@ export function AppLayout() {
     window.addEventListener('keydown', onWindowKeyDown);
     return () => window.removeEventListener('keydown', onWindowKeyDown);
   }, []);
-
-  // Close mobile filter when page bar disappears (route change / scrolled into view)
-  useEffect(() => {
-    if (!hasPageBar) setMobileFilterOpen(false);
-  }, [hasPageBar]);
-
-  // Auto-focus mobile filter input when opened
-  useEffect(() => {
-    if (mobileFilterOpen) {
-      window.requestAnimationFrame(() => mobileFilterInputRef.current?.focus());
-    }
-  }, [mobileFilterOpen]);
 
   useEffect(() => {
     const header = headerRef.current;
@@ -319,14 +306,7 @@ export function AppLayout() {
             />
           </div>
         )}
-        {pageBar?.sort && (
-          <div className="flex shrink-0 items-center gap-1.5">
-            <span className="text-xs font-semibold tracking-[0.09em] text-[var(--duck-muted)] uppercase">
-              Sort
-            </span>
-            {SortPills}
-          </div>
-        )}
+        {pageBar?.sort && <div className="flex shrink-0 items-center gap-1">{SortPills}</div>}
         {pageBar?.countLabel && (
           <span className="shrink-0 text-xs font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">
             {pageBar.countLabel}
@@ -335,139 +315,69 @@ export function AppLayout() {
       </div>
     ) : null;
 
-  // Mobile top bar page bar row: shown when scrolled past inline PageControlBar
+  // Mobile top bar page bar row: shown when scrolled past inline PageControlBar.
+  // Layout: [filter input (flex-1, if any)] [sort pills scrollable] [count]
   const MobilePageBarRow = hasPageBar ? (
-    <div className="border-t border-[var(--duck-border)]/50">
-      {/* Filter input row — shown when filter icon tapped */}
-      {mobileFilterOpen && pageBar?.filter ? (
-        <div className="flex items-center gap-2 px-3 py-2">
-          <div className="relative min-w-0 flex-1">
-            <Search
-              className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-[var(--duck-accent-strong)]"
-              aria-hidden="true"
-            />
-            <label htmlFor="mobile-header-filter" className="sr-only">
-              {pageBar.filter.placeholder}
-            </label>
-            <input
-              id="mobile-header-filter"
-              ref={mobileFilterInputRef}
-              type="search"
-              value={pageBar.filter.value}
-              onChange={(e) => pageBar.filter!.onChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  setMobileFilterOpen(false);
-                  pageBar.filter!.onChange('');
-                }
-              }}
-              onBlur={() => setTimeout(() => setMobileFilterOpen(false), 150)}
-              placeholder={pageBar.filter.placeholder}
-              className="w-full rounded-xl border border-[var(--duck-focus)] bg-[var(--duck-surface)] py-1.5 pr-3 pl-8 text-sm font-medium text-[var(--duck-fg)] ring-2 ring-[var(--duck-focus)]/20 outline-none placeholder:text-[var(--duck-muted)]"
-            />
-          </div>
-          {pageBar?.countLabel && (
-            <span className="shrink-0 text-xs font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">
-              {pageBar.countLabel}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={() => {
-              setMobileFilterOpen(false);
-              pageBar.filter!.onChange('');
+    <div className="flex items-center gap-2 border-t border-[var(--duck-border)]/50 px-3 py-2">
+      {/* Filter input — always visible when page has a filter; min-w ensures it stays usable */}
+      {pageBar?.filter && (
+        <div className="relative min-w-[5rem] flex-1">
+          <Search
+            className={`pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 transition-colors ${pageBar.filter.value ? 'text-[var(--duck-accent-strong)]' : 'text-[var(--duck-muted)]'}`}
+            aria-hidden="true"
+          />
+          <label htmlFor="mobile-header-filter" className="sr-only">
+            {pageBar.filter.placeholder}
+          </label>
+          <input
+            id="mobile-header-filter"
+            ref={mobileFilterInputRef}
+            type="search"
+            value={pageBar.filter.value}
+            onChange={(e) => pageBar.filter!.onChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') pageBar.filter!.onChange('');
             }}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[var(--duck-muted)] transition-colors hover:text-[var(--duck-fg)] active:scale-90"
-            aria-label="Close filter"
-          >
-            <X className="h-4 w-4" />
-          </button>
+            placeholder="Filter..."
+            className={`w-full rounded-xl border py-1.5 pr-3 pl-7 text-sm font-medium text-[var(--duck-fg)] transition outline-none placeholder:text-[var(--duck-muted)] focus:ring-2 focus:ring-[var(--duck-focus)]/20 ${pageBar.filter.value ? 'border-[var(--duck-focus)] bg-[var(--duck-surface)]' : 'border-[var(--duck-border)] bg-[var(--duck-surface)]'} focus:border-[var(--duck-focus)]`}
+          />
         </div>
-      ) : null}
+      )}
 
-      {/* Sort + filter-icon row — always shown when page bar active */}
-      {!mobileFilterOpen && pageBar?.sort ? (
-        <div className="flex items-center gap-2 px-3 py-2">
-          <span className="shrink-0 text-xs font-semibold tracking-[0.09em] text-[var(--duck-muted)] uppercase">
-            Sort
-          </span>
-          {/* Horizontally scrollable, no wrap */}
-          <div className="no-scrollbar min-w-0 flex-1 overflow-x-auto">
-            <div className="flex items-center gap-1" style={{ width: 'max-content' }}>
-              {pageBar.sort.options.map((opt) => {
-                const active = opt.key === pageBar.sort!.activeKey;
-                return (
-                  <button
-                    key={opt.key}
-                    type="button"
-                    onClick={() => {
-                      if (active) {
-                        pageBar.sort!.onToggleDirection();
-                      } else {
-                        pageBar.sort!.onChangeKey(opt.key);
-                      }
-                    }}
-                    className={`inline-flex shrink-0 items-center gap-0.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all duration-150 ${
-                      active
-                        ? 'border-[var(--duck-border-strong)] bg-[var(--duck-surface-soft)] text-[var(--duck-accent-strong)]'
-                        : 'border-[var(--duck-border)] bg-[var(--duck-surface)] text-[var(--duck-muted)]'
-                    }`}
-                  >
-                    {opt.label}
-                    {active && (
-                      <ChevronDown
-                        className={`h-3 w-3 transition-transform duration-150 ${pageBar.sort!.descending ? '' : 'rotate-180'}`}
-                        aria-hidden="true"
-                      />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+      {/* Sort pills — horizontally scrollable, no "Sort" label */}
+      {pageBar?.sort && (
+        <div className="no-scrollbar shrink-0 overflow-x-auto">
+          <div className="flex items-center gap-1" style={{ width: 'max-content' }}>
+            {pageBar.sort.options.map((opt) => {
+              const active = opt.key === pageBar.sort!.activeKey;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => {
+                    if (active) {
+                      pageBar.sort!.onToggleDirection();
+                    } else {
+                      pageBar.sort!.onChangeKey(opt.key);
+                    }
+                  }}
+                  className={`inline-flex shrink-0 items-center gap-0.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all duration-150 ${
+                    active
+                      ? 'border-[var(--duck-border-strong)] bg-[var(--duck-surface-soft)] text-[var(--duck-accent-strong)]'
+                      : 'border-[var(--duck-border)] bg-[var(--duck-surface)] text-[var(--duck-muted)]'
+                  }`}
+                >
+                  {opt.label}
+                  {active && (
+                    <ChevronDown
+                      className={`h-3 w-3 transition-transform duration-150 ${pageBar.sort!.descending ? '' : 'rotate-180'}`}
+                      aria-hidden="true"
+                    />
+                  )}
+                </button>
+              );
+            })}
           </div>
-          {pageBar?.countLabel && !pageBar?.filter && (
-            <span className="shrink-0 text-xs font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">
-              {pageBar.countLabel}
-            </span>
-          )}
-          {/* Filter icon — only shown when page has a filter */}
-          {pageBar?.filter && (
-            <button
-              type="button"
-              onClick={() => setMobileFilterOpen(true)}
-              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-all duration-150 active:scale-90 ${
-                pageBar.filter.value
-                  ? 'border-[var(--duck-border-strong)] bg-[var(--duck-surface-soft)] text-[var(--duck-accent-strong)]'
-                  : 'border-[var(--duck-border)] bg-[var(--duck-surface)] text-[var(--duck-muted)] hover:text-[var(--duck-accent-strong)]'
-              }`}
-              aria-label="Filter"
-            >
-              <Search className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
-      ) : null}
-
-      {/* Sort-only row when no sort, only filter (unusual but handled) */}
-      {!mobileFilterOpen && !pageBar?.sort && pageBar?.filter && (
-        <div className="flex items-center justify-between px-3 py-2">
-          {pageBar?.countLabel && (
-            <span className="text-xs font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">
-              {pageBar.countLabel}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={() => setMobileFilterOpen(true)}
-            className={`ml-auto flex h-7 w-7 items-center justify-center rounded-full border transition-all duration-150 active:scale-90 ${
-              pageBar.filter.value
-                ? 'border-[var(--duck-border-strong)] bg-[var(--duck-surface-soft)] text-[var(--duck-accent-strong)]'
-                : 'border-[var(--duck-border)] bg-[var(--duck-surface)] text-[var(--duck-muted)] hover:text-[var(--duck-accent-strong)]'
-            }`}
-            aria-label="Filter"
-          >
-            <Search className="h-3.5 w-3.5" />
-          </button>
         </div>
       )}
     </div>

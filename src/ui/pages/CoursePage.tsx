@@ -16,7 +16,7 @@ import { UPlotChart } from '../components/charts/UPlotChart';
 type InstructorSortKey = 'name' | 'students' | 'sections' | 'mean';
 
 const SORT_OPTIONS: Array<{ key: InstructorSortKey; label: string }> = [
-  { key: 'name', label: 'Name' },
+  { key: 'name', label: 'A-Z' },
   { key: 'students', label: 'Students' },
 
   { key: 'mean', label: 'GPA' },
