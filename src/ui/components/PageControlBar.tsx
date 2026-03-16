@@ -1,7 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { ChevronDown, Search } from 'lucide-react';
-import type { PageBarConfig, SearchLayoutContext, SortOption } from '../AppLayout';
+import type {
+  FilterModeOption,
+  PageBarConfig,
+  SearchLayoutContext,
+  SortOption,
+} from '../AppLayout';
 
 type Props = {
   filter?: {
@@ -9,6 +14,11 @@ type Props = {
     value: string;
     placeholder: string;
     onChange: (value: string) => void;
+  };
+  filterMode?: {
+    options: FilterModeOption[];
+    activeKey: string;
+    onChangeKey: (key: string) => void;
   };
   sort?: {
     options: SortOption[];
@@ -26,7 +36,7 @@ type Props = {
  * itself into the sticky header via setPageBar; when back in view it
  * unregisters so the header row collapses.
  */
-export function PageControlBar({ filter, sort, countLabel }: Props) {
+export function PageControlBar({ filter, filterMode, sort, countLabel }: Props) {
   const { setPageBar, registerPageControlBarEl } = useOutletContext<SearchLayoutContext>();
   const rootRef = useRef<HTMLDivElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -39,9 +49,9 @@ export function PageControlBar({ filter, sort, countLabel }: Props) {
 
   // Keep latest props in a ref so the IntersectionObserver callback always
   // has the current values without needing to re-subscribe.
-  const propsRef = useRef<PageBarConfig>({ filter, sort, countLabel });
+  const propsRef = useRef<PageBarConfig>({ filter, filterMode, sort, countLabel });
   useEffect(() => {
-    propsRef.current = { filter, sort, countLabel };
+    propsRef.current = { filter, filterMode, sort, countLabel };
   });
 
   useEffect(() => {
@@ -78,9 +88,9 @@ export function PageControlBar({ filter, sort, countLabel }: Props) {
   const isOutRef = useRef(false);
   useEffect(() => {
     if (isOutRef.current) {
-      setPageBar({ filter, sort, countLabel });
+      setPageBar({ filter, filterMode, sort, countLabel });
     }
-  }, [filter, sort, countLabel, setPageBar]);
+  }, [filter, filterMode, sort, countLabel, setPageBar]);
 
   // Track visibility so the above effect knows whether to push.
   useEffect(() => {
@@ -108,7 +118,7 @@ export function PageControlBar({ filter, sort, countLabel }: Props) {
         className="pointer-events-none absolute h-px w-px opacity-0"
       />
 
-      {/* ── Desktop layout: filter (flex-1) + Sort label + pills + count ── */}
+      {/* ── Desktop layout: filter (flex-1) + filter mode pills + Sort label + pills + count ── */}
       <div className="hidden items-center gap-3 px-4 py-2.5 sm:flex">
         {filter && (
           <div className="relative min-w-0 flex-1">
@@ -129,6 +139,27 @@ export function PageControlBar({ filter, sort, countLabel }: Props) {
             />
           </div>
         )}
+        {filterMode && (
+          <div className="flex shrink-0 items-center gap-1">
+            {filterMode.options.map((opt) => {
+              const active = opt.key === filterMode.activeKey;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => filterMode.onChangeKey(opt.key)}
+                  className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-1 text-xs font-semibold transition-all duration-150 ${
+                    active
+                      ? 'border-[var(--duck-border-strong)] bg-[var(--duck-surface-soft)] text-[var(--duck-accent-strong)]'
+                      : 'border-[var(--duck-border)] bg-[var(--duck-surface)] text-[var(--duck-muted)] hover:border-[var(--duck-border-strong)] hover:text-[var(--duck-accent-strong)]'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
         {sort && (
           <div className="flex shrink-0 items-center gap-1.5">
             <span className="text-xs font-semibold tracking-[0.09em] text-[var(--duck-muted)] uppercase">
@@ -144,7 +175,7 @@ export function PageControlBar({ filter, sort, countLabel }: Props) {
         )}
       </div>
 
-      {/* ── Mobile layout: filter full-width top, sort pills bottom ── */}
+      {/* ── Mobile layout: filter full-width top, filter mode + sort pills bottom ── */}
       <div className="flex flex-col gap-2 px-3 py-2.5 sm:hidden">
         {filter && (
           <div className="relative">
@@ -165,16 +196,31 @@ export function PageControlBar({ filter, sort, countLabel }: Props) {
             />
           </div>
         )}
-        {(sort ?? countLabel) && (
+        {(filterMode ?? sort ?? countLabel) && (
           <div className="flex items-center gap-2">
-            {sort && (
-              /* Horizontally scrollable no-wrap row, no label */
-              <div className="no-scrollbar min-w-0 flex-1 overflow-x-auto">
-                <div className="flex items-center gap-1" style={{ width: 'max-content' }}>
-                  <SortPillGroup sort={sort} />
-                </div>
+            <div className="no-scrollbar min-w-0 flex-1 overflow-x-auto">
+              <div className="flex items-center gap-1" style={{ width: 'max-content' }}>
+                {filterMode &&
+                  filterMode.options.map((opt) => {
+                    const active = opt.key === filterMode.activeKey;
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => filterMode.onChangeKey(opt.key)}
+                        className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-1 text-xs font-semibold transition-all duration-150 ${
+                          active
+                            ? 'border-[var(--duck-border-strong)] bg-[var(--duck-surface-soft)] text-[var(--duck-accent-strong)]'
+                            : 'border-[var(--duck-border)] bg-[var(--duck-surface)] text-[var(--duck-muted)] hover:border-[var(--duck-border-strong)] hover:text-[var(--duck-accent-strong)]'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                {sort && <SortPillGroup sort={sort} />}
               </div>
-            )}
+            </div>
             {countLabel && (
               <span className="ml-auto shrink-0 text-xs font-semibold tracking-[0.08em] text-[var(--duck-muted)] uppercase">
                 {countLabel}

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useOutletContext, useParams } from 'react-router-dom';
 import uPlot from 'uplot';
 import { getCourseShard, isNotFoundDataError, type CourseShard } from '../../lib/dataClient';
+import type { SearchLayoutContext } from '../AppLayout';
 import { abbreviateTermDesc, getTermRangeChip } from '../../lib/termUtils';
 import fuzzysort from 'fuzzysort';
 import { AggregateSummaryCard } from '../components/AggregateSummaryCard';
@@ -23,11 +24,15 @@ const SORT_OPTIONS: Array<{ key: InstructorSortKey; label: string }> = [
   { key: 'mean', label: 'GPA' },
 ];
 
+type InstructorWithFiltered = CourseShard['instructors'][number] & {
+  filteredSections: CourseShard['instructors'][number]['sections'];
+};
+
 function sortInstructors(
-  instructors: CourseShard['instructors'],
+  instructors: InstructorWithFiltered[],
   sortKey: InstructorSortKey,
   descending: boolean
-): CourseShard['instructors'] {
+): InstructorWithFiltered[] {
   const direction = descending ? -1 : 1;
 
   return [...instructors].sort((a, b) => {
@@ -63,11 +68,13 @@ function sortInstructors(
 
 export function CoursePage() {
   const { code } = useParams();
+  const { scrollToPageControlBar } = useOutletContext<SearchLayoutContext>();
   const [course, setCourse] = useState<CourseShard | null>(null);
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error' | 'not-found'>(
     'loading'
   );
-  const [instructorQuery, setInstructorQuery] = useState('');
+  const [filterQuery, setFilterQuery] = useState('');
+  const [filterMode, setFilterMode] = useState<'instructor' | 'course'>('instructor');
   const [sortKey, setSortKey] = useState<InstructorSortKey>('students');
   const [sortDescending, setSortDescending] = useState(true);
 
@@ -102,23 +109,57 @@ export function CoursePage() {
     setSortDescending(true);
   }, [sortKey]);
 
+  /**
+   * When filtering by instructor name: fuzzy-match instructor names, return matching instructors
+   * with their full section lists.
+   *
+   * When filtering by course title: for each instructor keep only sections whose csvTitle matches
+   * the query; drop instructors whose filtered section list is empty. Returns a mapped array
+   * that pairs each instructor with its (possibly filtered) sections.
+   */
   const visibleInstructors = useMemo(() => {
     const instructors = course?.instructors ?? [];
-    const query = instructorQuery.trim();
+    const query = filterQuery.trim();
+
     if (!query) {
-      return instructors;
+      // No filter active — return instructors unchanged (sections stay as-is)
+      return instructors.map((inst) => ({ ...inst, filteredSections: inst.sections }));
     }
-    return fuzzysort
-      .go(query, instructors, {
-        keys: [
-          (instructor) => instructor.name,
-          (instructor) => instructor.name.toLowerCase().replace(/[^a-z0-9]+/g, ''),
-        ],
-        threshold: query.length <= 4 ? 0.3 : 0.2,
-        limit: instructors.length,
-      })
-      .map((result) => result.obj);
-  }, [course?.instructors, instructorQuery]);
+
+    if (filterMode === 'instructor') {
+      return fuzzysort
+        .go(query, instructors, {
+          keys: [
+            (instructor) => instructor.name,
+            (instructor) => instructor.name.toLowerCase().replace(/[^a-z0-9]+/g, ''),
+          ],
+          threshold: query.length <= 4 ? 0.3 : 0.2,
+          limit: instructors.length,
+        })
+        .map((result) => ({ ...result.obj, filteredSections: result.obj.sections }));
+    }
+
+    // filterMode === 'course': filter sections by csvTitle within each instructor
+    const results: Array<
+      (typeof instructors)[number] & { filteredSections: (typeof instructors)[number]['sections'] }
+    > = [];
+    for (const instructor of instructors) {
+      const matchingSections = fuzzysort
+        .go(query, instructor.sections, {
+          keys: [
+            (s) => s.csvTitle ?? '',
+            (s) => (s.csvTitle ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ''),
+          ],
+          threshold: query.length <= 4 ? 0.3 : 0.2,
+          limit: instructor.sections.length,
+        })
+        .map((r) => r.obj);
+      if (matchingSections.length > 0) {
+        results.push({ ...instructor, filteredSections: matchingSections });
+      }
+    }
+    return results;
+  }, [course?.instructors, filterQuery, filterMode]);
 
   const sortedInstructors = useMemo(() => {
     return sortInstructors(visibleInstructors, sortKey, sortDescending);
@@ -220,7 +261,17 @@ export function CoursePage() {
         </div>
       </div>
 
-      {loadState === 'ready' && course ? <CourseTopicsPanel sections={allSections} /> : null}
+      {loadState === 'ready' && course ? (
+        <CourseTopicsPanel
+          sections={allSections}
+          onTopicClick={(title) => {
+            setFilterMode('course');
+            setFilterQuery(title);
+            // Give React a tick to flush state, then scroll the filter bar into view
+            setTimeout(() => scrollToPageControlBar(), 0);
+          }}
+        />
+      ) : null}
 
       {loadState === 'ready' && termAggregates.length > 1 ? (
         <section className="rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3 shadow-sm sm:p-5">
@@ -357,10 +408,24 @@ export function CoursePage() {
       {loadState === 'ready' && course && course.instructors.length > 0 ? (
         <PageControlBar
           filter={{
-            id: 'course-instructor-filter',
-            value: instructorQuery,
-            placeholder: 'Filter instructors...',
-            onChange: setInstructorQuery,
+            id: 'course-filter',
+            value: filterQuery,
+            placeholder:
+              filterMode === 'instructor' ? 'Filter instructors...' : 'Filter by course name...',
+            onChange: (v) => {
+              setFilterQuery(v);
+            },
+          }}
+          filterMode={{
+            options: [
+              { key: 'instructor', label: 'Instructor' },
+              { key: 'course', label: 'Course Name' },
+            ],
+            activeKey: filterMode,
+            onChangeKey: (key) => {
+              setFilterMode(key as 'instructor' | 'course');
+              setFilterQuery('');
+            },
           }}
           sort={{
             options: SORT_OPTIONS,
@@ -376,7 +441,11 @@ export function CoursePage() {
       {loadState === 'ready' && course ? (
         <>
           {sortedInstructors.length === 0 ? (
-            <p className="text-sm text-[var(--duck-muted)]">No instructors match your search.</p>
+            <p className="text-sm text-[var(--duck-muted)]">
+              {filterMode === 'instructor'
+                ? 'No instructors match your search.'
+                : 'No sections match that course name.'}
+            </p>
           ) : null}
 
           <div className="space-y-2.5">
@@ -392,9 +461,10 @@ export function CoursePage() {
                 ]}
                 distributionSize="sm"
                 showStudentCountInDistribution={false}
+                forceOpen={filterMode === 'course' && filterQuery.trim().length > 0}
               >
                 <SectionDrilldown
-                  sections={instructor.sections}
+                  sections={instructor.filteredSections}
                   identityPrefix={instructor.professorId}
                 />
               </EntityAggregateCard>

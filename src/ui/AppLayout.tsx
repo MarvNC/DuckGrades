@@ -19,6 +19,12 @@ export type SortOption = {
   label: string;
 };
 
+/** A single option for the filter-mode toggle (e.g. "Instructor" / "Course Name") */
+export type FilterModeOption = {
+  key: string;
+  label: string;
+};
+
 /** Config for the secondary header row rendered by AppLayout on behalf of the current page. */
 export type PageBarConfig = {
   /** Optional local filter/search input embedded in the header */
@@ -27,6 +33,12 @@ export type PageBarConfig = {
     value: string;
     placeholder: string;
     onChange: (value: string) => void;
+  };
+  /** Optional toggle pills that switch what the filter searches against */
+  filterMode?: {
+    options: FilterModeOption[];
+    activeKey: string;
+    onChangeKey: (key: string) => void;
   };
   /** Optional sort pill buttons */
   sort?: {
@@ -51,6 +63,8 @@ export type SearchLayoutContext = {
   setPageBar: (config: PageBarConfig | null) => void;
   /** PageControlBar calls this to register its DOM element so the merged header can scroll to it. */
   registerPageControlBarEl: (el: HTMLElement | null) => void;
+  /** Smoothly scrolls the page to the inline PageControlBar, accounting for the sticky header. */
+  scrollToPageControlBar: () => void;
 };
 
 export function AppLayout() {
@@ -324,6 +338,7 @@ export function AppLayout() {
     registerPageControlBarEl: (el) => {
       pageControlBarElRef.current = el;
     },
+    scrollToPageControlBar,
   };
 
   const shellStyle = { '--duck-header-height': `${headerHeight}px` } as CSSProperties;
@@ -375,7 +390,7 @@ export function AppLayout() {
     </div>
   ) : null;
 
-  // Desktop page bar row: filter input + sort pills + count
+  // Desktop page bar row: filter input + filter mode pills + sort pills + count
   const DesktopPageBarRow =
     hasPageBar && (pageBar?.filter ?? pageBar?.sort) ? (
       <div className="mt-2.5 flex items-center gap-3 border-t border-[var(--duck-border)]/50 pt-2.5">
@@ -396,6 +411,27 @@ export function AppLayout() {
               placeholder={pageBar.filter.placeholder}
               className="w-full rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] py-1.5 pr-3 pl-8 text-sm font-medium text-[var(--duck-fg)] transition outline-none placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20"
             />
+          </div>
+        )}
+        {pageBar?.filterMode && (
+          <div className="flex shrink-0 items-center gap-1">
+            {pageBar.filterMode.options.map((opt) => {
+              const active = opt.key === pageBar.filterMode!.activeKey;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => pageBar.filterMode!.onChangeKey(opt.key)}
+                  className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-1 text-xs font-semibold transition-all duration-150 ${
+                    active
+                      ? 'border-[var(--duck-border-strong)] bg-[var(--duck-surface-soft)] text-[var(--duck-accent-strong)]'
+                      : 'border-[var(--duck-border)] bg-[var(--duck-surface)] text-[var(--duck-muted)] hover:border-[var(--duck-border-strong)] hover:text-[var(--duck-accent-strong)]'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
           </div>
         )}
         {pageBar?.sort && <div className="flex shrink-0 items-center gap-1">{SortPills}</div>}
@@ -442,10 +478,28 @@ export function AppLayout() {
         </div>
       )}
 
-      {/* Sort pills + count — right-aligned, shrinks to let filter breathe; pills scroll horizontally */}
+      {/* Filter mode + Sort pills + count — right-aligned, shrinks to let filter breathe */}
       <div
         className={`flex min-w-0 shrink items-center gap-1.5 transition-all duration-200 ease-out ${mobileFilterFocused ? 'pointer-events-none w-0 overflow-hidden opacity-0' : 'opacity-100'}`}
       >
+        {pageBar?.filterMode &&
+          pageBar.filterMode.options.map((opt) => {
+            const active = opt.key === pageBar.filterMode!.activeKey;
+            return (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => pageBar.filterMode!.onChangeKey(opt.key)}
+                className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-1 text-xs font-semibold transition-all duration-150 ${
+                  active
+                    ? 'border-[var(--duck-border-strong)] bg-[var(--duck-surface-soft)] text-[var(--duck-accent-strong)]'
+                    : 'border-[var(--duck-border)] bg-[var(--duck-surface)] text-[var(--duck-muted)] hover:border-[var(--duck-border-strong)] hover:text-[var(--duck-accent-strong)]'
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
         {pageBar?.sort && pageBar.sort.options.find((o) => o.key === pageBar.sort!.activeKey) && (
           <button
             type="button"

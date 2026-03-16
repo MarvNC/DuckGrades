@@ -14,6 +14,8 @@ type EntityAggregateCardProps = {
   aggregate: Aggregate | null | undefined;
   distributionSize?: 'sm' | 'md';
   showStudentCountInDistribution?: boolean;
+  /** When true the card is forced open regardless of user toggle state */
+  forceOpen?: boolean;
   children?: ReactNode;
 };
 
@@ -25,10 +27,12 @@ export function EntityAggregateCard({
   aggregate,
   distributionSize = 'sm',
   showStudentCountInDistribution = false,
+  forceOpen = false,
   children,
 }: EntityAggregateCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const isExpandable = Boolean(children);
+  const effectivelyOpen = forceOpen || isOpen;
 
   return (
     <article
@@ -92,13 +96,13 @@ export function EntityAggregateCard({
           </div>
         </div>
       </div>
-      {isExpandable && !isOpen ? (
+      {isExpandable && !effectivelyOpen ? (
         <ChevronDown
           className="absolute bottom-1 left-1/2 h-3 w-3 -translate-x-1/2 text-[var(--duck-muted)]/60"
           aria-hidden="true"
         />
       ) : null}
-      {children && isOpen ? (
+      {children && effectivelyOpen ? (
         <div className="mt-4 border-t border-[var(--duck-border)] pt-4">{children}</div>
       ) : null}
     </article>

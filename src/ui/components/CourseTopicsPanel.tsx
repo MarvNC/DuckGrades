@@ -43,9 +43,10 @@ function sortTopics(topics: TopicSummary[]): TopicSummary[] {
 
 type CourseTopicsPanelProps = {
   sections: SectionRow[];
+  onTopicClick?: (title: string) => void;
 };
 
-export function CourseTopicsPanel({ sections }: CourseTopicsPanelProps) {
+export function CourseTopicsPanel({ sections, onTopicClick }: CourseTopicsPanelProps) {
   const [expanded, setExpanded] = useState(false);
   const [hasCollapsedOverflow, setHasCollapsedOverflow] = useState(false);
   const topicsWrapRef = useRef<HTMLDivElement | null>(null);
@@ -102,18 +103,36 @@ export function CourseTopicsPanel({ sections }: CourseTopicsPanelProps) {
         ref={topicsWrapRef}
         className={`mt-2.5 flex flex-wrap gap-1 transition-[max-height] duration-200 sm:mt-3 sm:gap-1.5 ${expanded ? '' : 'max-h-[46px] overflow-hidden sm:max-h-[70px]'}`}
       >
-        {sortedTopics.map((topic) => (
-          <span
-            key={topic.title}
-            className="inline-flex max-w-full items-center gap-1 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--duck-muted-strong)] sm:px-2 sm:text-xs"
-            title={topic.title}
-          >
-            <span className="truncate">{topic.title}</span>
-            <span className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-1 py-px text-[10px] font-semibold text-[var(--duck-muted)] sm:px-1.5">
-              {topic.count}
+        {sortedTopics.map((topic) =>
+          onTopicClick ? (
+            <button
+              key={topic.title}
+              type="button"
+              title={`Filter by "${topic.title}"`}
+              className="inline-flex max-w-full cursor-pointer items-center gap-1 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--duck-muted-strong)] transition-colors duration-150 hover:border-[var(--duck-accent-strong)] hover:bg-[var(--duck-surface)] hover:text-[var(--duck-accent-strong)] sm:px-2 sm:text-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                onTopicClick(topic.title);
+              }}
+            >
+              <span className="truncate">{topic.title}</span>
+              <span className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-1 py-px text-[10px] font-semibold text-[var(--duck-muted)] sm:px-1.5">
+                {topic.count}
+              </span>
+            </button>
+          ) : (
+            <span
+              key={topic.title}
+              className="inline-flex max-w-full items-center gap-1 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--duck-muted-strong)] sm:px-2 sm:text-xs"
+              title={topic.title}
+            >
+              <span className="truncate">{topic.title}</span>
+              <span className="rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-1 py-px text-[10px] font-semibold text-[var(--duck-muted)] sm:px-1.5">
+                {topic.count}
+              </span>
             </span>
-          </span>
-        ))}
+          )
+        )}
       </div>
 
       {hasCollapsedOverflow && !expanded ? (
