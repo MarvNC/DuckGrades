@@ -1139,6 +1139,16 @@ async function main() {
     return description;
   };
 
+  // Pre-create output subdirectories upfront so parallel writes never race on mkdir.
+  await mkdir(join(OUTPUT_ROOT, version, 'subjects'), { recursive: true });
+  await mkdir(join(OUTPUT_ROOT, version, 'courses'), { recursive: true });
+  await mkdir(join(OUTPUT_ROOT, version, 'professors'), { recursive: true });
+  CREATED_DIRECTORIES.add(join(OUTPUT_ROOT, version, 'subjects'));
+  CREATED_DIRECTORIES.add(join(OUTPUT_ROOT, version, 'courses'));
+  CREATED_DIRECTORIES.add(join(OUTPUT_ROOT, version, 'professors'));
+  CREATED_DIRECTORIES.add(join(OUTPUT_ROOT, version));
+  CREATED_DIRECTORIES.add(OUTPUT_ROOT);
+
   const fileIndex: Record<string, FileMeta> = {};
   const subjectOverviewRows: SubjectOverview[] = [];
   const courseAggregateCache = new Map<string, Aggregate>();
@@ -1146,6 +1156,7 @@ async function main() {
     courseAggregateCache.set(courseCode, buildAggregate(rows));
   }
 
+  const subjectWritePromises: Array<Promise<void>> = [];
   for (const [subjectCode, rows] of bySubject) {
     const courseRows = new Map<string, SectionRecord[]>();
     for (const row of rows) {
@@ -1212,8 +1223,13 @@ async function main() {
       aggregate: subjectAggregate,
     });
     const relativePath = `${version}/subjects/${subjectCode}.json`;
-    fileIndex[relativePath] = await writeJson(join(OUTPUT_ROOT, relativePath), payload);
+    subjectWritePromises.push(
+      writeJson(join(OUTPUT_ROOT, relativePath), payload).then((meta) => {
+        fileIndex[relativePath] = meta;
+      })
+    );
   }
+  await Promise.all(subjectWritePromises);
 
   subjectOverviewRows.sort((a, b) => a.code.localeCompare(b.code));
   const subjectCodeTable = subjectOverviewRows.map((row) => row.code);
@@ -1259,6 +1275,7 @@ async function main() {
     compactAnalytics
   );
 
+  const courseWritePromises: Array<Promise<void>> = [];
   for (const [courseCode, rows] of byCourse) {
     const catalogCourse = getCourseMetadata(courseCode);
     const byInstructor = new Map<string, SectionRecord[]>();
@@ -1296,9 +1313,15 @@ async function main() {
         .sort((a, b) => a.name.localeCompare(b.name)),
     };
     const relativePath = `${version}/courses/${courseCode}.json`;
-    fileIndex[relativePath] = await writeJson(join(OUTPUT_ROOT, relativePath), payload);
+    courseWritePromises.push(
+      writeJson(join(OUTPUT_ROOT, relativePath), payload).then((meta) => {
+        fileIndex[relativePath] = meta;
+      })
+    );
   }
+  await Promise.all(courseWritePromises);
 
+  const professorWritePromises: Array<Promise<void>> = [];
   for (const [professorId, rows] of byProfessor) {
     const byCourseRows = new Map<string, SectionRecord[]>();
     for (const row of rows) {
@@ -1331,8 +1354,13 @@ async function main() {
         .sort((a, b) => a.courseCode.localeCompare(b.courseCode)),
     };
     const relativePath = `${version}/professors/${professorId}.json`;
-    fileIndex[relativePath] = await writeJson(join(OUTPUT_ROOT, relativePath), payload);
+    professorWritePromises.push(
+      writeJson(join(OUTPUT_ROOT, relativePath), payload).then((meta) => {
+        fileIndex[relativePath] = meta;
+      })
+    );
   }
+  await Promise.all(professorWritePromises);
 
   const expandedSearchIndex: SearchIndexPayload = {
     subjects: [...bySubject.entries()]
