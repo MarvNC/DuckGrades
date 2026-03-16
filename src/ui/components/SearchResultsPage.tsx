@@ -2,6 +2,7 @@ import type { MutableRefObject } from 'react';
 import { BookOpen, Layers, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { prefetchRouteData } from '../../lib/dataClient';
+import { prefetchRouteModule } from '../../lib/routePrefetch';
 import type { SearchItem, SearchSection } from './searchModel';
 
 type SearchResultsPageProps = {
@@ -108,10 +109,12 @@ export function SearchResultsPage({
                       to={item.to}
                       onMouseEnter={() => {
                         setActiveIndex(indexValue);
+                        prefetchRouteModule(item.to);
                         prefetchRouteData(item.to);
                       }}
                       onFocus={() => {
                         setActiveIndex(indexValue);
+                        prefetchRouteModule(item.to);
                         prefetchRouteData(item.to);
                       }}
                       onClick={(event) => {

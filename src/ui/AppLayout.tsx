@@ -6,6 +6,8 @@ import { SiteFooter } from './components/SiteFooter';
 import { SearchResultsPage } from './components/SearchResultsPage';
 import { ThemeToggleButton, type ThemePreference } from './components/ThemeToggleButton';
 import { buildSearchItems, type SearchItem, useRankedSearch } from './components/searchModel';
+import { prefetchRouteData } from '../lib/dataClient';
+import { prefetchRouteModule } from '../lib/routePrefetch';
 
 type ResolvedTheme = 'light' | 'dark';
 
@@ -118,6 +120,28 @@ export function AppLayout() {
   useEffect(() => {
     if (isHome && hasQuery) window.requestAnimationFrame(() => focusInput());
   }, [isHome, hasQuery]);
+
+  useEffect(() => {
+    if (!isHome) {
+      return;
+    }
+
+    const connection = (navigator as Navigator & { connection?: { saveData?: boolean } })
+      .connection;
+    if (connection?.saveData) {
+      return;
+    }
+
+    const warm = () => {
+      prefetchRouteModule('/subjects');
+      prefetchRouteData('/subjects');
+      prefetchRouteModule('/analytics');
+      prefetchRouteData('/analytics');
+    };
+
+    const timeoutId = setTimeout(warm, 600);
+    return () => clearTimeout(timeoutId);
+  }, [isHome]);
 
   useEffect(() => {
     const onWindowKeyDown = (event: KeyboardEvent) => {
@@ -475,6 +499,14 @@ export function AppLayout() {
                 <Link
                   to="/subjects"
                   className={`${navPillBase} ${isSubjectsActive ? navPillActive : navPillIdle}`}
+                  onMouseEnter={() => {
+                    prefetchRouteModule('/subjects');
+                    prefetchRouteData('/subjects');
+                  }}
+                  onFocus={() => {
+                    prefetchRouteModule('/subjects');
+                    prefetchRouteData('/subjects');
+                  }}
                 >
                   <List className="h-4 w-4" aria-hidden="true" />
                   <span className="hidden text-sm lg:inline">Subjects</span>
@@ -483,6 +515,14 @@ export function AppLayout() {
                 <Link
                   to="/analytics"
                   className={`${navPillBase} ${isAnalyticsActive ? navPillActive : navPillIdle}`}
+                  onMouseEnter={() => {
+                    prefetchRouteModule('/analytics');
+                    prefetchRouteData('/analytics');
+                  }}
+                  onFocus={() => {
+                    prefetchRouteModule('/analytics');
+                    prefetchRouteData('/analytics');
+                  }}
                 >
                   <BarChart3 className="h-4 w-4" aria-hidden="true" />
                   <span className="hidden text-sm lg:inline">Analytics</span>
@@ -558,6 +598,10 @@ export function AppLayout() {
                   to="/subjects"
                   className={`flex h-12 w-12 shrink-0 items-center justify-center transition-all duration-200 active:scale-90 ${isSubjectsActive ? 'text-[var(--duck-accent-strong)]' : 'text-[var(--duck-muted)] hover:text-[var(--duck-accent-strong)]'}`}
                   aria-label="Browse all subjects"
+                  onTouchStart={() => {
+                    prefetchRouteModule('/subjects');
+                    prefetchRouteData('/subjects');
+                  }}
                 >
                   <List className="h-5 w-5" aria-hidden="true" />
                 </Link>
@@ -565,6 +609,10 @@ export function AppLayout() {
                   to="/analytics"
                   className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-r-2xl transition-all duration-200 active:scale-90 ${isAnalyticsActive ? 'text-[var(--duck-accent-strong)]' : 'text-[var(--duck-muted)] hover:text-[var(--duck-accent-strong)]'}`}
                   aria-label="View analytics"
+                  onTouchStart={() => {
+                    prefetchRouteModule('/analytics');
+                    prefetchRouteData('/analytics');
+                  }}
                 >
                   <BarChart3 className="h-5 w-5" aria-hidden="true" />
                 </Link>
