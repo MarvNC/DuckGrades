@@ -27,8 +27,15 @@ type Props = {
  * unregisters so the header row collapses.
  */
 export function PageControlBar({ filter, sort, countLabel }: Props) {
-  const { setPageBar } = useOutletContext<SearchLayoutContext>();
+  const { setPageBar, registerPageControlBarEl } = useOutletContext<SearchLayoutContext>();
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  // Register this element's DOM node so AppLayout can scroll to it
+  useEffect(() => {
+    registerPageControlBarEl(rootRef.current);
+    return () => registerPageControlBarEl(null);
+  }, [registerPageControlBarEl]);
 
   // Keep latest props in a ref so the IntersectionObserver callback always
   // has the current values without needing to re-subscribe.
@@ -90,7 +97,10 @@ export function PageControlBar({ filter, sort, countLabel }: Props) {
   }, []);
 
   return (
-    <div className="rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] shadow-sm">
+    <div
+      ref={rootRef}
+      className="rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] shadow-sm"
+    >
       {/* Sentinel: the element whose visibility we track */}
       <div
         ref={sentinelRef}

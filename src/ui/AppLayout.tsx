@@ -46,6 +46,8 @@ export type SearchLayoutContext = {
   cycleTheme: () => void;
   /** Pages call this (in useLayoutEffect) to register a page bar. Pass null to clear. */
   setPageBar: (config: PageBarConfig | null) => void;
+  /** PageControlBar calls this to register its DOM element so the merged header can scroll to it. */
+  registerPageControlBarEl: (el: HTMLElement | null) => void;
 };
 
 export function AppLayout() {
@@ -70,6 +72,7 @@ export function AppLayout() {
   const desktopSearchInputRef = useRef<HTMLInputElement | null>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement | null>(null);
   const mobileFilterInputRef = useRef<HTMLInputElement | null>(null);
+  const pageControlBarElRef = useRef<HTMLElement | null>(null);
   const lastScrollY = useRef(0);
   const headerRef = useRef<HTMLElement | null>(null);
   const resultRefs = useRef<Array<HTMLAnchorElement | null>>([]);
@@ -265,6 +268,14 @@ export function AppLayout() {
 
   // ── Derived UI ────────────────────────────────────────────────────────────
 
+  function scrollToPageControlBar() {
+    const el = pageControlBarElRef.current;
+    if (!el) return;
+    // Offset by header height so the bar isn't hidden under the sticky header
+    const top = el.getBoundingClientRect().top + window.scrollY - headerHeight - 8;
+    window.scrollTo({ top, behavior: 'smooth' });
+  }
+
   const outletContext: SearchLayoutContext = {
     hasActiveSearch: hasQuery,
     query,
@@ -273,6 +284,9 @@ export function AppLayout() {
     themePreference,
     cycleTheme,
     setPageBar,
+    registerPageControlBarEl: (el) => {
+      pageControlBarElRef.current = el;
+    },
   };
 
   const shellStyle = { '--duck-header-height': `${headerHeight}px` } as CSSProperties;
@@ -398,8 +412,9 @@ export function AppLayout() {
         {pageBar?.sort && pageBar.sort.options.find((o) => o.key === pageBar.sort!.activeKey) && (
           <button
             type="button"
-            onClick={() => pageBar.sort!.onToggleDirection()}
-            className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-[var(--duck-border-strong)] bg-[var(--duck-surface-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--duck-accent-strong)] transition-all duration-150"
+            onClick={scrollToPageControlBar}
+            title="Scroll to sort options"
+            className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-[var(--duck-border-strong)] bg-[var(--duck-surface-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--duck-accent-strong)] transition-all duration-150 active:scale-95"
           >
             {pageBar.sort.options.find((o) => o.key === pageBar.sort!.activeKey)!.label}
             <ChevronDown
