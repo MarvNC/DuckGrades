@@ -9,6 +9,12 @@ import { SectionDrilldown } from '../components/SectionDrilldown';
 import { NotFoundPage } from './NotFoundPage';
 import { usePageTitle } from '../usePageTitle';
 import { MetaChip } from '../components/MetaChip';
+import {
+  EntityCardSkeletonList,
+  LoadingText,
+  ErrorMessage,
+  EmptyState,
+} from '../components/Skeletons';
 
 type ProfessorCourseSortKey = 'code' | 'students' | 'sections' | 'mean';
 
@@ -119,46 +125,51 @@ export function ProfessorPage() {
   }
 
   return (
-    <section className="space-y-4 rounded-3xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-5 shadow-sm backdrop-blur-sm sm:p-7">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">
-          {professorDisplayName}
-        </h1>
-        {professor ? (
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              `${courses.length} courses`,
-              `${sectionCount} sections`,
-              `${totalStudents.toLocaleString()} students`,
-              termRangeChip,
-            ]
-              .filter((value): value is string => Boolean(value))
-              .map((chip) => (
-                <MetaChip key={chip} chip={chip} />
-              ))}
-          </div>
-        ) : null}
+    <section className="space-y-6 sm:space-y-8">
+      <div className="space-y-4">
+        <div className="space-y-3">
+          <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">
+            {professorDisplayName}
+          </h1>
+          {professor ? (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {[
+                `${courses.length} courses`,
+                `${sectionCount} sections`,
+                `${totalStudents.toLocaleString()} students`,
+                termRangeChip,
+              ]
+                .filter((value): value is string => Boolean(value))
+                .map((chip) => (
+                  <MetaChip key={chip} chip={chip} />
+                ))}
+            </div>
+          ) : null}
+        </div>
 
-        <div className="flex justify-start lg:justify-end">
+        <div className="rounded-2xl border border-[var(--duck-border)] bg-gradient-to-br from-[var(--duck-surface)] to-[var(--duck-surface-soft)] p-4 shadow-sm sm:p-5">
           <AggregateSummaryCard
             aggregate={professor?.aggregate}
             showDistributionStudentCount={false}
             embedded
+            hero
           />
         </div>
       </div>
       {loadState === 'loading' ? (
-        <p className="text-sm text-[var(--duck-muted)]">Loading professor shard...</p>
+        <div className="space-y-4">
+          <LoadingText message="Loading professor data..." />
+          <EntityCardSkeletonList count={3} />
+        </div>
       ) : null}
       {loadState === 'error' ? (
-        <p className="text-sm text-[var(--duck-danger-text)]">
-          Unable to load this professor shard right now.
-        </p>
+        <ErrorMessage message="Professor data is temporarily unavailable. Please try again later." />
       ) : null}
       {loadState === 'ready' && courses.length === 0 ? (
-        <p className="text-sm text-[var(--duck-muted)]">
-          No visible course data for this professor.
-        </p>
+        <EmptyState
+          message="No course data available for this professor."
+          suggestion="This professor may not have any graded sections on record."
+        />
       ) : null}
       {loadState === 'ready' && courses.length > 0 ? (
         <PageControlBar

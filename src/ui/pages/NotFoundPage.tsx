@@ -9,7 +9,7 @@ type NotFoundPageProps = {
 
 export function NotFoundPage({
   title = "We couldn't find that page",
-  description = 'The link may be outdated, the URL may be mistyped, or the course/subject/professor may not exist in this dataset.',
+  description = "The link may be outdated or the URL might have a typo. If you're looking for a specific course or professor, try browsing subjects or searching from the home page.",
 }: NotFoundPageProps) {
   usePageTitle('404 Page Not Found');
 

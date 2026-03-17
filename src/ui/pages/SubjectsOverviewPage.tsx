@@ -11,6 +11,12 @@ import { PageControlBar } from '../components/PageControlBar';
 import { PrefetchLink } from '../components/PrefetchLink';
 import { usePageTitle } from '../usePageTitle';
 import { MetaChip } from '../components/MetaChip';
+import {
+  EntityCardSkeletonList,
+  LoadingText,
+  ErrorMessage,
+  EmptyState,
+} from '../components/Skeletons';
 
 type SubjectSortKey = 'code' | 'students' | 'courses' | 'mean';
 
@@ -116,47 +122,50 @@ export function SubjectsOverviewPage() {
   const totalStudents = overview?.aggregate.totalNonWReported ?? 0;
 
   return (
-    <section className="space-y-4 rounded-3xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-5 shadow-sm backdrop-blur-sm sm:p-7">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">
-          Subject overview
-        </h1>
-        {overview ? (
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              `${overview.totals.subjectCount} subjects`,
-              `${overview.totals.courseCount.toLocaleString()} courses`,
-              `${overview.totals.sectionCount.toLocaleString()} sections`,
-              `${overview.totals.professorCount.toLocaleString()} professors`,
-              `${totalStudents.toLocaleString()} students`,
-            ].map((chip) => (
-              <MetaChip key={chip} chip={chip} />
-            ))}
-          </div>
-        ) : null}
+    <section className="space-y-6 sm:space-y-8">
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">
+            Subject overview
+          </h1>
+          {overview ? (
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                `${overview.totals.subjectCount} subjects`,
+                `${overview.totals.courseCount.toLocaleString()} courses`,
+                `${overview.totals.sectionCount.toLocaleString()} sections`,
+                `${overview.totals.professorCount.toLocaleString()} professors`,
+                `${totalStudents.toLocaleString()} students`,
+              ].map((chip) => (
+                <MetaChip key={chip} chip={chip} />
+              ))}
+            </div>
+          ) : null}
 
-        <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between lg:gap-5">
-          <p className="min-w-0 text-sm text-[var(--duck-muted)] lg:max-w-4xl">
+          <p className="max-w-4xl text-sm text-[var(--duck-muted)]">
             Browse all subjects and compare grade distributions and summary statistics across the
             university.
           </p>
-          <div className="lg:self-stretch lg:border-l lg:border-[var(--duck-border)] lg:pl-4">
-            <AggregateSummaryCard
-              aggregate={overview?.aggregate}
-              showDistributionStudentCount={false}
-              embedded
-            />
-          </div>
+        </div>
+
+        <div className="rounded-2xl border border-[var(--duck-border)] bg-gradient-to-br from-[var(--duck-surface)] to-[var(--duck-surface-soft)] p-4 shadow-sm sm:p-5">
+          <AggregateSummaryCard
+            aggregate={overview?.aggregate}
+            showDistributionStudentCount={false}
+            embedded
+            hero
+          />
         </div>
       </div>
 
       {loadState === 'loading' ? (
-        <p className="text-sm text-[var(--duck-muted)]">Loading subject overview...</p>
+        <div className="space-y-4">
+          <LoadingText message="Loading subject overview..." />
+          <EntityCardSkeletonList count={4} />
+        </div>
       ) : null}
       {loadState === 'error' ? (
-        <p className="text-sm text-[var(--duck-danger-text)]">
-          Unable to load subject overview data right now.
-        </p>
+        <ErrorMessage message="Subject data is temporarily unavailable. Please try again later." />
       ) : null}
 
       {loadState === 'ready' && overview ? (
@@ -179,7 +188,10 @@ export function SubjectsOverviewPage() {
       ) : null}
 
       {loadState === 'ready' && overview && visibleSubjects.length === 0 ? (
-        <p className="text-sm text-[var(--duck-muted)]">No subjects match your search.</p>
+        <EmptyState
+          message="No subjects match your search."
+          suggestion="Try a shorter query or browse all subjects."
+        />
       ) : null}
 
       {loadState === 'ready' ? (

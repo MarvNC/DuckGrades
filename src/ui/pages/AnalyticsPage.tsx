@@ -7,6 +7,7 @@ import { MetaChip } from '../components/MetaChip';
 import { usePageTitle } from '../usePageTitle';
 import { createGPAChartOptions } from '../components/charts/chartUtils';
 import { UPlotChart, type DuckChartTheme } from '../components/charts/UPlotChart';
+import { ChartSkeleton, LoadingText, ErrorMessage } from '../components/Skeletons';
 
 type ClassSizeBucket = {
   key: string;
@@ -324,13 +325,15 @@ export function AnalyticsPage() {
       </div>
 
       {loadState === 'loading' ? (
-        <p className="text-sm text-[var(--duck-muted)]">Loading analytics shard...</p>
+        <div className="space-y-4">
+          <LoadingText message="Loading analytics..." />
+          <ChartSkeleton height={270} />
+          <ChartSkeleton height={260} />
+          <ChartSkeleton height={280} />
+        </div>
       ) : null}
       {loadState === 'error' ? (
-        <p className="text-sm text-[var(--duck-danger-text)]">
-          Unable to load analytics data right now. Rebuild data with <code>bun run build:data</code>
-          and try again.
-        </p>
+        <ErrorMessage message="Grade data is temporarily unavailable. Please try again later." />
       ) : null}
 
       {loadState === 'ready' && analytics ? (

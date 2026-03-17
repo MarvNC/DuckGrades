@@ -15,6 +15,12 @@ import { MetaChip } from '../components/MetaChip';
 import { createGPAChartOptions } from '../components/charts/chartUtils';
 import { UPlotChart } from '../components/charts/UPlotChart';
 import { CourseTopicsPanel } from '../components/CourseTopicsPanel';
+import {
+  EntityCardSkeletonList,
+  LoadingText,
+  ErrorMessage,
+  EmptyState,
+} from '../components/Skeletons';
 
 type InstructorSortKey = 'name' | 'students' | 'sections' | 'mean';
 
@@ -219,7 +225,7 @@ export function CoursePage() {
   }
 
   return (
-    <section className="space-y-4 rounded-3xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-5 shadow-sm backdrop-blur-sm sm:p-7">
+    <section className="space-y-6 sm:space-y-8">
       <Link
         className="inline-flex items-center rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-3 py-1 text-sm font-semibold text-[var(--duck-muted-strong)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)] hover:shadow-md"
         to={course?.subject ? `/subject/${course.subject}` : '/subjects'}
@@ -227,49 +233,50 @@ export function CoursePage() {
         Back to {backToName}
       </Link>
 
-      <div className="space-y-2">
-        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">
-          {displayCourseCode}
-          {course?.title ? (
-            <>
-              <span className="pr-0.5 pl-1 text-[var(--duck-muted)]">-</span>
-              <span className="text-[var(--duck-muted-strong)]">{course.title}</span>
-            </>
-          ) : (
-            ''
-          )}
-        </h1>
-        {course ? (
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              course.subjectTitle ? course.subjectTitle : null,
-              `${totalSections} sections`,
-              `${course.instructors.length} instructors`,
-              `${course.aggregate.totalNonWReported.toLocaleString()} students`,
-              termRangeChip,
-            ]
-              .filter((value): value is string => Boolean(value))
-              .map((chip) => (
-                <MetaChip key={chip} chip={chip} />
-              ))}
-          </div>
-        ) : null}
+      <div className="space-y-4">
+        <div className="space-y-3">
+          <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">
+            {displayCourseCode}
+            {course?.title ? (
+              <>
+                <span className="pr-0.5 pl-1 text-[var(--duck-muted)]">-</span>
+                <span className="text-[var(--duck-muted-strong)]">{course.title}</span>
+              </>
+            ) : (
+              ''
+            )}
+          </h1>
 
-        <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between lg:gap-5">
-          <div className="min-w-0 lg:max-w-4xl">
-            {course?.description ? (
-              <p className="mt-1 text-sm leading-relaxed text-[var(--duck-muted-strong)]">
-                {course.description}
-              </p>
-            ) : null}
-          </div>
-          <div className="lg:self-stretch lg:border-l lg:border-[var(--duck-border)] lg:pl-4">
-            <AggregateSummaryCard
-              aggregate={course?.aggregate}
-              showDistributionStudentCount={false}
-              embedded
-            />
-          </div>
+          {course?.description ? (
+            <p className="max-w-4xl text-base leading-relaxed text-[var(--duck-fg)]">
+              {course.description}
+            </p>
+          ) : null}
+
+          {course ? (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {[
+                course.subjectTitle ? course.subjectTitle : null,
+                `${totalSections} sections`,
+                `${course.instructors.length} instructors`,
+                `${course.aggregate.totalNonWReported.toLocaleString()} students`,
+                termRangeChip,
+              ]
+                .filter((value): value is string => Boolean(value))
+                .map((chip) => (
+                  <MetaChip key={chip} chip={chip} />
+                ))}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="rounded-2xl border border-[var(--duck-border)] bg-gradient-to-br from-[var(--duck-surface)] to-[var(--duck-surface-soft)] p-4 shadow-sm sm:p-5">
+          <AggregateSummaryCard
+            aggregate={course?.aggregate}
+            showDistributionStudentCount={false}
+            embedded
+            hero
+          />
         </div>
       </div>
 
@@ -333,17 +340,19 @@ export function CoursePage() {
       ) : null}
 
       {loadState === 'loading' ? (
-        <p className="text-sm text-[var(--duck-muted)]">Loading course shard...</p>
+        <div className="space-y-4">
+          <LoadingText message="Loading course data..." />
+          <EntityCardSkeletonList count={3} />
+        </div>
       ) : null}
       {loadState === 'error' ? (
-        <p className="text-sm text-[var(--duck-danger-text)]">
-          Unable to load this course shard right now.
-        </p>
+        <ErrorMessage message="Course data is temporarily unavailable. Please try again later." />
       ) : null}
       {loadState === 'ready' && (course?.instructors.length ?? 0) === 0 ? (
-        <p className="text-sm text-[var(--duck-muted)]">
-          No visible instructor data for this course.
-        </p>
+        <EmptyState
+          message="No instructor data available for this course."
+          suggestion="This course may not have any graded sections on record."
+        />
       ) : null}
       {loadState === 'ready' && course && course.instructors.length > 0 ? (
         <PageControlBar
@@ -381,11 +390,14 @@ export function CoursePage() {
       {loadState === 'ready' && course ? (
         <>
           {sortedInstructors.length === 0 ? (
-            <p className="text-sm text-[var(--duck-muted)]">
-              {filterMode === 'instructor'
-                ? 'No instructors match your search.'
-                : 'No sections match that course name.'}
-            </p>
+            <EmptyState
+              message={
+                filterMode === 'instructor'
+                  ? 'No instructors match your search.'
+                  : 'No sections match that course name.'
+              }
+              suggestion="Try a shorter search term or clear filters to see all results."
+            />
           ) : null}
 
           <div className="space-y-2.5">
