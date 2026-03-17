@@ -264,3 +264,86 @@ summary:focus-visible {
 .no-scrollbar::-webkit-scrollbar {
   display: none; /* Chrome/Safari/Opera */
 }
+
+/* ── View Transitions ── */
+.vt-brand {
+  view-transition-name: vt-brand;
+}
+.vt-search-container {
+  view-transition-name: vt-search-container;
+}
+.vt-search-input {
+  view-transition-name: vt-search-input;
+}
+.vt-search-icon {
+  view-transition-name: vt-search-icon;
+}
+
+/* Optional: customize the easing to make it feel physical and "wow" */
+::view-transition-group(vt-brand),
+::view-transition-group(vt-search-container),
+::view-transition-group(vt-search-input),
+::view-transition-group(vt-search-icon) {
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-duration: 0.5s;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  /* Default page crossfade */
+  animation-duration: 0.3s;
+}
+
+/* View Transitions cascade effect */
+.vt-search-results {
+  view-transition-name: vt-search-results;
+}
+
+::view-transition-group(vt-search-results) {
+  animation-duration: 0.4s;
+  animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+::view-transition-old(vt-search-results) {
+  animation-name: slide-out-up, fade-out;
+}
+
+::view-transition-new(vt-search-results) {
+  animation-name: slide-in-up, fade-in;
+}
+
+@keyframes slide-in-up {
+  from {
+    transform: translateY(12px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-out-up {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

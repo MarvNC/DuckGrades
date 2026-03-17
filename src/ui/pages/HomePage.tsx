@@ -28,7 +28,7 @@ export function HomePage() {
     <section
       className={`relative mx-auto w-full max-w-4xl text-center transition-all duration-300 ease-out ${
         hasActiveSearch
-          ? 'max-h-0 -translate-y-6 overflow-hidden py-0 opacity-0 sm:-translate-y-8'
+          ? 'hidden' // Let View Transitions handle the disappear
           : 'flex flex-1 items-center justify-center py-4 opacity-100 sm:py-16'
       }`}
     >
@@ -40,7 +40,7 @@ export function HomePage() {
             </div>
 
             <section className="fade-in-up" style={{ animationDelay: '80ms' }}>
-              <Brand home className="justify-center" />
+              <Brand home className={`justify-center ${hasActiveSearch ? '' : 'vt-brand'}`} />
               <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed font-medium text-[var(--duck-muted)] sm:text-xl">
                 <span>
                   View past grades at the{' '}
@@ -53,10 +53,12 @@ export function HomePage() {
             </section>
 
             <section className="fade-in-up mt-8" style={{ animationDelay: '160ms' }}>
-              <div className="group relative mx-auto w-full max-w-2xl text-left">
+              <div
+                className={`group relative mx-auto w-full max-w-2xl text-left ${hasActiveSearch ? '' : 'vt-search-container'}`}
+              >
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 sm:pl-5">
                   <Search
-                    className="h-5 w-5 text-[var(--duck-muted)] transition-colors group-focus-within:text-[var(--duck-accent-strong)]"
+                    className={`h-5 w-5 text-[var(--duck-muted)] transition-colors group-focus-within:text-[var(--duck-accent-strong)] ${hasActiveSearch ? '' : 'vt-search-icon'}`}
                     aria-hidden="true"
                   />
                 </div>
@@ -66,7 +68,7 @@ export function HomePage() {
                 <input
                   id="search"
                   ref={inputRef}
-                  className="w-full rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] py-4 pr-3 pl-12 text-base text-[var(--duck-fg)] shadow-lg transition-all outline-none placeholder:text-sm placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/25 sm:pr-4 sm:pl-14 sm:text-lg sm:placeholder:text-base"
+                  className={`w-full rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] py-4 pr-3 pl-12 text-base text-[var(--duck-fg)] shadow-lg transition-all outline-none placeholder:text-sm placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/25 sm:pr-4 sm:pl-14 sm:text-lg sm:placeholder:text-base ${hasActiveSearch ? '' : 'vt-search-input'}`}
                   value={query}
                   onChange={(event) => {
                     setQuery(event.target.value);

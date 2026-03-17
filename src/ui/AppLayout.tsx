@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback, type CSSProperties } from 'react';
+import { flushSync } from 'react-dom';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { BarChart3, ChevronDown, List, Search } from 'lucide-react';
 import { Brand } from './components/Brand';
@@ -71,7 +72,30 @@ export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const isHome = location.pathname === '/';
-  const [query, setQuery] = useState('');
+  const [query, _setQuery] = useState('');
+
+  const setQuery = useCallback((action: React.SetStateAction<string>) => {
+    _setQuery((prevQuery) => {
+      const nextQuery = typeof action === 'function' ? action(prevQuery) : action;
+      const willHaveQuery = nextQuery.trim().length > 0;
+      const currentlyHasQuery = prevQuery.trim().length > 0;
+
+      // Trigger View Transition ONLY when crossing the empty/non-empty threshold
+      if (
+        willHaveQuery !== currentlyHasQuery &&
+        document.startViewTransition &&
+        window.matchMedia('(prefers-reduced-motion: no-preference)').matches
+      ) {
+        document.startViewTransition(() => {
+          flushSync(() => {
+            _setQuery(nextQuery);
+          });
+        });
+        return prevQuery; // The flushSync handles the actual update
+      }
+      return nextQuery;
+    });
+  }, []);
   const [activeIndex, setActiveIndex] = useState(0);
   const [themePreference, setThemePreference] = useState<ThemePreference>(() => {
     const stored = window.localStorage.getItem('duckgrades-theme');
@@ -189,7 +213,7 @@ export function AppLayout() {
     };
     window.addEventListener('keydown', onWindowKeyDown);
     return () => window.removeEventListener('keydown', onWindowKeyDown);
-  }, []);
+  }, [setQuery]);
 
   // Scroll direction detection with hysteresis — requires 40px of sustained
   // movement in one direction before committing, preventing flutter on slow/
@@ -537,12 +561,16 @@ export function AppLayout() {
           >
             {/* Main nav row */}
             <div className="flex items-center gap-2 lg:gap-4">
-              <Brand onClick={onHeaderBrandClick} className="shrink-0" hideWordmarkOnTiny />
+              <Brand
+                onClick={onHeaderBrandClick}
+                className="vt-brand shrink-0"
+                hideWordmarkOnTiny
+              />
               {/* Search — takes all available space */}
-              <div className="group relative min-w-0 flex-1">
+              <div className="group vt-search-container relative min-w-0 flex-1">
                 <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3.5 lg:pl-4">
                   <Search
-                    className="h-4 w-4 text-[var(--duck-muted)] transition-colors group-focus-within:text-[var(--duck-accent-strong)]"
+                    className="vt-search-icon h-4 w-4 text-[var(--duck-muted)] transition-colors group-focus-within:text-[var(--duck-accent-strong)]"
                     aria-hidden="true"
                   />
                 </div>
@@ -557,7 +585,7 @@ export function AppLayout() {
                   onKeyDown={onSearchInputKeyDown}
                   placeholder="Search courses, professors, subjects..."
                   autoComplete="off"
-                  className="w-full rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] py-2 pr-3 pl-9 text-sm font-semibold text-[var(--duck-fg)] shadow-sm transition-all outline-none placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20 lg:rounded-2xl lg:py-2.5 lg:pl-10"
+                  className="vt-search-input w-full rounded-xl border border-[var(--duck-border)] bg-[var(--duck-surface)] py-2 pr-3 pl-9 text-sm font-semibold text-[var(--duck-fg)] shadow-sm transition-all outline-none placeholder:text-[var(--duck-muted)] focus:border-[var(--duck-focus)] focus:ring-2 focus:ring-[var(--duck-focus)]/20 lg:rounded-2xl lg:py-2.5 lg:pl-10"
                 />
               </div>
               {/* Nav buttons — icon+label at lg, icon-only at sm–lg */}
@@ -596,7 +624,7 @@ export function AppLayout() {
             >
               <div className="min-h-0 overflow-hidden">
                 <div className="flex items-center justify-between px-3 py-2">
-                  <Brand onClick={onHeaderBrandClick} className="shrink-0" />
+                  <Brand onClick={onHeaderBrandClick} className="vt-brand shrink-0" />
                   <ThemeToggleButton themePreference={themePreference} cycleTheme={cycleTheme} />
                 </div>
               </div>
@@ -616,10 +644,10 @@ export function AppLayout() {
             className={`mx-auto flex w-full items-center rounded-2xl border bg-[var(--duck-surface)]/90 shadow-[0_8px_32px_-6px_rgba(0,0,0,0.22)] backdrop-blur-xl backdrop-saturate-150 transition-all duration-300 ease-out ${mobileSearchFocused ? 'max-w-full border-[var(--duck-focus)] ring-2 ring-[var(--duck-focus)]/20' : 'max-w-lg border-[var(--duck-border)]'}`}
           >
             {/* Global search input */}
-            <div className="group relative min-w-0 flex-1">
+            <div className="group vt-search-container relative min-w-0 flex-1">
               <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
                 <Search
-                  className={`h-4 w-4 transition-colors duration-200 ${mobileSearchFocused ? 'text-[var(--duck-accent-strong)]' : 'text-[var(--duck-muted)]'}`}
+                  className={`vt-search-icon h-4 w-4 transition-colors duration-200 ${mobileSearchFocused ? 'text-[var(--duck-accent-strong)]' : 'text-[var(--duck-muted)]'}`}
                   aria-hidden="true"
                 />
               </div>
@@ -638,7 +666,7 @@ export function AppLayout() {
                   mobileSearchFocused ? 'Search courses, professors, subjects...' : 'Search...'
                 }
                 autoComplete="off"
-                className="w-full rounded-l-2xl bg-transparent py-3.5 pr-3 pl-10 text-sm font-semibold text-[var(--duck-fg)] outline-none placeholder:text-[var(--duck-muted)]"
+                className="vt-search-input w-full rounded-l-2xl bg-transparent py-3.5 pr-3 pl-10 text-sm font-semibold text-[var(--duck-fg)] outline-none placeholder:text-[var(--duck-muted)]"
               />
             </div>
             {/* Nav buttons — hidden when focused */}

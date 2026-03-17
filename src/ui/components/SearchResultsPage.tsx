@@ -130,7 +130,7 @@ export function SearchResultsPage({
   }
 
   return (
-    <section className="mx-auto w-full max-w-4xl pb-8 text-left">
+    <section className="vt-search-results mx-auto w-full max-w-4xl pb-8 text-left">
       <p className="mb-4 px-1 text-sm font-medium text-[var(--duck-muted)]">
         Results for <span className="font-semibold text-[var(--duck-fg)]">"{query.trim()}"</span>
       </p>
