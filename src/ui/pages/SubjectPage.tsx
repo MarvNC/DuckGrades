@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import uPlot from 'uplot';
 import { getSubjectShard, isNotFoundDataError, type SubjectShard } from '../../lib/dataClient';
 import { PrefetchLink } from '../components/PrefetchLink';
@@ -13,6 +13,12 @@ import { usePageTitle } from '../usePageTitle';
 import { MetaChip } from '../components/MetaChip';
 import { createGPAChartOptions } from '../components/charts/chartUtils';
 import { UPlotChart } from '../components/charts/UPlotChart';
+import {
+  EntityCardSkeletonList,
+  LoadingText,
+  ErrorMessage,
+  EmptyState,
+} from '../components/Skeletons';
 
 type SubjectCourseSortKey = 'code' | 'students' | 'sections' | 'mean';
 
@@ -160,49 +166,59 @@ export function SubjectPage() {
 
   return (
     <section className="space-y-3 sm:space-y-4">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">
-          {displaySubjectCode}
-          {subject?.subjectTitle ? (
-            <>
-              <span className="pr-0.5 pl-1 text-[var(--duck-muted)]">-</span>
-              <span className="text-[var(--duck-muted-strong)]">{subject.subjectTitle}</span>
-            </>
-          ) : (
-            ''
-          )}
-        </h1>
-        {loadState === 'ready' && subject ? (
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              `${courses.length} courses`,
-              `${sectionCount} sections`,
-              'professorCount' in subject ? `${subject.professorCount ?? '...'} professors` : null,
-              `${subject.aggregate.totalNonWReported.toLocaleString()} students`,
-              termRangeChipFromDescriptions(subject.firstTerm, subject.lastTerm),
-            ]
-              .filter((value): value is string => Boolean(value))
-              .map((chip) => (
-                <MetaChip key={chip} chip={chip} />
-              ))}
-          </div>
-        ) : null}
+      <Link
+        className="inline-flex items-center rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface)] px-3 py-1 text-sm font-semibold text-[var(--duck-muted-strong)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-soft)] hover:text-[var(--duck-accent-strong)] hover:shadow-md"
+        to="/subjects"
+      >
+        Browse all subjects
+      </Link>
 
-        <div
-          className={`flex flex-col gap-2.5 lg:flex-row lg:items-start lg:gap-5 ${subject?.subjectDescription ? 'lg:justify-between' : 'lg:justify-end'}`}
-        >
+      <div className="space-y-4">
+        <div className="space-y-3">
+          <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">
+            {displaySubjectCode}
+            {subject?.subjectTitle ? (
+              <>
+                <span className="pr-0.5 pl-1 text-[var(--duck-muted)]">-</span>
+                <span className="text-[var(--duck-muted-strong)]">{subject.subjectTitle}</span>
+              </>
+            ) : (
+              ''
+            )}
+          </h1>
+
           {subject?.subjectDescription ? (
-            <p className="min-w-0 text-sm leading-relaxed text-[var(--duck-muted-strong)] lg:max-w-4xl">
+            <p className="max-w-4xl text-base leading-relaxed text-[var(--duck-fg)]">
               {subject.subjectDescription}
             </p>
           ) : null}
-          <div className="lg:self-stretch lg:border-l lg:border-[var(--duck-border)] lg:pl-4">
-            <AggregateSummaryCard
-              aggregate={subject?.aggregate}
-              showDistributionStudentCount={false}
-              embedded
-            />
-          </div>
+
+          {loadState === 'ready' && subject ? (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {[
+                `${courses.length} courses`,
+                `${sectionCount} sections`,
+                'professorCount' in subject
+                  ? `${subject.professorCount ?? '...'} professors`
+                  : null,
+                `${subject.aggregate.totalNonWReported.toLocaleString()} students`,
+                termRangeChipFromDescriptions(subject.firstTerm, subject.lastTerm),
+              ]
+                .filter((value): value is string => Boolean(value))
+                .map((chip) => (
+                  <MetaChip key={chip} chip={chip} />
+                ))}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="rounded-2xl border border-[var(--duck-border)] bg-gradient-to-br from-[var(--duck-surface)] to-[var(--duck-surface-soft)] p-4 shadow-sm sm:p-5">
+          <AggregateSummaryCard
+            aggregate={subject?.aggregate}
+            showDistributionStudentCount={false}
+            embedded
+            hero
+          />
         </div>
       </div>
 
@@ -254,15 +270,19 @@ export function SubjectPage() {
       ) : null}
 
       {loadState === 'loading' ? (
-        <p className="text-sm text-[var(--duck-muted)]">Loading subject data...</p>
+        <div className="space-y-4">
+          <LoadingText message="Loading subject data..." />
+          <EntityCardSkeletonList count={3} />
+        </div>
       ) : null}
       {loadState === 'error' ? (
-        <p className="text-sm text-[var(--duck-danger-text)]">
-          Unable to load this subject shard right now.
-        </p>
+        <ErrorMessage message="Subject data is temporarily unavailable. Please try again later." />
       ) : null}
       {loadState === 'ready' && courses.length === 0 ? (
-        <p className="text-sm text-[var(--duck-muted)]">No visible course data for this subject.</p>
+        <EmptyState
+          message="No course data available for this subject."
+          suggestion="This subject may not have any graded sections on record."
+        />
       ) : null}
 
       {loadState === 'ready' && courses.length > 0 ? (
@@ -285,7 +305,10 @@ export function SubjectPage() {
       ) : null}
 
       {loadState === 'ready' && courses.length > 0 && visibleCourses.length === 0 ? (
-        <p className="text-sm text-[var(--duck-muted)]">No courses match your search.</p>
+        <EmptyState
+          message="No courses match your search."
+          suggestion="Try a shorter search term or clear the filter to see all courses."
+        />
       ) : null}
 
       {loadState === 'ready' ? (
