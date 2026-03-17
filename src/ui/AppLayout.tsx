@@ -73,28 +73,28 @@ export function AppLayout() {
   const location = useLocation();
   const isHome = location.pathname === '/';
   const [query, _setQuery] = useState('');
+  const queryRef = useRef(query);
+  queryRef.current = query;
 
   const setQuery = useCallback((action: React.SetStateAction<string>) => {
-    _setQuery((prevQuery) => {
-      const nextQuery = typeof action === 'function' ? action(prevQuery) : action;
-      const willHaveQuery = nextQuery.trim().length > 0;
-      const currentlyHasQuery = prevQuery.trim().length > 0;
+    const nextQuery = typeof action === 'function' ? action(queryRef.current) : action;
+    const willHaveQuery = nextQuery.trim().length > 0;
+    const currentlyHasQuery = queryRef.current.trim().length > 0;
 
-      // Trigger View Transition ONLY when crossing the empty/non-empty threshold
-      if (
-        willHaveQuery !== currentlyHasQuery &&
-        document.startViewTransition &&
-        window.matchMedia('(prefers-reduced-motion: no-preference)').matches
-      ) {
-        document.startViewTransition(() => {
-          flushSync(() => {
-            _setQuery(nextQuery);
-          });
+    // Trigger View Transition ONLY when crossing the empty/non-empty threshold
+    if (
+      willHaveQuery !== currentlyHasQuery &&
+      document.startViewTransition &&
+      window.matchMedia('(prefers-reduced-motion: no-preference)').matches
+    ) {
+      document.startViewTransition(() => {
+        flushSync(() => {
+          _setQuery(nextQuery);
         });
-        return prevQuery; // The flushSync handles the actual update
-      }
-      return nextQuery;
-    });
+      });
+    } else {
+      _setQuery(nextQuery);
+    }
   }, []);
   const [activeIndex, setActiveIndex] = useState(0);
   const [themePreference, setThemePreference] = useState<ThemePreference>(() => {
@@ -637,7 +637,7 @@ export function AppLayout() {
       {/* ── Mobile bottom floating island (sm:hidden) ── */}
       {showHeader ? (
         <div
-          className={`fixed z-40 transition-all duration-300 ease-out sm:hidden ${mobileSearchFocused ? 'inset-x-2 top-2 bottom-auto' : 'inset-x-3 top-auto bottom-4'}`}
+          className={`fixed z-40 transition-all duration-300 ease-out sm:hidden ${mobileSearchFocused ? 'inset-x-2 top-[4.5rem] bottom-auto' : 'inset-x-3 top-auto bottom-4'}`}
         >
           {/* Main island pill */}
           <div
