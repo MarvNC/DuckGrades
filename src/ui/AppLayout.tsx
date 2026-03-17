@@ -694,6 +694,13 @@ export function AppLayout() {
       ) : null}
 
       <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 sm:px-8">
+        {/* Spacer for mobile search floating island when it moves to the top */}
+        <div
+          className={`transition-all duration-300 ease-out sm:hidden ${
+            mobileSearchFocused ? 'h-[4.5rem]' : 'h-0'
+          }`}
+          aria-hidden="true"
+        />
         {isHome || !hasQuery ? <Outlet context={outletContext} /> : null}
         {hasQuery ? (
           <SearchResultsPage
