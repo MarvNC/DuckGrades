@@ -124,12 +124,18 @@ export function SubjectsOverviewPage() {
   return (
     <section className="space-y-6 sm:space-y-8">
       <div className="space-y-4">
-        <div className="space-y-2">
+        <div className="space-y-3">
           <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">
             Subject overview
           </h1>
+
+          <p className="max-w-4xl text-base leading-relaxed text-[var(--duck-fg)]">
+            Browse all subjects and compare grade distributions and summary statistics across the
+            university.
+          </p>
+
           {overview ? (
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1.5 pt-1">
               {[
                 `${overview.totals.subjectCount} subjects`,
                 `${overview.totals.courseCount.toLocaleString()} courses`,
@@ -141,11 +147,6 @@ export function SubjectsOverviewPage() {
               ))}
             </div>
           ) : null}
-
-          <p className="max-w-4xl text-sm text-[var(--duck-muted)]">
-            Browse all subjects and compare grade distributions and summary statistics across the
-            university.
-          </p>
         </div>
 
         <div className="rounded-2xl border border-[var(--duck-border)] bg-gradient-to-br from-[var(--duck-surface)] to-[var(--duck-surface-soft)] p-4 shadow-sm sm:p-5">
