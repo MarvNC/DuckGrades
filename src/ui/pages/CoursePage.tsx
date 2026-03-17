@@ -365,7 +365,7 @@ export function CoursePage() {
                     scale: 'y',
                     stroke: theme.chart1,
                     width: compact ? 1.6 : 2,
-                    points: { size: compact ? 3 : 4, stroke: theme.chart1, fill: theme.surface },
+                    points: { size: compact ? 3 : 4, stroke: theme.chart1, fill: theme.chart1 },
                   },
                   {
                     label: 'Students',
