@@ -304,7 +304,7 @@ export function AnalyticsPage() {
       : 'All available terms';
 
   return (
-    <section className="space-y-4 rounded-3xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3.5 shadow-sm backdrop-blur-sm sm:p-6">
+    <section className="space-y-3 sm:space-y-4">
       <div className="space-y-2">
         <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">Analytics</h1>
         <p className="text-sm leading-relaxed text-[var(--duck-muted)] sm:text-[0.95rem]">

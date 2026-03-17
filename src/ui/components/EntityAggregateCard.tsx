@@ -97,28 +97,17 @@ export function EntityAggregateCard({
         </div>
       </div>
       {isExpandable ? (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsOpen(!isOpen);
-          }}
-          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full border border-[var(--duck-border)] bg-[var(--duck-surface-soft)] py-1.5 text-xs font-medium text-[var(--duck-muted-strong)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--duck-border-strong)] hover:bg-[var(--duck-surface-muted)] hover:text-[var(--duck-accent-strong)] hover:shadow-sm focus-visible:ring-2 focus-visible:ring-[var(--duck-focus)]/20 focus-visible:outline-none"
+        <div
+          className="mt-1 flex items-center justify-center"
           aria-expanded={effectivelyOpen}
           aria-controls={isExpandable ? `section-drilldown-${title}` : undefined}
         >
           {effectivelyOpen ? (
-            <>
-              <span>Hide sections</span>
-              <ChevronUp className="h-4 w-4" aria-hidden="true" />
-            </>
+            <ChevronUp className="h-3 w-3 text-[var(--duck-muted)]" aria-hidden="true" />
           ) : (
-            <>
-              <span>Show sections</span>
-              <ChevronDown className="h-4 w-4" aria-hidden="true" />
-            </>
+            <ChevronDown className="h-3 w-3 text-[var(--duck-muted)]" aria-hidden="true" />
           )}
-        </button>
+        </div>
       ) : null}
       {children && effectivelyOpen ? (
         <div

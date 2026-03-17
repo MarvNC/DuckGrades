@@ -159,7 +159,7 @@ export function SubjectPage() {
   }
 
   return (
-    <section className="space-y-4 rounded-3xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-5 shadow-sm backdrop-blur-sm sm:p-7">
+    <section className="space-y-3 sm:space-y-4">
       <div className="space-y-2">
         <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">
           {displaySubjectCode}

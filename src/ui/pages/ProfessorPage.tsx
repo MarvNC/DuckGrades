@@ -125,7 +125,7 @@ export function ProfessorPage() {
   }
 
   return (
-    <section className="space-y-6 sm:space-y-8">
+    <section className="space-y-3 sm:space-y-4">
       <div className="space-y-4">
         <div className="space-y-3">
           <h1 className="text-3xl font-extrabold tracking-tight text-[var(--duck-fg)]">
