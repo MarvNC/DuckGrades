@@ -50,8 +50,8 @@ All colors are CSS custom properties under the `--duck-*` namespace, defined in 
 
 | Token                                   | Hex                    | Role                                                  |
 | --------------------------------------- | ---------------------- | ----------------------------------------------------- |
-| `--duck-bg`                             | `#121418`              | Dark background (near-black blue-grey)                |
-| `--duck-bg-accent`                      | `#1a1d23`              | Slightly lighter dark bg                              |
+| `--duck-bg`                             | `#131715`              | Dark background (near-black with warm-green tint)     |
+| `--duck-bg-accent`                      | `#1a201d`              | Slightly lighter dark bg with warm-green tint         |
 | `--duck-fg`                             | `#e9edf2`              | Light text (cool off-white)                           |
 | `--duck-muted`                          | `#a8b0ba`              | Muted text (medium cool grey)                         |
 | `--duck-muted-strong`                   | `#c6ced8`              | Stronger muted (lighter cool grey)                    |

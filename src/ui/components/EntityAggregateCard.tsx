@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { MetaChip } from './MetaChip';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { type Aggregate } from '../../lib/dataClient';
 import { formatGradeCode, formatGradeStat } from '../../lib/grades';
 import { GradeDistributionStrip } from './GradeDistributionStrip';
