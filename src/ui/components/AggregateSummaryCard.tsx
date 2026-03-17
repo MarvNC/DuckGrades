@@ -9,6 +9,7 @@ type AggregateSummaryCardProps = {
   metaChips?: string[];
   showDistributionStudentCount?: boolean;
   embedded?: boolean;
+  hero?: boolean;
 };
 
 export function AggregateSummaryCard({
@@ -17,6 +18,7 @@ export function AggregateSummaryCard({
   metaChips,
   showDistributionStudentCount = true,
   embedded = false,
+  hero = false,
 }: AggregateSummaryCardProps) {
   const hasMetaChips = (metaChips ?? []).length > 0;
 
@@ -24,7 +26,9 @@ export function AggregateSummaryCard({
     <section
       className={
         embedded
-          ? 'pt-1'
+          ? hero
+            ? ''
+            : 'pt-1'
           : 'rounded-2xl border border-[var(--duck-border)] bg-[var(--duck-surface)] p-3.5 shadow-sm sm:p-4'
       }
     >
@@ -35,7 +39,7 @@ export function AggregateSummaryCard({
       ) : null}
 
       <div
-        className={`flex flex-col gap-3 sm:flex-row sm:items-center ${hasMetaChips ? 'sm:justify-between sm:gap-4' : 'sm:justify-end'} ${label ? 'mt-2.5' : ''}`}
+        className={`flex flex-col gap-3 sm:flex-row sm:items-center ${hasMetaChips ? 'sm:justify-between sm:gap-4' : 'sm:justify-center'} ${label ? 'mt-2.5' : ''}`}
       >
         {hasMetaChips ? (
           <div className="min-w-0 sm:flex-1">
@@ -47,13 +51,17 @@ export function AggregateSummaryCard({
           </div>
         ) : null}
 
-        <div className="flex w-full flex-col items-start gap-1.5 sm:w-auto sm:items-end">
+        <div
+          className={`flex w-full flex-col gap-2 ${hero ? 'items-center' : 'items-start sm:w-auto sm:items-end'} ${hero ? 'sm:gap-3' : 'gap-1.5'}`}
+        >
           <GradeDistributionStrip
             aggregate={aggregate}
-            size="md"
+            size={hero ? 'lg' : 'md'}
             showStudentCount={showDistributionStudentCount}
           />
-          <div className="flex flex-wrap justify-start gap-x-3 gap-y-1 text-[10px] font-normal text-[var(--duck-muted)] opacity-70 sm:justify-end">
+          <div
+            className={`flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-normal text-[var(--duck-muted)] opacity-70 ${hero ? 'justify-center' : 'justify-start sm:justify-end'}`}
+          >
             <span>
               <span className="tracking-[0.08em] text-[var(--duck-muted)] uppercase">Mean</span>{' '}
               {formatGradeStat(aggregate?.mean)}

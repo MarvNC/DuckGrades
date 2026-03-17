@@ -8,7 +8,7 @@ import {
 
 type GradeDistributionStripProps = {
   aggregate: Aggregate | null | undefined;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
   showStudentCount?: boolean;
 };
 
@@ -121,11 +121,11 @@ export function GradeDistributionStrip({
       ? getLeftBucketDetails(resolvedActive.code)
       : getNumericalDetails(resolvedActive.index);
 
-  const baseBarHeight = size === 'sm' ? 20 : 24;
+  const baseBarHeight = size === 'sm' ? 20 : size === 'md' ? 24 : 32;
   const numericalBarHeight = baseBarHeight;
   const leftBarHeight = baseBarHeight;
-  const barWidth = 12;
-  const barGap = 2;
+  const barWidth = size === 'lg' ? 16 : 12;
+  const barGap = size === 'lg' ? 3 : 2;
 
   return (
     <div
@@ -137,13 +137,13 @@ export function GradeDistributionStrip({
       >
         {showStudentCount ? (
           <p
-            className={`rounded-md bg-[var(--duck-surface)] px-2 py-0.5 font-semibold tracking-[0.09em] text-[var(--duck-muted-strong)] uppercase ${size === 'sm' ? 'text-[9px]' : 'text-[10px]'}`}
+            className={`rounded-md bg-[var(--duck-surface)] px-2 py-0.5 font-semibold tracking-[0.09em] text-[var(--duck-muted-strong)] uppercase ${size === 'lg' ? 'text-xs' : size === 'sm' ? 'text-[9px]' : 'text-[10px]'}`}
           >
             {displayedTotal.toLocaleString()} students
           </p>
         ) : null}
         <p
-          className={`${size === 'sm' ? 'text-[9px]' : 'text-[10px]'} max-w-[13rem] truncate text-right font-semibold text-[var(--duck-muted)] sm:max-w-[14rem]`}
+          className={`${size === 'lg' ? 'text-xs' : size === 'sm' ? 'text-[9px]' : 'text-[10px]'} max-w-[13rem] truncate text-right font-semibold text-[var(--duck-muted)] sm:max-w-[14rem]`}
         >
           {activeText}
         </p>
@@ -152,7 +152,7 @@ export function GradeDistributionStrip({
       <div className="mt-1 flex items-end gap-0">
         <div className="shrink-0">
           <div
-            className={`grid items-end border-r border-dashed border-[var(--duck-border)] ${size === 'sm' ? 'pr-1' : 'pr-1.5'}`}
+            className={`grid items-end border-r border-dashed border-[var(--duck-border)] ${size === 'lg' ? 'pr-2' : size === 'sm' ? 'pr-1' : 'pr-1.5'}`}
             style={{
               height: leftBarHeight,
               gridTemplateColumns: `repeat(${LEFT_BUCKET_ORDER.length}, ${barWidth}px)`,
@@ -187,7 +187,7 @@ export function GradeDistributionStrip({
             })}
           </div>
           <div
-            className={`${size === 'sm' ? 'text-[7px]' : 'text-[8px]'} mt-0.5 grid font-semibold tracking-[0.06em] text-[var(--duck-muted)] uppercase`}
+            className={`${size === 'lg' ? 'text-[10px]' : size === 'sm' ? 'text-[7px]' : 'text-[8px]'} mt-0.5 grid font-semibold tracking-[0.06em] text-[var(--duck-muted)] uppercase`}
             style={{
               gridTemplateColumns: `repeat(${LEFT_BUCKET_ORDER.length}, ${barWidth}px)`,
               columnGap: `${barGap}px`,
@@ -200,7 +200,9 @@ export function GradeDistributionStrip({
           </div>
         </div>
 
-        <div className={`${size === 'sm' ? 'pl-1' : 'pl-1.5'} inline-block`}>
+        <div
+          className={`${size === 'lg' ? 'pl-2' : size === 'sm' ? 'pl-1' : 'pl-1.5'} inline-block`}
+        >
           <div
             className="grid items-end border-b border-[var(--duck-border)] pb-0.5"
             style={{
@@ -240,7 +242,7 @@ export function GradeDistributionStrip({
             })}
           </div>
           <div
-            className={`${size === 'sm' ? 'text-[7px]' : 'text-[8px]'} mt-0.5 grid font-semibold tracking-[0.06em] text-[var(--duck-muted)] uppercase`}
+            className={`${size === 'lg' ? 'text-[10px]' : size === 'sm' ? 'text-[7px]' : 'text-[8px]'} mt-0.5 grid font-semibold tracking-[0.06em] text-[var(--duck-muted)] uppercase`}
             style={{
               gridTemplateColumns: `repeat(${NUMERICAL_GRADE_ORDER.length}, ${barWidth}px)`,
               columnGap: `${barGap}px`,
