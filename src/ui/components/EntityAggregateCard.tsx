@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { MetaChip } from './MetaChip';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { type Aggregate } from '../../lib/dataClient';
 import { formatGradeCode, formatGradeStat } from '../../lib/grades';
 import { GradeDistributionStrip } from './GradeDistributionStrip';
@@ -96,18 +96,11 @@ export function EntityAggregateCard({
           </div>
         </div>
       </div>
-      {isExpandable ? (
-        <div
-          className="mt-1 flex items-center justify-center"
-          aria-expanded={effectivelyOpen}
-          aria-controls={isExpandable ? `section-drilldown-${title}` : undefined}
-        >
-          {effectivelyOpen ? (
-            <ChevronUp className="h-3 w-3 text-[var(--duck-muted)]" aria-hidden="true" />
-          ) : (
-            <ChevronDown className="h-3 w-3 text-[var(--duck-muted)]" aria-hidden="true" />
-          )}
-        </div>
+      {isExpandable && !effectivelyOpen ? (
+        <ChevronDown
+          className="absolute bottom-1 left-1/2 h-3 w-3 -translate-x-1/2 text-[var(--duck-muted)]/60"
+          aria-hidden="true"
+        />
       ) : null}
       {children && effectivelyOpen ? (
         <div
